@@ -22,8 +22,14 @@
     interfaces = {
       enp4s0.useDHCP = true;
       enp5s0.useDHCP = true;
-      enp7s0.useDHCP = true;
+      enp8s0.useDHCP = true;
       wlp6s0.useDHCP = true;
+      wlp7s0.useDHCP = true;
+    };
+
+    wireless = {
+      enable = true;
+      interfaces = ["wlp6s0" "wlp7s0"];
     };
   };
 
