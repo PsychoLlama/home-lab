@@ -21,8 +21,8 @@ inputs:
           passwordAuthentication = false;
         };
 
-        users.users.root.openssh.authorizedKeys.keys = [
-          (builtins.readFile ./ssh-key.pub)
+        users.users.root.openssh.authorizedKeys.keyFiles = [
+          ./ssh-key.pub
         ];
       })
 
