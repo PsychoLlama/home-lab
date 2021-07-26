@@ -33,5 +33,10 @@
     };
   };
 
+  services.nomad = {
+    enable = true;
+    enableDocker = true;
+  };
+
   system.stateVersion = "21.05";
 }
