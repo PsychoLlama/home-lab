@@ -1,32 +1,22 @@
-inputs:
+rec {
+  domain = "selfhosted.city";
+  defineHost = path: { config, lib, pkgs, ... }: {
+    imports = [path];
 
-{
-  defineHost = system: path: inputs.nixpkgs.lib.nixosSystem {
-    inherit system;
+    # Match the directory name to the host's name.
+    networking.hostName = lib.mkDefault (baseNameOf path);
 
-    specialArgs = {
-      inherit system inputs;
+    deployment = {
+      targetHost = "${config.networking.hostName}.${domain}";
     };
 
-    modules = [
-      ({ lib, pkgs, ... }: {
-        # Match the directory name to the host's name.
-        networking.hostName = lib.mkDefault (baseNameOf path);
+    services.openssh = {
+      enable = true;
+      passwordAuthentication = false;
+    };
 
-        # Attach the git sha to `nixos-version` output.
-        system.configurationRevision = inputs.self.rev or null;
-
-        services.openssh = {
-          enable = true;
-          passwordAuthentication = false;
-        };
-
-        users.users.root.openssh.authorizedKeys.keyFiles = [
-          ./ssh-key.pub
-        ];
-      })
-
-      path
+    users.users.root.openssh.authorizedKeys.keyFiles = [
+      ./ssh-key.pub
     ];
   };
 }
