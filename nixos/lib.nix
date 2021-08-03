@@ -3,6 +3,9 @@ rec {
   defineHost = path: { config, lib, pkgs, ... }: {
     imports = [path];
 
+    # Run garbage collection on a schedule.
+    nix.gc.automatic = true;
+
     # Match the directory name to the host's name.
     networking.hostName = lib.mkDefault (baseNameOf path);
 
