@@ -9,4 +9,5 @@ in {
   };
 
   corvus = lib.defineHost ./hosts/corvus;
+  clu = lib.defineHost ./hosts/clu;
 }
