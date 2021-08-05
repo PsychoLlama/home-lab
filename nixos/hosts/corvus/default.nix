@@ -31,5 +31,12 @@
     enableDocker = true;
   };
 
+  services.consul = {
+    enable = true;
+    interface.bind = "wlp6s0";
+  };
+
+  services.vault.enable = true;
+
   system.stateVersion = "21.05";
 }
