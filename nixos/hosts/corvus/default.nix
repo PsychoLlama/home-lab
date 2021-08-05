@@ -5,6 +5,22 @@
     ./hardware-configuration.nix
   ];
 
+  nix = {
+    distributedBuilds = true;
+    buildMachines = [
+      {
+        hostName = "tron.selfhosted.city";
+        sshUser = "root";
+        system = "aarch64-linux";
+      }
+      {
+        hostName = "clu.selfhosted.city";
+        sshUser = "root";
+        system = "aarch64-linux";
+      }
+    ];
+  };
+
   boot.loader = {
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
@@ -31,12 +47,11 @@
     enableDocker = true;
   };
 
-  services.consul = {
-    enable = true;
-    interface.bind = "wlp6s0";
-  };
-
-  services.vault.enable = true;
+  environment.systemPackages = [
+    pkgs.git
+    pkgs.nixops
+    pkgs.neovim
+  ];
 
   system.stateVersion = "21.05";
 }
