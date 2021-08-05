@@ -5,4 +5,5 @@
   hardware.pulseaudio.enable = true;
 
   services.nomad.enable = true;
+  services.consul.enable = true;
 }
