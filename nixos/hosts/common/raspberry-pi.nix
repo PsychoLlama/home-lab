@@ -3,7 +3,8 @@
     "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/09ed30ff3bb67f5efe9c77e0d79aca01793526ca.tar.gz"}/raspberry-pi/4"
   ];
 
-  nixpkgs.crossSystem = {
+  nixpkgs.localSystem = {
+    config = "aarch64-unknown-linux-gnu";
     system = "aarch64-linux";
   };
 
