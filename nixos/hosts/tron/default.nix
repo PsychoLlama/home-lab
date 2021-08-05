@@ -3,4 +3,6 @@
 
   # Enable audio.
   hardware.pulseaudio.enable = true;
+
+  services.nomad.enable = true;
 }
