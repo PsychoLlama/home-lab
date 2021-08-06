@@ -19,8 +19,8 @@ rec {
     };
 
     users.users.root.openssh.authorizedKeys.keyFiles = [
-      ./deploy-key.pub
-      ./admin-key.pub
+      ./keys/deploy.pub
+      ./keys/admin.pub
     ];
   };
 }
