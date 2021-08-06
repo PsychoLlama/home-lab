@@ -53,6 +53,7 @@
     pkgs.neovim
   ];
 
+  services.container-orchestration.enable = true;
   services.service-mesh = {
     enable = true;
     iface = "wlp6s0";

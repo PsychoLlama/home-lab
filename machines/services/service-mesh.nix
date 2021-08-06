@@ -7,8 +7,6 @@
 
 let
   cfg = config.services.service-mesh;
-  tcpPorts = config.networking.allowedTCPPortRanges or [];
-  udpPorts = config.networking.allowedUDPPortRanges or [];
   myHostName = config.networking.hostName;
   shouldFederate = node:
     node.config.services.service-mesh.enable &&
@@ -51,17 +49,17 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPortRanges = mkIf cfg.enable (tcpPorts ++ [
+    networking.firewall.allowedTCPPortRanges = mkIf cfg.enable [
       { from = 8600; to = 8600; } # DNS
       { from = 8500; to = 8500; } # HTTP
       { from = 8300; to = 8300; } # Server-to-server RPC
       { from = 8301; to = 8302; } # LAN/WAN Serf
       { from = 21000; to = 21255; } # Sidecar proxy
-    ]);
+    ];
 
-    networking.firewall.allowedUDPPortRanges = mkIf cfg.enable (udpPorts ++ [
+    networking.firewall.allowedUDPPortRanges = mkIf cfg.enable [
       { from = 8600; to = 8600; } # DNS
       { from = 8301; to = 8302; } # LAN/WAN Serf
-    ]);
+    ];
   };
 }

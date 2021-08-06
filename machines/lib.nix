@@ -3,6 +3,7 @@ rec {
   defineHost = path: { config, lib, pkgs, ... }: {
     imports = [
       ./services/service-mesh.nix
+      ./services/container-orchestration.nix
       path
     ];
 
