@@ -12,6 +12,9 @@ rec {
     # Match the directory name to the host's name.
     networking.hostName = lib.mkDefault (baseNameOf path);
 
+    # Assume all hosts exist under the root domain.
+    networking.domain = domain;
+
     deployment = {
       targetHost = "${config.networking.hostName}.${domain}";
     };

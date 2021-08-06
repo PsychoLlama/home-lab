@@ -2,11 +2,21 @@
 
 # service-mesh
 #
-# Configures HashiCorp Consul and automatically federates with other machines
-# that enable the service mesh (TODO).
+# Configures HashiCorp Consul and automatically federates with all other
+# machines that enable the service mesh.
 
 let
   cfg = config.services.service-mesh;
+  tcpPorts = config.networking.allowedTCPPortRanges or [];
+  udpPorts = config.networking.allowedUDPPortRanges or [];
+  myHostName = config.networking.hostName;
+  shouldFederate = node:
+    node.config.services.service-mesh.enable &&
+    node.config.networking.hostName != myHostName;
+
+  federationTargets = builtins.map
+    (node: node.config.networking.fqdn)
+    (builtins.filter shouldFederate (builtins.attrValues nodes));
 
 in {
   options.services.service-mesh = with lib; {
@@ -34,8 +44,24 @@ in {
       interface.bind = cfg.iface;
 
       extraConfig = {
-        data_dir = "/var/db/consul/${config.networking.hostName}";
+        server = true;
+        data_dir = "/var/db/consul/${myHostName}";
+        retry_join = federationTargets;
+        bootstrap_expect = (builtins.length federationTargets) + 1;
       };
     };
+
+    networking.firewall.allowedTCPPortRanges = mkIf cfg.enable (tcpPorts ++ [
+      { from = 8600; to = 8600; } # DNS
+      { from = 8500; to = 8500; } # HTTP
+      { from = 8300; to = 8300; } # Server-to-server RPC
+      { from = 8301; to = 8302; } # LAN/WAN Serf
+      { from = 21000; to = 21255; } # Sidecar proxy
+    ]);
+
+    networking.firewall.allowedUDPPortRanges = mkIf cfg.enable (udpPorts ++ [
+      { from = 8600; to = 8600; } # DNS
+      { from = 8301; to = 8302; } # LAN/WAN Serf
+    ]);
   };
 }

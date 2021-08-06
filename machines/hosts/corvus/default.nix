@@ -53,5 +53,10 @@
     pkgs.neovim
   ];
 
+  services.service-mesh = {
+    enable = true;
+    iface = "wlp6s0";
+  };
+
   system.stateVersion = "21.05";
 }
