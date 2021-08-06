@@ -34,7 +34,7 @@ in {
   };
 
   config = with lib; {
-    fileSystems."/var/db/consul" = mkIf cfg.enable {
+    fileSystems."/srv/consul" = mkIf cfg.enable {
       fsType = "nfs";
       device = "file-server.selfhosted.city:/mnt/zpool1/locker/applications/consul";
     };
@@ -45,7 +45,7 @@ in {
 
       extraConfig = {
         server = true;
-        data_dir = "/var/db/consul/${myHostName}";
+        data_dir = "/srv/consul/${myHostName}";
         retry_join = federationTargets;
         bootstrap_expect = (builtins.length federationTargets) + 1;
       };
