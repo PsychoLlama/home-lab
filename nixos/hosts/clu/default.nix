@@ -1,9 +1,19 @@
 {
   imports = [../common/raspberry-pi.nix];
 
-  # Enable audio.
-  hardware.pulseaudio.enable = true;
-
   services.nomad.enable = true;
-  services.vault.enable = true;
+
+  fileSystems."/var/db/consul" = {
+    fsType = "nfs";
+    device = "file-server.selfhosted.city:/mnt/zpool1/locker/applications/consul";
+  };
+
+  services.consul = {
+    enable = true;
+    interface.bind = "eth0";
+
+    extraConfig = {
+      data_dir = "/var/db/consul";
+    };
+  };
 }
