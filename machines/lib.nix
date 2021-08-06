@@ -1,7 +1,10 @@
 rec {
   domain = "selfhosted.city";
   defineHost = path: { config, lib, pkgs, ... }: {
-    imports = [path];
+    imports = [
+      ./services/service-mesh.nix
+      path
+    ];
 
     # Run garbage collection on a schedule.
     nix.gc.automatic = true;
