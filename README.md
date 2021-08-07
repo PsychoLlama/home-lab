@@ -9,7 +9,7 @@ Stack:
 | Category | Tool |
 |----------|------|
 | Operating System | [NixOS](https://nixos.org/) |
-| Provisioning Tool | [NixOps](https://github.com/NixOS/nixops) |
+| Provisioning Tools | [NixOps](https://github.com/NixOS/nixops) & [Terraform](https://www.terraform.io/) |
 | Service Discovery | [Consul](https://www.consul.io/) |
 | Container Orchestration | [Nomad](https://www.nomadproject.io/) |
 | Storage Backend | [TrueNAS](https://www.truenas.com/) |
@@ -19,7 +19,7 @@ Most of this is automated, but without good Terraform providers for TrueNAS/OPNS
 
 ## Structure
 
-- `machines/`: provisions physical resources & configures operating systems
-  - `hosts/`: configuration per host
+- `machines/`: provisions physical resources & manages operating systems
+  - `hosts/`: host-level configuration
   - `hardware/`: settings for different hardware classes (e.g. Raspberry Pi)
 - `infrastructure/`: higher-level terraform configs and service definitions
