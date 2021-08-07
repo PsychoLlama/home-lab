@@ -21,4 +21,5 @@ Most of this is automated, but without good Terraform providers for TrueNAS/OPNS
 
 - `machines/`: provisions physical resources & configures operating systems
   - `hosts/`: configuration per host
+  - `hardware/`: settings for different hardware classes (e.g. Raspberry Pi)
 - `infrastructure/`: higher-level terraform configs and service definitions
