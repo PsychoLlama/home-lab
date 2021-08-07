@@ -1,6 +1,9 @@
 {
   imports = [
-    "${fetchTarball "https://github.com/NixOS/nixos-hardware/archive/09ed30ff3bb67f5efe9c77e0d79aca01793526ca.tar.gz"}/raspberry-pi/4"
+    "${
+      fetchTarball
+      "https://github.com/NixOS/nixos-hardware/archive/09ed30ff3bb67f5efe9c77e0d79aca01793526ca.tar.gz"
+    }/raspberry-pi/4"
   ];
 
   nixpkgs.localSystem = {
@@ -12,7 +15,7 @@
     "/" = {
       device = "/dev/disk/by-label/NIXOS_SD";
       fsType = "ext4";
-      options = ["noatime"];
+      options = [ "noatime" ];
     };
   };
 

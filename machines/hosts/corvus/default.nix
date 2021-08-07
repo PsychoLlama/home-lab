@@ -1,9 +1,7 @@
 { config, pkgs, ... }:
 
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
   nix = {
     distributedBuilds = true;
@@ -38,7 +36,7 @@
 
     wireless = {
       enable = true;
-      interfaces = ["wlp6s0" "wlp7s0"];
+      interfaces = [ "wlp6s0" "wlp7s0" ];
     };
   };
 
@@ -47,11 +45,7 @@
     enableDocker = true;
   };
 
-  environment.systemPackages = [
-    pkgs.git
-    pkgs.nixops
-    pkgs.neovim
-  ];
+  environment.systemPackages = [ pkgs.git pkgs.nixops pkgs.neovim ];
 
   services.container-orchestration.enable = true;
   services.service-mesh = {

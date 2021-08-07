@@ -9,11 +9,10 @@ let
   cfg = config.services.service-mesh;
   myHostName = config.networking.hostName;
   shouldFederate = node:
-    node.config.services.service-mesh.enable &&
-    node.config.networking.hostName != myHostName;
+    node.config.services.service-mesh.enable && node.config.networking.hostName
+    != myHostName;
 
-  federationTargets = builtins.map
-    (node: node.config.networking.fqdn)
+  federationTargets = builtins.map (node: node.config.networking.fqdn)
     (builtins.filter shouldFederate (builtins.attrValues nodes));
 
 in {
@@ -34,7 +33,8 @@ in {
   config = with lib; {
     fileSystems."/srv/consul" = mkIf cfg.enable {
       fsType = "nfs";
-      device = "file-server.selfhosted.city:/mnt/zpool1/locker/applications/consul";
+      device =
+        "file-server.selfhosted.city:/mnt/zpool1/locker/applications/consul";
     };
 
     services.consul = mkIf cfg.enable {
@@ -50,16 +50,49 @@ in {
     };
 
     networking.firewall.allowedTCPPortRanges = mkIf cfg.enable [
-      { from = 8600; to = 8600; } # DNS
-      { from = 8500; to = 8500; } # HTTP
-      { from = 8300; to = 8300; } # Server-to-server RPC
-      { from = 8301; to = 8302; } # LAN/WAN Serf
-      { from = 21000; to = 21255; } # Sidecar proxy
+      # DNS
+      {
+        from = 8600;
+        to = 8600;
+      }
+
+      # HTTP
+      {
+        from = 8500;
+        to = 8500;
+      }
+
+      # Server-to-server RPC
+      {
+        from = 8300;
+        to = 8300;
+      }
+
+      # LAN/WAN Serf
+      {
+        from = 8301;
+        to = 8302;
+      }
+
+      # Sidecar proxy
+      {
+        from = 21000;
+        to = 21255;
+      }
     ];
 
     networking.firewall.allowedUDPPortRanges = mkIf cfg.enable [
-      { from = 8600; to = 8600; } # DNS
-      { from = 8301; to = 8302; } # LAN/WAN Serf
+      # DNS
+      {
+        from = 8600;
+        to = 8600;
+      }
+
+      # LAN/WAN Serf
+      {
+        from = 8301;
+        to = 8302;
+      }
     ];
   };
 }

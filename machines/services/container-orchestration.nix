@@ -9,8 +9,8 @@ let
   cfg = config.services.container-orchestration;
   runsNomad = node: node.config.services.service-mesh.enable;
 
-  nomadClusterCount = builtins.length
-    (builtins.filter runsNomad (builtins.attrValues nodes));
+  nomadClusterCount =
+    builtins.length (builtins.filter runsNomad (builtins.attrValues nodes));
 
 in {
   options.services.container-orchestration = with lib; {
@@ -31,26 +31,50 @@ in {
           bootstrap_expect = nomadClusterCount;
         };
 
-        client = {
-          enabled = true;
-        };
+        client = { enabled = true; };
 
-        consul = {
-          address = "127.0.0.1:8500";
-        };
+        consul = { address = "127.0.0.1:8500"; };
       };
     };
 
     networking.firewall.allowedTCPPortRanges = mkIf cfg.enable [
-      { from = 4646; to = 4646; } # HTTP API
-      { from = 4647; to = 4647; } # Private RPC
-      { from = 4648; to = 4648; } # Serf WAN
-      { from = 20000; to = 32000; } # Dynamic port allocations
+      # HTTP API
+      {
+        from = 4646;
+        to = 4646;
+      }
+
+      # Private RPC
+      {
+        from = 4647;
+        to = 4647;
+      }
+
+      # Serf WAN
+      {
+        from = 4648;
+        to = 4648;
+      }
+
+      # Dynamic port allocations
+      {
+        from = 20000;
+        to = 32000;
+      }
     ];
 
     networking.firewall.allowedUDPPortRanges = mkIf cfg.enable [
-      { from = 4648; to = 4648; } # Serf WAN
-      { from = 20000; to = 32000; } # Dynamic port allocations
+      # Serf WAN
+      {
+        from = 4648;
+        to = 4648;
+      }
+
+      # Dynamic port allocations
+      {
+        from = 20000;
+        to = 32000;
+      }
     ];
   };
 }

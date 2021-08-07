@@ -1,6 +1,5 @@
 # This uses Nixops to manage all machines on the network.
-let
-  lib = import ./lib.nix;
+let lib = import ./lib.nix;
 
 in {
   network = {
