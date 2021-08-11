@@ -1,4 +1,4 @@
-{ nodes, config, lib, ... }:
+{ nodes, config, lib, pkgs, ... }:
 
 # container-orchestration
 #
@@ -24,6 +24,10 @@ in {
   config = with lib; {
     services.nomad = mkIf cfg.enable {
       enable = true;
+      dropPrivileges = false;
+
+      # Provides network support for the Consul sidecar proxy.
+      extraPackages = with pkgs; [ cni-plugins ];
 
       settings = {
         server = {
@@ -31,7 +35,10 @@ in {
           bootstrap_expect = nomadClusterCount;
         };
 
-        client = { enabled = true; };
+        client = with pkgs; {
+          enabled = true;
+          cni_path = "${cni-plugins}/bin";
+        };
 
         consul = { address = "127.0.0.1:8500"; };
       };

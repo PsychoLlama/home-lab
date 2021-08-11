@@ -31,19 +31,13 @@ in {
   };
 
   config = with lib; {
-    fileSystems."/srv/consul" = mkIf cfg.enable {
-      fsType = "nfs";
-      device =
-        "file-server.selfhosted.city:/mnt/zpool1/locker/applications/consul";
-    };
-
     services.consul = mkIf cfg.enable {
       enable = true;
       interface.bind = cfg.iface;
 
       extraConfig = {
         server = true;
-        data_dir = "/srv/consul/${myHostName}";
+        connect = { enabled = true; };
         retry_join = federationTargets;
         bootstrap_expect = (builtins.length federationTargets) + 1;
       };
