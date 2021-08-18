@@ -33,6 +33,7 @@ in {
   config = with lib; {
     services.consul = mkIf cfg.enable {
       enable = true;
+      forceIpv4 = true;
       interface.bind = cfg.iface;
 
       extraConfig = {
