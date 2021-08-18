@@ -1,4 +1,4 @@
-{ nodes, config, lib, ... }:
+{ nodes, config, lib, pkgs, ... }:
 
 # service-mesh
 #
@@ -6,6 +6,7 @@
 # machines that enable the service mesh.
 
 let
+  unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.services.service-mesh;
   myHostName = config.networking.hostName;
   shouldFederate = node:
@@ -35,6 +36,7 @@ in {
       enable = true;
       forceIpv4 = true;
       interface.bind = cfg.iface;
+      package = unstable.consul;
 
       extraConfig = {
         server = true;

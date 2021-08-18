@@ -6,8 +6,9 @@
 # with other nomad instances discovered over Consul.
 
 let
+  unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.services.container-orchestration;
-  runsNomad = node: node.config.services.service-mesh.enable;
+  runsNomad = node: node.config.services.container-orchestration.enable;
 
   nomadClusterCount =
     builtins.length (builtins.filter runsNomad (builtins.attrValues nodes));
@@ -25,6 +26,7 @@ in {
     services.nomad = mkIf cfg.enable {
       enable = true;
       dropPrivileges = false;
+      package = unstable.nomad;
 
       # Provides network support for the Consul sidecar proxy.
       extraPackages = with pkgs; [ cni-plugins ];
