@@ -29,7 +29,7 @@ in {
       package = unstable.nomad;
 
       # Provides network support for the Consul sidecar proxy.
-      extraPackages = with pkgs; [ cni-plugins ];
+      extraPackages = with pkgs; [ cni-plugins unstable.consul ];
 
       settings = {
         server = {
