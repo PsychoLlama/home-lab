@@ -43,6 +43,7 @@ in {
         connect = { enabled = true; };
         retry_join = federationTargets;
         bootstrap_expect = (builtins.length federationTargets) + 1;
+        ports = { grpc = 8502; };
       };
     };
 
@@ -57,6 +58,12 @@ in {
       {
         from = 8500;
         to = 8500;
+      }
+
+      # HTTP
+      {
+        from = 8502;
+        to = 8502;
       }
 
       # Server-to-server RPC
