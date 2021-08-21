@@ -40,6 +40,10 @@ in {
         client = with pkgs; {
           enabled = true;
           cni_path = "${cni-plugins}/bin";
+
+          # Force downgrade Envoy. See:
+          # https://github.com/envoyproxy/envoy/issues/15235
+          meta = { "connect.sidecar_image" = "envoyproxy/envoy:v1.16.4"; };
         };
 
         consul = {
