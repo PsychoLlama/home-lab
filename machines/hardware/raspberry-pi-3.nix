@@ -11,6 +11,11 @@
     };
   };
 
+  nixpkgs.localSystem = {
+    config = "aarch64-unknown-linux-gnu";
+    system = "aarch64-linux";
+  };
+
   fileSystems."/" = {
     device = "/dev/disk/by-label/NIXOS_SD";
     fsType = "ext4";
