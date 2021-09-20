@@ -2,7 +2,6 @@
 
 {
   boot = {
-    consoleLogLevel = 7;
     kernelPackages = pkgs.linuxPackages_latest;
 
     loader = {
@@ -27,7 +26,4 @@
     device = "/var/swapfile";
     size = 1024;
   }];
-
-  services.openssh.enable = true;
-  services.openssh.permitRootLogin = "yes";
 }
