@@ -28,11 +28,11 @@
   # worker node.
   #
   #   nixops deploy --include cluster-manager
-  #   ssh-copy-id -i /root/.ssh/deploy_key root@<worker>
+  #   ssh-copy-id -i /root/.ssh/id_ed25519.pub root@<worker>
   #
   services.openssh.hostKeys = [{
     type = "ed25519";
-    path = "/root/.ssh/deploy_key";
+    path = "/root/.ssh/id_ed25519";
     comment = "NixOps deploy key";
   }];
 
