@@ -7,6 +7,7 @@ in {
     enableRollback = true;
   };
 
+  multivac = lib.defineHost ./hosts/multivac;
   viki = lib.defineHost ./hosts/viki;
   clu = lib.defineHost ./hosts/clu;
   tron = lib.defineHost ./hosts/tron;

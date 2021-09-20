@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
-  imports = [ ../../hardware/raspberry-pi-3.nix ];
+  imports = [ ./hardware-configuration.nix ];
 
   nix = {
     distributedBuilds = true;
@@ -15,11 +15,6 @@
         hostName = "clu";
         sshUser = "root";
         system = "aarch64-linux";
-      }
-      {
-        hostName = "corvus";
-        sshUser = "root";
-        system = "x86_64-linux";
       }
     ];
   };
@@ -36,7 +31,33 @@
     comment = "NixOps deploy key";
   }];
 
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+    grub.enable = true;
+    grub.version = 2;
+    grub.device = "/dev/sdb";
+  };
+
+  networking = {
+    useDHCP = false;
+    interfaces = {
+      eno1.useDHCP = true;
+      eno2.useDHCP = true;
+      eno3.useDHCP = true;
+      eno4.useDHCP = true;
+    };
+  };
+
+  services.nomad = {
+    enable = true;
+    enableDocker = true;
+  };
+
   environment.systemPackages = with pkgs; [ git nixops neovim ];
+
+  services.container-orchestration.enable = true;
+  services.service-mesh = { enable = true; iface = "eno4"; };
 
   system.stateVersion = "21.05";
 }
