@@ -9,6 +9,7 @@ in {
 
   multivac = lib.defineHost ./hosts/multivac;
   viki = lib.defineHost ./hosts/viki;
+  hal = lib.defineHost ./hosts/hal;
   clu = lib.defineHost ./hosts/clu;
   tron = lib.defineHost ./hosts/tron;
 }
