@@ -20,7 +20,7 @@
       efi.canTouchEfiVariables = true;
       grub.enable = true;
       grub.version = 2;
-      grub.device = "/dev/sdb";
+      grub.device = "/dev/sda";
     };
   };
 
