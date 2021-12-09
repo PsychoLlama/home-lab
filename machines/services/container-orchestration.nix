@@ -29,7 +29,7 @@ in {
       package = unstable.nomad;
 
       # Provides network support for the Consul sidecar proxy.
-      extraPackages = with pkgs; [ cni-plugins unstable.consul ];
+      extraPackages = with unstable; [ cni-plugins consul ];
 
       settings = {
         server = {
@@ -37,13 +37,9 @@ in {
           bootstrap_expect = nomadClusterCount;
         };
 
-        client = with pkgs; {
+        client = with unstable; {
           enabled = true;
           cni_path = "${cni-plugins}/bin";
-
-          # Force downgrade Envoy. See:
-          # https://github.com/envoyproxy/envoy/issues/15235
-          meta = { "connect.sidecar_image" = "envoyproxy/envoy:v1.16.4"; };
         };
 
         consul = {

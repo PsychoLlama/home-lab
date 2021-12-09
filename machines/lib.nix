@@ -1,7 +1,7 @@
 rec {
   domain = "selfhosted.city";
   defineHost = path:
-    { config, lib, pkgs, ... }: {
+    { config, lib, ... }: {
       imports = [
         ./services/service-mesh.nix
         ./services/container-orchestration.nix

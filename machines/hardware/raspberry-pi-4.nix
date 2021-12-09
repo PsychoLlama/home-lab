@@ -2,7 +2,7 @@
   imports = [
     "${
       fetchTarball
-      "https://github.com/NixOS/nixos-hardware/archive/09ed30ff3bb67f5efe9c77e0d79aca01793526ca.tar.gz"
+      "https://github.com/NixOS/nixos-hardware/archive/4c9f07277bd4bc29a051ff2a0ca58c6403e3881a.tar.gz"
     }/raspberry-pi/4"
   ];
 

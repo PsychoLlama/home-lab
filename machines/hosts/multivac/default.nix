@@ -31,13 +31,7 @@
     comment = "NixOps deploy key";
   }];
 
-  environment.systemPackages = with pkgs; [ nixops neovim ];
-
-  services.container-orchestration.enable = true;
-  services.service-mesh = {
-    enable = true;
-    iface = "eno4";
-  };
+  environment.systemPackages = with pkgs; [ nixopsUnstable neovim ];
 
   system.stateVersion = "21.05";
 }
