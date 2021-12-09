@@ -11,9 +11,6 @@ rec {
         path
       ];
 
-      # Run garbage collection on a schedule.
-      nix.gc.automatic = true;
-
       # Match the directory name to the host's name.
       networking.hostName = lib.mkDefault (baseNameOf path);
 
@@ -24,6 +21,12 @@ rec {
 
       # Enable flakes.
       nix = {
+        # Run garbage collection on a schedule.
+        gc.automatic = true;
+
+        # Use hard links to save disk space.
+        optimise.automatic = true;
+
         package = unstable.nix;
         extraOptions = ''
           experimental-features = nix-command flakes
