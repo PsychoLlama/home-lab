@@ -1,7 +1,10 @@
 rec {
   domain = "selfhosted.city";
   defineHost = path:
-    { config, lib, ... }: {
+    { config, lib, pkgs, ... }:
+    let unstable = import ./unstable-pkgs.nix { system = pkgs.system; };
+
+    in {
       imports = [
         ./services/service-mesh.nix
         ./services/container-orchestration.nix
@@ -18,6 +21,14 @@ rec {
       networking.domain = domain;
 
       deployment = { targetHost = "${config.networking.hostName}.${domain}"; };
+
+      # Enable flakes.
+      nix = {
+        package = unstable.nix;
+        extraOptions = ''
+          experimental-features = nix-command flakes
+        '';
+      };
 
       services.openssh = {
         enable = true;
