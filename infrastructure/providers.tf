@@ -9,7 +9,7 @@ terraform {
   backend "consul" {
     address = "tron.selfhosted.city:8500"
     scheme  = "http"
-    path    = "terraform/state"
+    path    = "terraform/home-lab"
   }
 }
 
