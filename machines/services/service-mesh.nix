@@ -37,6 +37,7 @@ in {
       forceIpv4 = true;
       interface.bind = cfg.iface;
       package = unstable.consul;
+      webUi = true;
 
       extraConfig = {
         server = true;
@@ -44,6 +45,7 @@ in {
         retry_join = federationTargets;
         bootstrap_expect = (builtins.length federationTargets) + 1;
         ports = { grpc = 8502; };
+        addresses = { http = "0.0.0.0"; };
       };
     };
 

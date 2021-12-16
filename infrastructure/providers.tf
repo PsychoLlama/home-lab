@@ -5,6 +5,12 @@ terraform {
       version = "~> 1.4.15"
     }
   }
+
+  backend "consul" {
+    address = "tron.selfhosted.city:8500"
+    scheme  = "http"
+    path    = "terraform/state"
+  }
 }
 
 provider "nomad" {
