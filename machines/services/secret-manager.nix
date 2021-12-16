@@ -13,8 +13,12 @@ in with lib; {
     services.vault = {
       enable = true;
       package = unstable.vault;
-      address = config.networking.fqdn;
-      # TODO: Persist state to Consul.
+      address = "0.0.0.0:8200";
+      storageBackend = "consul";
+      extraConfig = ''
+        cluster_address = "http://${config.networking.fqdn}:8201"
+        api_addr = "http://${config.networking.fqdn}:8200"
+      '';
     };
 
     environment.systemPackages = [ unstable.vault ];

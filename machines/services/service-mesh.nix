@@ -54,13 +54,13 @@ in {
         to = 8600;
       }
 
-      # HTTP
+      # HTTP API
       {
         from = 8500;
         to = 8500;
       }
 
-      # HTTP
+      # gRPC API
       {
         from = 8502;
         to = 8502;
