@@ -8,6 +8,7 @@ rec {
       imports = [
         ./services/service-mesh.nix
         ./services/container-orchestration.nix
+        ./services/secret-manager.nix
         path
       ];
 
