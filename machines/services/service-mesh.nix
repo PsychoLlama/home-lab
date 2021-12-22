@@ -7,17 +7,17 @@
 
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
-  cfg = config.services.service-mesh;
+  cfg = config.lab.service-mesh;
   myHostName = config.networking.hostName;
   shouldFederate = node:
-    node.config.services.service-mesh.enable && node.config.networking.hostName
+    node.config.lab.service-mesh.enable && node.config.networking.hostName
     != myHostName;
 
   federationTargets = builtins.map (node: node.config.networking.fqdn)
     (builtins.filter shouldFederate (builtins.attrValues nodes));
 
 in {
-  options.services.service-mesh = with lib; {
+  options.lab.service-mesh = with lib; {
     enable = mkOption {
       type = types.bool;
       default = false;

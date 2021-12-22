@@ -7,14 +7,14 @@
 
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
-  cfg = config.services.container-orchestration;
-  runsNomad = node: node.config.services.container-orchestration.enable;
+  cfg = config.lab.container-orchestration;
+  runsNomad = node: node.config.lab.container-orchestration.enable;
 
   nomadClusterCount =
     builtins.length (builtins.filter runsNomad (builtins.attrValues nodes));
 
 in {
-  options.services.container-orchestration = with lib; {
+  options.lab.container-orchestration = with lib; {
     enable = mkOption {
       type = types.bool;
       default = false;

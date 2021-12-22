@@ -1,9 +1,9 @@
 {
   imports = [ ../../hardware/raspberry-pi-4.nix ];
 
-  services.service-mesh.enable = true;
-  services.container-orchestration.enable = true;
-  services.secret-manager.enable = true;
+  lab.service-mesh.enable = true;
+  lab.container-orchestration.enable = true;
+  lab.secret-manager.enable = true;
 
   system.stateVersion = "21.05";
 }
