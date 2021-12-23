@@ -23,5 +23,11 @@
           tron = lib.defineHost ./machines/hosts/tron;
         };
       };
+
+      checks = with nixpkgs.lib;
+        listToAttrs (forEach [ "x86_64-linux" "aarch64-linux" ] (system:
+          nameValuePair system (import ./machines/tests/router.nix {
+            pkgs = import ./machines/unstable-pkgs.nix { inherit system; };
+          })));
     };
 }
