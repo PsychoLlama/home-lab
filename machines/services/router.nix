@@ -125,6 +125,7 @@ in with lib; {
         option broadcast-address ${lan.subnet.broadcast};
         option routers ${lan.address};
         option domain-name-servers ${lan.address};
+        authoritative;
 
         subnet ${lan.subnet.base} netmask ${lan.subnet.mask} {
           range ${lan.subnet.range.start} ${lan.subnet.range.end};
