@@ -1,12 +1,18 @@
 { pkgs, ... }:
 
 {
-  boot = {
-    kernelPackages = pkgs.linuxPackages_latest;
+  hardware.enableRedistributableFirmware = true;
 
+  boot = {
     loader = {
       generic-extlinux-compatible.enable = true;
       grub.enable = false;
+
+      raspberryPi = {
+        enable = true;
+        version = 3;
+        uboot.enable = true;
+      };
     };
   };
 
