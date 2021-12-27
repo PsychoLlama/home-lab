@@ -34,7 +34,7 @@ in with lib; {
 
         address = mkOption {
           type = types.str;
-          default = "192.168.1.1";
+          default = "10.0.0.1";
           description = "Static LAN IP of the router";
         };
 
@@ -58,26 +58,26 @@ in with lib; {
 
           base = mkOption {
             type = types.str;
-            default = "192.168.1.0";
+            default = "10.0.0.0";
             description = "The first IP address in the subnet";
           };
 
           broadcast = mkOption {
             type = types.str;
-            default = "192.168.1.255";
+            default = "10.0.0.255";
             description = "Subnet broadcast address";
           };
 
           range = {
             start = mkOption {
               type = types.str;
-              default = "192.168.1.10";
+              default = "10.0.0.10";
               description = "Starting range for DHCP";
             };
 
             end = mkOption {
               type = types.str;
-              default = "192.168.1.254";
+              default = "10.0.0.254";
               description = "Ending range for DHCP";
             };
           };

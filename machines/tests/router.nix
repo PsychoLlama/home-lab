@@ -29,7 +29,7 @@
       start_all()
 
       client.wait_for_unit('network-online.target')
-      client.succeed('ip addr show eth1 to 192.168.1.1/24 | grep inet')
+      client.succeed('ip addr show eth1 to 10.0.0.1/24 | grep inet')
     '';
   };
 }
