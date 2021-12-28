@@ -9,6 +9,7 @@ rec {
         ./services/service-mesh.nix
         ./services/container-orchestration.nix
         ./services/secret-manager.nix
+        ./services/router.nix
         path
       ];
 

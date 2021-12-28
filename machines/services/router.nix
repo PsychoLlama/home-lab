@@ -9,6 +9,7 @@ let
 in with lib; {
   options.lab.router = {
     enable = mkEnableOption "Act as a router";
+    debugging.enable = mkEnableOption "Enable the debugging toolkit";
 
     dns = {
       servers = mkOption {
@@ -111,10 +112,7 @@ in with lib; {
       };
     };
 
-    services.bind = {
-      enable = true;
-      forwarders = cfg.dns.servers;
-    };
+    environment.systemPackages = mkIf cfg.debugging.enable [ unstable.dogdns ];
 
     services.dhcpd4 = with cfg.network; {
       enable = true;
@@ -124,7 +122,7 @@ in with lib; {
         option subnet-mask ${lan.subnet.mask};
         option broadcast-address ${lan.subnet.broadcast};
         option routers ${lan.address};
-        option domain-name-servers ${lan.address};
+        option domain-name-servers ${concatStringsSep ", " cfg.dns.servers};
         authoritative;
 
         subnet ${lan.subnet.base} netmask ${lan.subnet.mask} {
