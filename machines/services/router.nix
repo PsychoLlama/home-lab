@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, options, ... }:
 
 # Turns the device into a simple router.
 
@@ -20,6 +20,9 @@ in with lib; {
     };
 
     network = {
+      # Aliased because I hope to inject these as local DNS records too.
+      hosts = options.services.dhcpd4.machines;
+
       wan = {
         interface = mkOption {
           type = types.str;
@@ -78,7 +81,7 @@ in with lib; {
 
             end = mkOption {
               type = types.str;
-              default = "10.0.0.254";
+              default = "10.0.0.200";
               description = "Ending range for DHCP";
             };
           };
@@ -122,6 +125,7 @@ in with lib; {
     services.dhcpd4 = with cfg.network; {
       enable = true;
       interfaces = [ lan.interface ];
+      machines = cfg.network.hosts;
 
       extraConfig = ''
         option subnet-mask ${lan.subnet.mask};

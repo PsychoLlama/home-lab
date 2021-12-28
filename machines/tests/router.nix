@@ -86,4 +86,31 @@ in {
         client.succeed("curl --fail http://server/")
     '';
   };
+
+  hosts = let ethernetAddress = "aa:bb:cc:dd:ee:ff";
+  in pkgs.nixosTest {
+    name = "router-hosts";
+    nodes = {
+      router = {
+        imports = [ routerBase ];
+        lab.router.network.hosts = [{
+          ipAddress = "10.0.0.200";
+          hostName = "le-host-name";
+          inherit ethernetAddress;
+        }];
+      };
+
+      client = {
+        imports = [ clientBase ];
+        networking.interfaces.eth1.macAddress = ethernetAddress;
+      };
+    };
+
+    testScript = ''
+      start_all()
+
+      client.wait_for_unit("network-online.target")
+      client.succeed("ip addr show eth1 | grep 10.0.0.200")
+    '';
+  };
 }
