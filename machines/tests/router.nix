@@ -8,6 +8,7 @@ let
 
     lab.router = {
       enable = true;
+      debugging.enable = true;
       network.wan.interface = "eth1";
       network.lan.interface = "eth2";
     };

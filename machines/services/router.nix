@@ -112,7 +112,12 @@ in with lib; {
       };
     };
 
-    environment.systemPackages = mkIf cfg.debugging.enable [ unstable.dogdns ];
+    environment.systemPackages = mkIf cfg.debugging.enable [
+      unstable.bottom # System load observer
+      unstable.dogdns # DNS testing
+      unstable.tcpdump # Inspect traffic (used with Wireshark)
+      unstable.conntrack-tools # Inspect active connection states
+    ];
 
     services.dhcpd4 = with cfg.network; {
       enable = true;
