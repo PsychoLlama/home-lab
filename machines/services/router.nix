@@ -12,10 +12,18 @@ in with lib; {
     debugging.enable = mkEnableOption "Enable the debugging toolkit";
 
     dns = {
-      servers = mkOption {
-        type = types.listOf types.str;
-        default = [ "1.1.1.1" ];
-        description = "Upstream DNS servers";
+      upstream = {
+        ipAddress = mkOption {
+          type = types.str;
+          default = "1.1.1.1";
+          description = "IP address of the DNS server";
+        };
+
+        hostname = mkOption {
+          type = types.str;
+          default = "cloudflare-dns.com";
+          description = "Server hostname (used for TLS)";
+        };
       };
     };
 
@@ -113,6 +121,8 @@ in with lib; {
           }"
         ];
       };
+
+      firewall.allowedUDPPorts = [ 53 ];
     };
 
     environment.systemPackages = mkIf cfg.debugging.enable [
@@ -121,6 +131,27 @@ in with lib; {
       unstable.tcpdump # Inspect traffic (used with Wireshark)
       unstable.conntrack-tools # Inspect active connection states
     ];
+
+    services.coredns = {
+      enable = true;
+      package = unstable.coredns;
+      config = ''
+        .:53 {
+          bind lo ${cfg.network.lan.interface}
+
+          log
+          errors
+          cache
+          local
+          nsid router
+
+          forward . tls://${cfg.dns.upstream.ipAddress} {
+            tls_servername ${cfg.dns.upstream.hostname}
+            health_check 1h
+          }
+        }
+      '';
+    };
 
     services.dhcpd4 = with cfg.network; {
       enable = true;
@@ -131,7 +162,7 @@ in with lib; {
         option subnet-mask ${lan.subnet.mask};
         option broadcast-address ${lan.subnet.broadcast};
         option routers ${lan.address};
-        option domain-name-servers ${concatStringsSep ", " cfg.dns.servers};
+        option domain-name-servers ${lan.address};
         authoritative;
 
         subnet ${lan.subnet.base} netmask ${lan.subnet.mask} {

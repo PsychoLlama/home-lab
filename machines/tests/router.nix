@@ -16,6 +16,7 @@ let
 
   clientBase = {
     virtualisation.vlans = [ 2 ];
+    environment.systemPackages = [ pkgs.dogdns ];
     networking = {
       useDHCP = false;
       interfaces.eth1.useDHCP = true;
@@ -111,6 +112,27 @@ in {
 
       client.wait_for_unit("network-online.target")
       client.succeed("ip addr show eth1 | grep 10.0.0.200")
+    '';
+  };
+
+  dns = pkgs.nixosTest {
+    name = "router-dns";
+    nodes = {
+      router = routerBase;
+      client = clientBase;
+    };
+
+    testScript = ''
+      start_all()
+
+      with subtest("Test basic functionality from router"):
+        router.wait_for_unit("coredns.service")
+        router.wait_for_open_port(53)
+        router.succeed("dog @localhost localhost")
+
+      with subtest("Test basic functionality from client"):
+        client.wait_for_unit("network-online.target")
+        client.succeed("dog @10.0.0.1 localhost")
     '';
   };
 }
