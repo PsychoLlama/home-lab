@@ -25,6 +25,16 @@ in with lib; {
           description = "Server hostname (used for TLS)";
         };
       };
+
+      # Facilitates DNS-level adblock.
+      blocklist = mkOption {
+        type = types.either types.str types.path;
+        default = builtins.fetchurl {
+          sha256 = "06bgjnl0x1apfpildg47jwjiz2fw1vapirfz45rs86qafcxmkbm2";
+          url =
+            "https://raw.githubusercontent.com/StevenBlack/hosts/3.9.30/hosts";
+        };
+      };
     };
 
     network = {
@@ -144,6 +154,12 @@ in with lib; {
           cache
           local
           nsid router
+
+          hosts ${cfg.dns.blocklist} {
+            fallthrough
+            reload 0
+            ttl 60
+          }
 
           forward . tls://${cfg.dns.upstream.ipAddress} {
             tls_servername ${cfg.dns.upstream.hostname}
