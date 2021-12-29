@@ -5,6 +5,18 @@
 let
   cfg = config.lab.router;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
+  domain = (import ../lib.nix).domain;
+  hostsFile = unstable.writeText "coredns.hosts" ''
+    # --- CUSTOM HOSTS ---
+    ${cfg.network.lan.address}  router
+
+    ${lib.concatMapStringsSep "\n" (machine:
+      "${machine.ipAddress}  ${machine.hostName} ${machine.hostName}.${domain}")
+    cfg.network.hosts}
+
+    # --- BLOCKLIST ---
+    ${builtins.readFile cfg.dns.blocklist}
+  '';
 
 in with lib; {
   options.lab.router = {
@@ -155,7 +167,7 @@ in with lib; {
           local
           nsid router
 
-          hosts ${cfg.dns.blocklist} {
+          hosts ${hostsFile} {
             fallthrough
             reload 0
             ttl 60

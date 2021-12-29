@@ -20,7 +20,7 @@ in with lib; {
       hosts = [
         {
           ethernetAddress = "b8:27:eb:60:f5:88";
-          ipAddress = "10.0.0.201";
+          ipAddress = "10.0.0.1";
           hostName = "viki";
         }
         {

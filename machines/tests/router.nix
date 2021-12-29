@@ -115,11 +115,23 @@ in {
     '';
   };
 
-  dns = pkgs.nixosTest {
+  dns = let ethernetAddress = "aa:bb:cc:dd:ee:ff";
+  in pkgs.nixosTest {
     name = "router-dns";
     nodes = {
-      router = routerBase;
-      client = clientBase;
+      router = {
+        imports = [ routerBase ];
+        lab.router.network.hosts = [{
+          ipAddress = "10.0.0.123";
+          hostName = "custom-hostname";
+          inherit ethernetAddress;
+        }];
+      };
+
+      client = {
+        imports = [ clientBase ];
+        networking.interfaces.eth1.macAddress = ethernetAddress;
+      };
     };
 
     testScript = ''
@@ -133,6 +145,9 @@ in {
       with subtest("Test basic functionality from client"):
         client.wait_for_unit("network-online.target")
         client.succeed("dog @10.0.0.1 localhost")
+
+      with subtest("Test custom host records"):
+        client.succeed("dog @10.0.0.1 custom-hostname | grep 10.0.0.123")
     '';
   };
 }
