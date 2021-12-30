@@ -51,7 +51,7 @@ in with lib; {
         {
           ethernetAddress = "ec:f4:bb:d6:4b:4b";
           ipAddress = "10.0.0.207";
-          hostName = "file-server";
+          hostName = "hactar";
         }
         {
           ethernetAddress = "98:5f:d3:14:0b:30";

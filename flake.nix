@@ -17,6 +17,7 @@
           };
 
           multivac = lib.defineHost ./machines/hosts/multivac;
+          hactar = lib.defineHost ./machines/hosts/hactar;
           corvus = lib.defineHost ./machines/hosts/corvus;
           viki = lib.defineHost ./machines/hosts/viki;
           hal = lib.defineHost ./machines/hosts/hal;
