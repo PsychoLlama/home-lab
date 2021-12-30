@@ -18,11 +18,8 @@
       wlp7s0.useDHCP = true;
     };
 
-    wireless = {
-      enable = true;
-      interfaces = [ "wlp6s0" "wlp7s0" ];
-    };
+    networkmanager.enable = true;
   };
 
-  system.stateVersion = "21.05";
+  system.stateVersion = "21.11";
 }

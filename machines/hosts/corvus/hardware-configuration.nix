@@ -1,7 +1,7 @@
+{ modulesPath, ... }:
+
 {
-  # Stolen from `/installer/scan/not-detected.nix`.
-  # Enables non-free firmware for unrecognized hardware.
-  hardware.enableRedistributableFirmware = true;
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot.initrd.availableKernelModules = [
     "xhci_pci"

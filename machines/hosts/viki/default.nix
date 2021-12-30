@@ -39,7 +39,7 @@ in with lib; {
           hostName = "tron";
         }
         {
-          ethernetAddress = "68:1c:a2:13:55:6f";
+          ethernetAddress = "68:3e:26:c5:65:16";
           ipAddress = "10.0.0.205";
           hostName = "corvus";
         }
