@@ -50,7 +50,6 @@ in with lib; {
     };
 
     network = {
-      # Aliased because I hope to inject these as local DNS records too.
       hosts = options.services.dhcpd4.machines;
 
       wan = {
