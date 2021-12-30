@@ -144,7 +144,10 @@ in with lib; {
         ];
       };
 
-      firewall.allowedUDPPorts = [ 53 ];
+      firewall.interfaces.${cfg.network.lan.interface} = {
+        allowedTCPPorts = [ 22 ];
+        allowedUDPPorts = [ 53 ];
+      };
     };
 
     environment.systemPackages = mkIf cfg.debugging.enable [
@@ -198,5 +201,8 @@ in with lib; {
         }
       '';
     };
+
+    # SSH should not be accessible from the open internet.
+    services.openssh.openFirewall = mkDefault false;
   };
 }

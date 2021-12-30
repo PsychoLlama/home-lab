@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 
 let
   xbox-live-ports = {
@@ -66,18 +66,22 @@ in with lib; {
   # router and some networking requirements are bound to bleed over.
   #
   # This opens ports for multiplayer gaming on Xbox Live.
-  networking.nat.forwardPorts = forEach xbox-live-ports.tcp (port: {
-    sourcePort = port;
-    destination = "10.0.0.250:${builtins.toString port}";
-    proto = "tcp";
-  }) ++ forEach xbox-live-ports.udp (port: {
-    sourcePort = port;
-    destination = "10.0.0.250:${builtins.toString port}";
-    proto = "udp";
-  });
+  networking = {
+    nat.forwardPorts = forEach xbox-live-ports.tcp (port: {
+      sourcePort = port;
+      destination = "10.0.0.250:${builtins.toString port}";
+      proto = "tcp";
+    }) ++ forEach xbox-live-ports.udp (port: {
+      sourcePort = port;
+      destination = "10.0.0.250:${builtins.toString port}";
+      proto = "udp";
+    });
 
-  networking.firewall.allowedTCPPorts = xbox-live-ports.tcp;
-  networking.firewall.allowedUDPPorts = xbox-live-ports.udp;
+    firewall.interfaces.${config.lab.router.network.wan.interface} = {
+      allowedUDPPorts = xbox-live-ports.udp;
+      allowedTCPPorts = xbox-live-ports.tcp;
+    };
+  };
 
   system.stateVersion = "21.11";
 }

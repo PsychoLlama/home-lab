@@ -5,6 +5,7 @@ let
     imports = [ ../services/router.nix ];
     virtualisation.vlans = [ 1 2 ];
     networking.interfaces.eth1.useDHCP = false;
+    services.openssh.enable = true;
 
     lab.router = {
       enable = true;
@@ -48,6 +49,7 @@ in {
       # accepting traffic.
       with subtest("Test basic connectivity to router"):
         alice.succeed("ping -c 1 10.0.0.1")
+        alice.succeed("nc -zvw 5 10.0.0.1 22")
 
       # Most of the work is done by the vlan. It just ensures both clients got
       # a routable, non-conflicting IP.
