@@ -21,5 +21,13 @@
     networkmanager.enable = true;
   };
 
+  lab = {
+    container-orchestration.enable = true;
+    service-mesh = {
+      enable = true;
+      iface = "wlp6s0";
+    };
+  };
+
   system.stateVersion = "21.11";
 }
