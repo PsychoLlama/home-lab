@@ -13,9 +13,10 @@ Stack:
 | Service Discovery | [Consul](https://www.consul.io/) |
 | Container Orchestration | [Nomad](https://www.nomadproject.io/) |
 | Storage Backend | [TrueNAS](https://www.truenas.com/) |
-| Network Configuration | [OPNSense](https://opnsense.org/) |
 
-Most of this is automated, but without good Terraform providers for TrueNAS/OPNSense, those services are still managed manually.
+The network is managed declaratively by a Raspberry Pi 3 configured to act as a router (see [here](./machines/hosts/viki/default.nix) and [here](./machines/services/router.nix)).
+
+Most of this is automated, but without good Terraform providers for TrueNAS, the file server is still managed manually.
 
 ## Structure
 
