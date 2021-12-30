@@ -5,22 +5,12 @@
 
   boot = {
     kernelModules = [ "kvm-intel" ];
-    initrd.availableKernelModules = [
-      "ehci_pci"
-      "ahci"
-      "megaraid_sas"
-      "usbhid"
-      "usb_storage"
-      "sd_mod"
-      "sr_mod"
-    ];
+    initrd.availableKernelModules =
+      [ "ehci_pci" "usbhid" "usb_storage" "sd_mod" ];
 
-    loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-      grub.enable = true;
-      grub.version = 2;
-      grub.device = "/dev/sda";
+    loader.grub = {
+      enable = true;
+      version = 2;
     };
   };
 
