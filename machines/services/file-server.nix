@@ -20,6 +20,18 @@ in with lib; {
 
       default = [ ];
     };
+
+    mounts = mkOption {
+      type = types.attrsOf types.str;
+
+      description = ''
+        Filesystem mounts for ZFS. Keys are file paths, values are datasets.
+      '';
+
+      example = { "/mnt/data" = "tank/data"; };
+
+      default = { };
+    };
   };
 
   config = mkIf cfg.enable {
@@ -43,5 +55,11 @@ in with lib; {
         pools = mkDefault cfg.pools;
       };
     };
+
+    fileSystems = mapAttrs (filePath: dataset: {
+      device = dataset;
+      fsType = "zfs";
+      options = [ "zfsutil" ];
+    }) cfg.mounts;
   };
 }
