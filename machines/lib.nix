@@ -10,6 +10,7 @@ rec {
         ./services/container-orchestration.nix
         ./services/secret-manager.nix
         ./services/router.nix
+        ./services/file-server.nix
         path
       ];
 
