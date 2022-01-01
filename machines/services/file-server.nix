@@ -32,6 +32,10 @@ in with lib; {
 
       default = { };
     };
+
+    services.syncthing = filterAttrs (field: _:
+      (all (filtered: field != filtered) [ "declarative" "useInotify" ]))
+      options.services.syncthing;
   };
 
   config = mkIf cfg.enable {
@@ -61,5 +65,44 @@ in with lib; {
       fsType = "zfs";
       options = [ "zfsutil" ];
     }) cfg.mounts;
+
+    # Containerized for a degree of isolation and security.
+    containers.syncthing = with cfg.services;
+      mkIf cfg.services.syncthing.enable {
+        autoStart = true;
+
+        bindMounts."/syncthing" = {
+          hostPath = syncthing.dataDir;
+          isReadOnly = false;
+        };
+
+        config = {
+          # Containers are less likely to stick around than the host OS. If
+          # the user or group ID changes, it could break the service, so
+          # they're statically assigned here.
+          users = {
+            groups.filesync.gid = 8384;
+            users.filesync = {
+              isSystemUser = true;
+              group = syncthing.group;
+              uid = 8384;
+            };
+          };
+
+          services.syncthing = syncthing // {
+            # The original `dataDir` is the host path; This is the mount.
+            dataDir = "/syncthing";
+
+            # This is stored on the same dataset to leverage disk encryption.
+            # The config includes identity files.
+            configDir = "/syncthing/.config";
+
+            # The NixOS service forces an incremental UID/GID for the default
+            # "syncthing" names. Overridden here for more control.
+            user = "filesync";
+            group = "filesync";
+          };
+        };
+      };
   };
 }

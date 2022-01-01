@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
-{
+let unstable = import ../../unstable-pkgs.nix { system = pkgs.system; };
+
+in {
   imports = [ ../../hardware/poweredge-r720.nix ];
 
   boot = {
@@ -14,7 +16,38 @@
     pools = [ "pool0" ];
     mounts = {
       "/mnt/pool0" = "pool0";
-      "/mnt/pool0/attic" = "pool0/attic";
+      "/mnt/pool0/syncthing" = "pool0/syncthing";
+    };
+
+    services.syncthing = {
+      enable = true;
+      package = unstable.syncthing;
+      dataDir = "/mnt/pool0/syncthing";
+
+      folders."/syncthing/attic" = {
+        id = "attic";
+        devices = [ "laptop" "phone" ];
+        label = "Attic";
+      };
+
+      devices = {
+        laptop = {
+          addresses = [ "dynamic" ];
+          id =
+            "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
+        };
+
+        phone = {
+          addresses = [ "dynamic" ];
+          id =
+            "YTUVZSZ-V4TOBKD-SCKD4B6-AOW5TMT-PGCLJO6-7MLGZII-FOYC7JO-LGP62AX";
+        };
+      };
+
+      extraOptions = {
+        options.urAccepted = 3;
+        gui.theme = "dark";
+      };
     };
   };
 
