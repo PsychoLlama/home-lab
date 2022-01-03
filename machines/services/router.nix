@@ -1,21 +1,28 @@
 { config, lib, pkgs, options, ... }:
 
 # Turns the device into a simple router.
+#
+# Manages firewalls, routing, NAT, DHCP, and DNS.
 
 let
   cfg = config.lab.router;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   domain = (import ../lib.nix).domain;
-  hostsFile = unstable.writeText "coredns.hosts" ''
-    # --- CUSTOM HOSTS ---
-    ${cfg.network.lan.address}  router
+  zoneFile = unstable.writeText "local.zone" ''
+    $ORIGIN ${domain}.
+    @       IN SOA dns trash (
+            1         ; Version number
+            60        ; Zone refresh interval
+            30        ; Zone update retry timeout
+            180       ; Zone TTL
+            3600)     ; Negative response TTL
 
-    ${lib.concatMapStringsSep "\n" (machine:
-      "${machine.ipAddress}  ${machine.hostName} ${machine.hostName}.${domain}")
+    dns     ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
+    router  ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
+
+    ${lib.concatMapStringsSep "\n"
+    (machine: "${machine.hostName}  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
     cfg.network.hosts}
-
-    # --- BLOCKLIST ---
-    ${builtins.readFile cfg.dns.blocklist}
   '';
 
 in with lib; {
@@ -46,6 +53,12 @@ in with lib; {
           url =
             "https://raw.githubusercontent.com/StevenBlack/hosts/3.9.30/hosts";
         };
+      };
+
+      ttl = mkOption {
+        type = types.str;
+        description = "TTL for custom DNS records";
+        default = "60";
       };
     };
 
@@ -168,8 +181,13 @@ in with lib; {
           cache
           local
           nsid router
+          loadbalance round_robin
 
-          hosts ${hostsFile} {
+          file ${zoneFile} ${domain} {
+            reload 0
+          }
+
+          hosts ${cfg.dns.blocklist} {
             fallthrough
             reload 0
             ttl 60

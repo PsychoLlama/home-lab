@@ -1,6 +1,7 @@
 { pkgs ? import ../unstable-pkgs.nix { } }:
 
 let
+  inherit (import ../lib.nix) domain;
   routerBase = {
     imports = [ ../services/router.nix ];
     virtualisation.vlans = [ 1 2 ];
@@ -125,7 +126,7 @@ in {
         imports = [ routerBase ];
         lab.router.network.hosts = [{
           ipAddress = "10.0.0.123";
-          hostName = "custom-hostname";
+          hostName = "custom";
           inherit ethernetAddress;
         }];
       };
@@ -149,7 +150,7 @@ in {
         client.succeed("dog @10.0.0.1 localhost")
 
       with subtest("Test custom host records"):
-        client.succeed("dog @10.0.0.1 custom-hostname | grep 10.0.0.123")
+        client.succeed("dog @10.0.0.1 custom.${domain} | grep 10.0.0.123")
     '';
   };
 }
