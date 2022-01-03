@@ -7,7 +7,7 @@ rec {
     in {
       imports = [
         ./services/service-mesh.nix
-        ./services/container-orchestration.nix
+        ./services/nomad.nix
         ./services/secret-manager.nix
         ./services/router.nix
         ./services/file-server.nix

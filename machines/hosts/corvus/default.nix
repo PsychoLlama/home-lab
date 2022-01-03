@@ -22,7 +22,7 @@
   };
 
   lab = {
-    container-orchestration.enable = true;
+    nomad.enable = true;
     service-mesh = {
       enable = true;
       iface = "wlp6s0";

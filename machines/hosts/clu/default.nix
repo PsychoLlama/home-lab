@@ -1,9 +1,12 @@
 {
   imports = [ ../../hardware/raspberry-pi-4.nix ];
 
-  lab.service-mesh.enable = true;
-  lab.container-orchestration.enable = true;
   lab.secret-manager.enable = true;
+  lab.service-mesh.enable = true;
+  lab.nomad = {
+    server.enable = true;
+    enable = true;
+  };
 
   system.stateVersion = "21.05";
 }

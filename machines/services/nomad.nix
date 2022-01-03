@@ -5,24 +5,27 @@
 # Configures HashiCorp Nomad in server mode, automatically set to federate
 # with other nomad instances discovered over Consul.
 
+with lib;
+
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
-  cfg = config.lab.container-orchestration;
-  runsNomad = node: node.config.lab.container-orchestration.enable;
-
-  nomadClusterCount =
-    builtins.length (builtins.filter runsNomad (builtins.attrValues nodes));
+  cfg = config.lab.nomad;
+  nomadServers = attrValues
+    (filterAttrs (_: node: with node.config.lab.nomad; enable && server.enable)
+      nodes);
 
 in {
-  options.lab.container-orchestration = with lib; {
-    enable = mkOption {
+  options.lab.nomad = {
+    enable = mkEnableOption "Run Nomad as part of a cluster";
+    server.enable = mkEnableOption "Orchestrate workloads for Nomad clients";
+    client.enable = mkOption {
       type = types.bool;
-      default = false;
-      description = "Run Nomad as part of a cluster";
+      description = "Accept workloads from Nomad servers";
+      default = true;
     };
   };
 
-  config = with lib; {
+  config = {
     services.nomad = mkIf cfg.enable {
       enable = true;
       dropPrivileges = false;
@@ -33,13 +36,16 @@ in {
 
       settings = {
         server = {
-          enabled = true;
-          bootstrap_expect = nomadClusterCount;
+          enabled = cfg.server.enable;
+          bootstrap_expect = length nomadServers;
         };
 
-        client = with unstable; {
-          enabled = true;
-          cni_path = "${cni-plugins}/bin";
+        client = {
+          enabled = cfg.client.enable;
+          cni_path = "${unstable.cni-plugins}/bin";
+
+          servers =
+            forEach nomadServers (server: server.config.networking.fqdn);
 
           # Force downgrade Envoy. See:
           # https://github.com/envoyproxy/envoy/issues/15235
