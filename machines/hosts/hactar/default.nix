@@ -10,43 +10,50 @@ in {
     loader.grub.device = "/dev/sda";
   };
 
-  lab.file-server = {
-    enable = true;
-    hostId = "a26860d3";
-    pools = [ "pool0" ];
-    mounts = {
-      "/mnt/pool0" = "pool0";
-      "/mnt/pool0/syncthing" = "pool0/syncthing";
+  lab = {
+    network = {
+      ethernetAddress = "ec:f4:bb:d6:4b:4b";
+      ipAddress = "10.0.0.207";
     };
 
-    services.syncthing = {
+    file-server = {
       enable = true;
-      package = unstable.syncthing;
-      dataDir = "/mnt/pool0/syncthing";
-
-      folders."/syncthing/attic" = {
-        id = "attic";
-        devices = [ "laptop" "phone" ];
-        label = "Attic";
+      hostId = "a26860d3";
+      pools = [ "pool0" ];
+      mounts = {
+        "/mnt/pool0" = "pool0";
+        "/mnt/pool0/syncthing" = "pool0/syncthing";
       };
 
-      devices = {
-        laptop = {
-          addresses = [ "dynamic" ];
-          id =
-            "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
+      services.syncthing = {
+        enable = true;
+        package = unstable.syncthing;
+        dataDir = "/mnt/pool0/syncthing";
+
+        folders."/syncthing/attic" = {
+          id = "attic";
+          devices = [ "laptop" "phone" ];
+          label = "Attic";
         };
 
-        phone = {
-          addresses = [ "dynamic" ];
-          id =
-            "YTUVZSZ-V4TOBKD-SCKD4B6-AOW5TMT-PGCLJO6-7MLGZII-FOYC7JO-LGP62AX";
-        };
-      };
+        devices = {
+          laptop = {
+            addresses = [ "dynamic" ];
+            id =
+              "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
+          };
 
-      extraOptions = {
-        options.urAccepted = 3;
-        gui.theme = "dark";
+          phone = {
+            addresses = [ "dynamic" ];
+            id =
+              "YTUVZSZ-V4TOBKD-SCKD4B6-AOW5TMT-PGCLJO6-7MLGZII-FOYC7JO-LGP62AX";
+          };
+        };
+
+        extraOptions = {
+          options.urAccepted = 3;
+          gui.theme = "dark";
+        };
       };
     };
   };

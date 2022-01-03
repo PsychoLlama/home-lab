@@ -1,13 +1,27 @@
-{ config, lib, pkgs, options, ... }:
+{ config, lib, pkgs, options, nodes, ... }:
 
 # Turns the device into a simple router.
 #
 # Manages firewalls, routing, NAT, DHCP, and DNS.
 
+with lib;
+
 let
+  inherit (import ../lib.nix) domain;
   cfg = config.lab.router;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
-  domain = (import ../lib.nix).domain;
+
+  # Each host optionally defines an ethernet+ip pairing. This extracts it from
+  # every machine and converts it to the `services.dhcpd4.machines` format.
+  labHosts = forEach (attrValues (filterAttrs (_: node:
+    hasAttr "ethernetAddress" ((node.config.lab or { }).network or { })
+    && node.config.lab.network.ethernetAddress != null) nodes)) (node: {
+      inherit (node.config.lab.network) ethernetAddress ipAddress;
+      hostName = node.config.networking.hostName;
+    });
+
+  allHosts = labHosts ++ cfg.network.extraHosts;
+
   zoneFile = unstable.writeText "local.zone" ''
     $ORIGIN ${domain}.
     @       IN SOA dns trash (
@@ -20,12 +34,12 @@ let
     dns     ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
     router  ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
 
-    ${lib.concatMapStringsSep "\n"
+    ${concatMapStringsSep "\n"
     (machine: "${machine.hostName}  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
-    cfg.network.hosts}
+    allHosts}
   '';
 
-in with lib; {
+in {
   options.lab.router = {
     enable = mkEnableOption "Act as a router";
     debugging.enable = mkEnableOption "Enable the debugging toolkit";
@@ -63,7 +77,7 @@ in with lib; {
     };
 
     network = {
-      hosts = options.services.dhcpd4.machines;
+      extraHosts = options.services.dhcpd4.machines;
 
       wan = {
         interface = mkOption {
@@ -129,6 +143,22 @@ in with lib; {
           };
         };
       };
+    };
+  };
+
+  # DHCP can sync ethernet addresses with IPs for more consistent topologies.
+  # Each host that wants a reservation should set this field.
+  options.lab.network = {
+    ethernetAddress = mkOption {
+      type = types.nullOr types.str;
+      description = "MAC address of the machine.";
+      default = null;
+    };
+
+    ipAddress = mkOption {
+      type = types.nullOr types.str;
+      description = "IP address of the machine.";
+      default = null;
     };
   };
 
@@ -204,7 +234,7 @@ in with lib; {
     services.dhcpd4 = with cfg.network; {
       enable = true;
       interfaces = [ lan.interface ];
-      machines = cfg.network.hosts;
+      machines = allHosts;
 
       extraConfig = ''
         option subnet-mask ${lan.subnet.mask};

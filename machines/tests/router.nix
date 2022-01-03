@@ -17,6 +17,7 @@ let
   };
 
   clientBase = {
+    imports = [ ../services/router.nix ];
     virtualisation.vlans = [ 2 ];
     environment.systemPackages = [ pkgs.dogdns ];
     networking = {
@@ -95,18 +96,14 @@ in {
   in pkgs.nixosTest {
     name = "router-hosts";
     nodes = {
-      router = {
-        imports = [ routerBase ];
-        lab.router.network.hosts = [{
-          ipAddress = "10.0.0.200";
-          hostName = "le-host-name";
-          inherit ethernetAddress;
-        }];
-      };
-
+      router = routerBase;
       client = {
         imports = [ clientBase ];
         networking.interfaces.eth1.macAddress = ethernetAddress;
+        lab.network = {
+          ipAddress = "10.0.0.200";
+          inherit ethernetAddress;
+        };
       };
     };
 
@@ -124,16 +121,24 @@ in {
     nodes = {
       router = {
         imports = [ routerBase ];
-        lab.router.network.hosts = [{
-          ipAddress = "10.0.0.123";
-          hostName = "custom";
-          inherit ethernetAddress;
+        lab.router.network.extraHosts = [{
+          ipAddress = "10.0.0.234";
+          hostName = "unmanaged";
+          ethernetAddress = "bb:bb:bb:ee:ee:ee";
         }];
       };
 
       client = {
         imports = [ clientBase ];
-        networking.interfaces.eth1.macAddress = ethernetAddress;
+        networking = {
+          interfaces.eth1.macAddress = ethernetAddress;
+          inherit domain;
+        };
+
+        lab.network = {
+          ipAddress = "10.0.0.123";
+          inherit ethernetAddress;
+        };
       };
     };
 
@@ -150,7 +155,8 @@ in {
         client.succeed("dog @10.0.0.1 localhost")
 
       with subtest("Test custom host records"):
-        client.succeed("dog @10.0.0.1 custom.${domain} | grep 10.0.0.123")
+        client.succeed("dog @10.0.0.1 client.${domain} | grep 10.0.0.123")
+        client.succeed("dog @10.0.0.1 unmanaged.${domain} | grep 10.0.0.234")
     '';
   };
 }

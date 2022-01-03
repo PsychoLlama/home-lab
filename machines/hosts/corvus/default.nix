@@ -22,6 +22,11 @@
   };
 
   lab = {
+    network = {
+      ethernetAddress = "68:3e:26:c5:65:16";
+      ipAddress = "10.0.0.205";
+    };
+
     nomad.enable = true;
     service-mesh = {
       enable = true;
