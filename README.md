@@ -10,7 +10,9 @@ Stack:
 | Provisioning Tools | [NixOps](https://github.com/NixOS/nixops) & [Terraform](https://www.terraform.io/) |
 | Service Discovery | [Consul](https://www.consul.io/) |
 | Container Orchestration | [Nomad](https://www.nomadproject.io/) |
+| Secrets Management | [Vault](https://www.vaultproject.io/) |
 | Storage Backend | [ZFS](https://github.com/openzfs/zfs) & [NFS](https://en.wikipedia.org/wiki/Network_File_System) |
+| DNS | [CoreDNS](https://coredns.io/) |
 
 The network is managed declaratively by a Raspberry Pi 3 configured to act as a router (see [here](./machines/hosts/viki/default.nix) and [here](./machines/services/router.nix)).
 
