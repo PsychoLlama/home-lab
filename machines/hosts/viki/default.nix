@@ -26,10 +26,18 @@ in {
       enable = true;
       debugging.enable = true;
 
-      dns.services = [{
-        name = "consul.service";
-        addresses = addressesWhere (node: node.config.lab.consul.server.enable);
-      }];
+      dns.services = [
+        {
+          name = "consul.service";
+          addresses =
+            addressesWhere (node: node.config.lab.consul.server.enable);
+        }
+        {
+          name = "nomad.service";
+          addresses =
+            addressesWhere (node: node.config.lab.nomad.server.enable);
+        }
+      ];
 
       network = {
         lan.interface = "eth0"; # Native hardware
