@@ -29,6 +29,7 @@
 
     nomad.enable = true;
     service-mesh = {
+      server.enable = true;
       enable = true;
       iface = "wlp6s0";
     };

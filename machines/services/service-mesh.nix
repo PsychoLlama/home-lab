@@ -5,34 +5,35 @@
 # Configures HashiCorp Consul and automatically federates with all other
 # machines that enable the service mesh.
 
+with lib;
+
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.lab.service-mesh;
-  myHostName = config.networking.hostName;
-  shouldFederate = node:
-    node.config.lab.service-mesh.enable && node.config.networking.hostName
-    != myHostName;
+  myAddress = config.networking.fqdn;
 
-  federationTargets = builtins.map (node: node.config.networking.fqdn)
-    (builtins.filter shouldFederate (builtins.attrValues nodes));
+  otherConsulServers = mapAttrsToList (_: node: node.config.networking.fqdn)
+    (filterAttrs (_: node:
+      node.config.lab.service-mesh.server.enable && node.config.networking.fqdn
+      != myAddress) nodes);
+
+  expectedServerCount = length otherConsulServers
+    + (if cfg.server.enable then 1 else 0);
 
 in {
-  options.lab.service-mesh = with lib; {
-    enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Run Consul as part of a cluster";
-    };
-
+  options.lab.service-mesh = {
+    enable = mkEnableOption "Run Consul as part of a cluster";
     iface = mkOption {
       type = types.str;
       default = "eth0";
       description = "Which network interface to bind to";
     };
+
+    server.enable = mkEnableOption "Run Consul in server mode";
   };
 
-  config = with lib; {
-    services.consul = mkIf cfg.enable {
+  config = mkIf cfg.enable {
+    services.consul = {
       enable = true;
       forceIpv4 = true;
       interface.bind = cfg.iface;
@@ -40,16 +41,17 @@ in {
       webUi = true;
 
       extraConfig = {
-        server = true;
-        connect = { enabled = true; };
-        retry_join = federationTargets;
-        bootstrap_expect = (builtins.length federationTargets) + 1;
-        ports = { grpc = 8502; };
-        addresses = { http = "0.0.0.0"; };
-      };
+        server = cfg.server.enable;
+        connect.enabled = true;
+        ports.grpc = 8502;
+        addresses.http = "0.0.0.0";
+        retry_join = [ "consul.service.selfhosted.city" ];
+      } // (optionalAttrs cfg.server.enable {
+        bootstrap_expect = expectedServerCount;
+      });
     };
 
-    networking.firewall.allowedTCPPortRanges = mkIf cfg.enable [
+    networking.firewall.allowedTCPPortRanges = [
       # DNS
       {
         from = 8600;
@@ -87,7 +89,7 @@ in {
       }
     ];
 
-    networking.firewall.allowedUDPPortRanges = mkIf cfg.enable [
+    networking.firewall.allowedUDPPortRanges = [
       # DNS
       {
         from = 8600;

@@ -1,12 +1,19 @@
-{ config, lib, ... }:
+{ config, lib, nodes, ... }:
+
+with lib;
 
 let
+  # IP Addresses of nodes where `fn(node) == true`.
+  addressesWhere = predicate:
+    forEach (attrValues (filterAttrs (key: predicate) nodes))
+    (node: node.config.lab.network.ipAddress);
+
   xbox-live-ports = {
     tcp = [ 3074 ];
     udp = [ 3074 3075 88 500 3544 4500 ];
   };
 
-in with lib; {
+in {
   imports = [ ../../hardware/raspberry-pi-3.nix ];
 
   lab = {
@@ -18,6 +25,12 @@ in with lib; {
     router = {
       enable = true;
       debugging.enable = true;
+
+      dns.services = [{
+        name = "consul.service";
+        addresses =
+          addressesWhere (node: node.config.lab.service-mesh.server.enable);
+      }];
 
       network = {
         lan.interface = "eth0"; # Native hardware

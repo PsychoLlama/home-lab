@@ -7,7 +7,11 @@
       ipAddress = "10.0.0.204";
     };
 
-    service-mesh.enable = true;
+    service-mesh = {
+      server.enable = true;
+      enable = true;
+    };
+
     nomad = {
       server.enable = true;
       enable = true;
