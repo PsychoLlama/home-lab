@@ -12,7 +12,7 @@ let
 in {
   options.lab.consul = {
     enable = mkEnableOption "Run Consul as part of a cluster";
-    iface = mkOption {
+    interface = mkOption {
       type = types.str;
       default = "eth0";
       description = "Which network interface to bind to";
@@ -25,7 +25,7 @@ in {
     services.consul = {
       enable = true;
       forceIpv4 = true;
-      interface.bind = cfg.iface;
+      interface.bind = cfg.interface;
       package = unstable.consul;
       webUi = true;
 

@@ -31,7 +31,7 @@
     consul = {
       server.enable = true;
       enable = true;
-      iface = "wlp6s0";
+      interface = "wlp6s0";
     };
   };
 

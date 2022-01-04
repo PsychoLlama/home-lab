@@ -12,7 +12,7 @@
       ipAddress = "10.0.0.206";
     };
 
-    consul.iface = "eno4";
+    consul.interface = "eno4";
     nomad.enable = true;
   };
 
