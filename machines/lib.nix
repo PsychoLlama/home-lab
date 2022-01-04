@@ -57,7 +57,7 @@ rec {
         groups.pantheon = { };
         users.admin = {
           description = "Server administrator";
-          extraGroups = [ "pantheon" "docker" ];
+          extraGroups = [ "wheel" "pantheon" "docker" ];
           isNormalUser = true;
           packages = [ pkgs.starship ];
 
