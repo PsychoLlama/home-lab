@@ -43,7 +43,25 @@ rec {
         passwordAuthentication = false;
       };
 
-      users.users.root.openssh.authorizedKeys.keyFiles =
-        [ ./keys/deploy.pub ./keys/admin.pub ];
+      users.users.admin = {
+        description = "Server administrator";
+        extraGroups = [ "pantheon" "docker" ];
+        isNormalUser = true;
+
+        openssh.authorizedKeys.keyFiles = [ ./keys/admin.pub ];
+      };
+
+      # Passwords are for programs. The Law has entered the game.
+      # https://www.youtube.com/watch?v=pEHZLcFMVo0&t=130s
+      users.groups.pantheon = { };
+      security.sudo.extraRules = [{
+        groups = [ "pantheon" ];
+        commands = [{
+          command = "ALL";
+          options = [ "NOPASSWD" ];
+        }];
+      }];
+
+      users.users.root.openssh.authorizedKeys.keyFiles = [ ./keys/deploy.pub ];
     };
 }
