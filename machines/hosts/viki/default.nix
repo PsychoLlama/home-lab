@@ -28,8 +28,7 @@ in {
 
       dns.services = [{
         name = "consul.service";
-        addresses =
-          addressesWhere (node: node.config.lab.service-mesh.server.enable);
+        addresses = addressesWhere (node: node.config.lab.consul.server.enable);
       }];
 
       network = {

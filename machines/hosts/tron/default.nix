@@ -7,7 +7,7 @@
       ipAddress = "10.0.0.204";
     };
 
-    service-mesh = {
+    consul = {
       server.enable = true;
       enable = true;
     };

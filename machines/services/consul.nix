@@ -1,6 +1,6 @@
 { nodes, config, lib, pkgs, ... }:
 
-# service-mesh
+# Consul
 #
 # Configures HashiCorp Consul and automatically federates with all other
 # machines that enable the service mesh.
@@ -9,19 +9,19 @@ with lib;
 
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
-  cfg = config.lab.service-mesh;
+  cfg = config.lab.consul;
   myAddress = config.networking.fqdn;
 
   otherConsulServers = mapAttrsToList (_: node: node.config.networking.fqdn)
     (filterAttrs (_: node:
-      node.config.lab.service-mesh.server.enable && node.config.networking.fqdn
+      node.config.lab.consul.server.enable && node.config.networking.fqdn
       != myAddress) nodes);
 
   expectedServerCount = length otherConsulServers
     + (if cfg.server.enable then 1 else 0);
 
 in {
-  options.lab.service-mesh = {
+  options.lab.consul = {
     enable = mkEnableOption "Run Consul as part of a cluster";
     iface = mkOption {
       type = types.str;

@@ -6,7 +6,7 @@ rec {
 
     in {
       imports = [
-        ./services/service-mesh.nix
+        ./services/consul.nix
         ./services/nomad.nix
         ./services/secret-manager.nix
         ./services/router.nix

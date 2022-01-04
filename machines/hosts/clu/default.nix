@@ -9,7 +9,7 @@
 
     secret-manager.enable = true;
 
-    service-mesh = {
+    consul = {
       server.enable = true;
       enable = true;
     };

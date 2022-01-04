@@ -28,7 +28,7 @@
     };
 
     nomad.enable = true;
-    service-mesh = {
+    consul = {
       server.enable = true;
       enable = true;
       iface = "wlp6s0";
