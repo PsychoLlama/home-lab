@@ -43,17 +43,32 @@ rec {
         passwordAuthentication = false;
       };
 
-      users.users.admin = {
-        description = "Server administrator";
-        extraGroups = [ "pantheon" "docker" ];
-        isNormalUser = true;
+      programs.zsh = {
+        enable = true;
+        syntaxHighlighting.enable = true;
+        autosuggestions.enable = true;
+        histSize = 500;
+        promptInit = ''
+          eval "$(starship init zsh)"
+        '';
+      };
 
-        openssh.authorizedKeys.keyFiles = [ ./keys/admin.pub ];
+      users = {
+        groups.pantheon = { };
+        users.admin = {
+          description = "Server administrator";
+          extraGroups = [ "pantheon" "docker" ];
+          isNormalUser = true;
+          packages = [ pkgs.starship ];
+
+          openssh.authorizedKeys.keyFiles = [ ./keys/admin.pub ];
+        };
+
+        defaultUserShell = pkgs.zsh;
       };
 
       # Passwords are for programs. The Law has entered the game.
       # https://www.youtube.com/watch?v=pEHZLcFMVo0&t=130s
-      users.groups.pantheon = { };
       security.sudo.extraRules = [{
         groups = [ "pantheon" ];
         commands = [{
