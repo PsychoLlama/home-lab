@@ -1,13 +1,11 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.lab.secret-manager;
+  cfg = config.lab.vault;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
 
 in with lib; {
-  options.lab.secret-manager = {
-    enable = mkEnableOption "Run HashiCorp Vault";
-  };
+  options.lab.vault = { enable = mkEnableOption "Run HashiCorp Vault"; };
 
   config = mkIf cfg.enable {
     services.vault = {

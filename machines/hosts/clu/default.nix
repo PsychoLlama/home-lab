@@ -7,7 +7,7 @@
       ipAddress = "10.0.0.203";
     };
 
-    secret-manager.enable = true;
+    vault.enable = true;
 
     consul = {
       server.enable = true;

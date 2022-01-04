@@ -8,7 +8,7 @@ rec {
       imports = [
         ./services/consul.nix
         ./services/nomad.nix
-        ./services/secret-manager.nix
+        ./services/vault.nix
         ./services/router.nix
         ./services/file-server.nix
         path
