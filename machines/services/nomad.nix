@@ -75,5 +75,9 @@ in {
         to = 32000;
       }];
     };
+
+    # Nomad tightly integrates with Consul and strongly discourages use over
+    # the network; It must run locally.
+    lab.consul.enable = mkDefault cfg.client.enable;
   };
 }
