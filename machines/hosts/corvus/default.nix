@@ -29,7 +29,6 @@
 
     nomad.enable = true;
     consul = {
-      server.enable = true;
       enable = true;
       interface = "wlp6s0";
     };
