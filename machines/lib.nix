@@ -20,7 +20,9 @@ rec {
       # Assume all hosts exist under the root domain.
       networking.domain = domain;
 
-      deployment = { targetHost = "${config.networking.hostName}.${domain}"; };
+      deployment = {
+        targetHost = "${config.networking.hostName}.host.${domain}";
+      };
 
       # Enable flakes.
       nix = {

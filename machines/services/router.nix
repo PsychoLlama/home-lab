@@ -44,8 +44,8 @@ let
             3600)     ; Negative response TTL
 
     ; Hosts
-    ${concatMapStringsSep "\n"
-    (machine: "${machine.hostName}  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
+    ${concatMapStringsSep "\n" (machine:
+      "${machine.hostName}.host  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
     allHosts}
 
     ; Services

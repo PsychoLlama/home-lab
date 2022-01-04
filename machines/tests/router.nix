@@ -166,8 +166,8 @@ in {
         client.succeed("dog @10.0.0.1 localhost")
 
       with subtest("Test custom host records"):
-        client.succeed("dog @10.0.0.1 client.${domain} | grep 10.0.0.123")
-        client.succeed("dog @10.0.0.1 unmanaged.${domain} | grep 10.0.0.234")
+        client.succeed("dog @10.0.0.1 client.host.${domain} | grep 10.0.0.123")
+        client.succeed("dog @10.0.0.1 unmanaged.host.${domain} | grep 10.0.0.234")
 
       with subtest("Test custom service records"):
         client.succeed("dog @10.0.0.1 consul.${domain} | grep 127.0.0.2")
