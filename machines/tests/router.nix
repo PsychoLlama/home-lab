@@ -126,6 +126,17 @@ in {
           hostName = "unmanaged";
           ethernetAddress = "bb:bb:bb:ee:ee:ee";
         }];
+
+        lab.router.dns.services = [
+          {
+            name = "consul";
+            addresses = [ "127.0.0.2" "127.0.0.3" ];
+          }
+          {
+            name = "@";
+            addresses = [ "127.0.0.4" ];
+          }
+        ];
       };
 
       client = {
@@ -157,6 +168,15 @@ in {
       with subtest("Test custom host records"):
         client.succeed("dog @10.0.0.1 client.${domain} | grep 10.0.0.123")
         client.succeed("dog @10.0.0.1 unmanaged.${domain} | grep 10.0.0.234")
+
+      with subtest("Test custom service records"):
+        client.succeed("dog @10.0.0.1 consul.${domain} | grep 127.0.0.2")
+        client.succeed("dog @10.0.0.1 consul.${domain} | grep 127.0.0.3")
+        client.succeed("dog @10.0.0.1 ${domain} | grep 127.0.0.4")
+
+      with subtest("Test router service alias records"):
+        client.succeed("dog @10.0.0.1 router.${domain} | grep 10.0.0.1")
+        client.succeed("dog @10.0.0.1 dns.${domain} | grep 10.0.0.1")
     '';
   };
 }

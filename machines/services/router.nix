@@ -22,6 +22,18 @@ let
 
   allHosts = labHosts ++ cfg.network.extraHosts;
 
+  # Provides easier access to the router and DNS servers.
+  defaultServices = [
+    {
+      name = "dns";
+      addresses = [ cfg.network.lan.address ];
+    }
+    {
+      name = "router";
+      addresses = [ cfg.network.lan.address ];
+    }
+  ];
+
   zoneFile = unstable.writeText "local.zone" ''
     $ORIGIN ${domain}.
     @       IN SOA dns trash (
@@ -31,12 +43,16 @@ let
             180       ; Zone TTL
             3600)     ; Negative response TTL
 
-    dns     ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
-    router  ${cfg.dns.ttl} IN A      ${cfg.network.lan.address}
-
+    ; Hosts
     ${concatMapStringsSep "\n"
     (machine: "${machine.hostName}  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
     allHosts}
+
+    ; Services
+    ${concatMapStringsSep "\n" (service:
+      concatMapStringsSep "\n"
+      (address: "${service.name}  ${cfg.dns.ttl} IN A ${address}")
+      service.addresses) (cfg.dns.services ++ defaultServices)}
   '';
 
 in {
@@ -67,6 +83,28 @@ in {
           url =
             "https://raw.githubusercontent.com/StevenBlack/hosts/3.9.30/hosts";
         };
+      };
+
+      services = mkOption {
+        type = types.listOf (types.submodule {
+          options.addresses = mkOption {
+            type = types.listOf types.str;
+            description = "IP addresses pointing to the service";
+          };
+
+          options.name = mkOption {
+            type = types.str;
+            description = ''
+              Any BIND zone record identifier, usually a subdomain name.
+              Use <literal>@</literal> for apex records.
+
+              Note: Only domains within the lab's zone are recognized.
+            '';
+          };
+        });
+
+        description = "Load balance a list of IPs assigned to a service record";
+        default = [ ];
       };
 
       ttl = mkOption {
@@ -251,5 +289,12 @@ in {
 
     # SSH should not be accessible from the open internet.
     services.openssh.openFirewall = mkDefault false;
+
+    assertions = forEach cfg.dns.services (service: {
+      assertion = length service.addresses > 0;
+      message = ''
+        DNS service "${service.name}" needs at least one IP address.
+      '';
+    });
   };
 }
