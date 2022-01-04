@@ -21,7 +21,13 @@ in with lib; {
 
     environment.systemPackages = [ unstable.vault ];
 
-    # Vault Server + HA Coordination.
-    networking.firewall.allowedTCPPorts = [ 8200 8201 ];
+    networking.firewall.allowedTCPPorts = [
+      8200 # Vault Server
+      8201 # HA Coordination.
+    ];
+
+    # The Consul storage backend assumes we're running a local agent.
+    # HashiCorp recommends against going over the network.
+    lab.consul.enable = mkDefault true;
   };
 }

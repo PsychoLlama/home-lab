@@ -37,6 +37,10 @@ in {
           addresses =
             addressesWhere (node: node.config.lab.nomad.server.enable);
         }
+        {
+          name = "vault.service";
+          addresses = addressesWhere (node: node.config.lab.vault.enable);
+        }
       ];
 
       network = {
