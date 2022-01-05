@@ -250,7 +250,6 @@ in {
 
           log
           errors
-          cache
           local
           nsid router
         }
@@ -265,6 +264,7 @@ in {
 
         . {
           import common
+          cache
 
           file ${zoneFile} ${domain} {
             reload 0
