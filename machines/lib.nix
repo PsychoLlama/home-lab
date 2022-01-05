@@ -42,6 +42,19 @@ rec {
         promptInit = ''
           eval "$(starship init zsh)"
         '';
+
+        setOptions = [
+          "auto_cd"
+          "auto_pushd"
+          "hist_ignore_all_dups"
+          "hist_ignore_space"
+          "hist_no_functions"
+          "hist_reduce_blanks"
+          "interactive_comments"
+          "pipefail"
+          "pushd_ignore_dups"
+          "share_history"
+        ];
       };
 
       users = {
