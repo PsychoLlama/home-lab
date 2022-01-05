@@ -13,10 +13,6 @@ in with lib; {
       package = unstable.vault;
       address = "0.0.0.0:8200";
       storageBackend = "consul";
-      extraConfig = ''
-        cluster_address = "http://${config.networking.fqdn}:8201"
-        api_addr = "http://${config.networking.fqdn}:8200"
-      '';
     };
 
     environment.systemPackages = [ unstable.vault ];
