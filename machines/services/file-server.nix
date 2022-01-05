@@ -66,6 +66,11 @@ in with lib; {
       options = [ "zfsutil" ];
     }) cfg.mounts;
 
+    networking.firewall = mkIf cfg.services.syncthing.enable {
+      allowedTCPPorts = [ 22000 ]; # TCP Sync
+      allowedUDPPorts = [ 22000 21027 ]; # QUIC + Discovery
+    };
+
     # Containerized for a degree of isolation and security.
     containers.syncthing = with cfg.services;
       mkIf cfg.services.syncthing.enable {
