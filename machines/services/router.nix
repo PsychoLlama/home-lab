@@ -22,17 +22,15 @@ let
 
   allHosts = labHosts ++ cfg.network.extraHosts;
 
-  # Provides easier access to the router and DNS servers.
-  defaultServices = [
-    {
-      name = "dns";
-      addresses = [ cfg.network.lan.address ];
-    }
-    {
-      name = "router";
-      addresses = [ cfg.network.lan.address ];
-    }
-  ];
+  defaultAliases = [{
+    name = "dns";
+    kind = "A";
+    addresses = [ cfg.network.lan.address ];
+  }];
+
+  consulDnsAddresses =
+    mapAttrsToList (_: node: node.config.lab.network.ipAddress + ":8600")
+    (flip filterAttrs nodes (_: node: node.config.lab.consul.server.enable));
 
   zoneFile = unstable.writeText "local.zone" ''
     $ORIGIN ${domain}.
@@ -48,11 +46,11 @@ let
       "${machine.hostName}.host  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
     allHosts}
 
-    ; Services
-    ${concatMapStringsSep "\n" (service:
+    ; Custom records
+    ${concatMapStringsSep "\n" (record:
       concatMapStringsSep "\n"
-      (address: "${service.name}  ${cfg.dns.ttl} IN A ${address}")
-      service.addresses) (cfg.dns.services ++ defaultServices)}
+      (address: "${record.name}  ${cfg.dns.ttl} IN ${record.kind} ${address}")
+      record.addresses) (defaultAliases ++ cfg.dns.records)}
   '';
 
 in {
@@ -85,7 +83,7 @@ in {
         };
       };
 
-      services = mkOption {
+      records = mkOption {
         type = types.listOf (types.submodule {
           options.addresses = mkOption {
             type = types.listOf types.str;
@@ -101,9 +99,15 @@ in {
               Note: Only domains within the lab's zone are recognized.
             '';
           };
+
+          options.kind = mkOption {
+            type = types.str;
+            description = "DNS record kind";
+            default = "CNAME";
+          };
         });
 
-        description = "Load balance a list of IPs assigned to a service record";
+        description = "Insert custom DNS records";
         default = [ ];
       };
 
@@ -241,7 +245,7 @@ in {
       enable = true;
       package = unstable.coredns;
       config = ''
-        .:53 {
+        (common) {
           bind lo ${cfg.network.lan.interface}
 
           log
@@ -249,7 +253,18 @@ in {
           cache
           local
           nsid router
-          loadbalance round_robin
+        }
+
+        ${optionalString (length consulDnsAddresses > 0) ''
+          service.selfhosted.city {
+            import common
+
+            forward . ${toString consulDnsAddresses}
+          }
+        ''}
+
+        . {
+          import common
 
           file ${zoneFile} ${domain} {
             reload 0
@@ -290,10 +305,10 @@ in {
     # SSH should not be accessible from the open internet.
     services.openssh.openFirewall = mkDefault false;
 
-    assertions = forEach cfg.dns.services (service: {
+    assertions = forEach cfg.dns.records (service: {
       assertion = length service.addresses > 0;
       message = ''
-        DNS service "${service.name}" needs at least one IP address.
+        DNS record "${service.name}" needs at least one address.
       '';
     });
   };

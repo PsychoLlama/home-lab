@@ -3,7 +3,7 @@
 let
   inherit (import ../lib.nix) domain;
   routerBase = {
-    imports = [ ../services/router.nix ];
+    imports = [ ../services ];
     virtualisation.vlans = [ 1 2 ];
     networking.interfaces.eth1.useDHCP = false;
     services.openssh.enable = true;
@@ -17,12 +17,31 @@ let
   };
 
   clientBase = {
-    imports = [ ../services/router.nix ];
+    imports = [ ../services ];
     virtualisation.vlans = [ 2 ];
     environment.systemPackages = [ pkgs.dogdns ];
     networking = {
       useDHCP = false;
       interfaces.eth1.useDHCP = true;
+    };
+  };
+
+  consulBase = let ethernetAddress = "ee:ee:ee:ff:ff:ff";
+  in { config, ... }: {
+    imports = [ clientBase ];
+    networking.interfaces.eth1.macAddress = ethernetAddress;
+
+    lab = {
+      consul = {
+        interface = "eth1";
+        server.enable = true;
+        enable = true;
+      };
+
+      network = {
+        inherit ethernetAddress;
+        ipAddress = "10.0.0.205";
+      };
     };
   };
 
@@ -70,6 +89,7 @@ in {
       router = routerBase;
       client = clientBase;
       server = {
+        imports = [ ../services ];
         virtualisation.vlans = [ 1 ];
         services.httpd.enable = true;
         services.httpd.adminAddr = "foo@example.com";
@@ -127,16 +147,11 @@ in {
           ethernetAddress = "bb:bb:bb:ee:ee:ee";
         }];
 
-        lab.router.dns.services = [
-          {
-            name = "consul";
-            addresses = [ "127.0.0.2" "127.0.0.3" ];
-          }
-          {
-            name = "@";
-            addresses = [ "127.0.0.4" ];
-          }
-        ];
+        lab.router.dns.records = [{
+          name = "@";
+          kind = "A";
+          addresses = [ "127.0.0.2" ];
+        }];
       };
 
       client = {
@@ -151,6 +166,8 @@ in {
           inherit ethernetAddress;
         };
       };
+
+      consul = consulBase;
     };
 
     testScript = ''
@@ -169,14 +186,13 @@ in {
         client.succeed("dog @10.0.0.1 client.host.${domain} | grep 10.0.0.123")
         client.succeed("dog @10.0.0.1 unmanaged.host.${domain} | grep 10.0.0.234")
 
-      with subtest("Test custom service records"):
-        client.succeed("dog @10.0.0.1 consul.${domain} | grep 127.0.0.2")
-        client.succeed("dog @10.0.0.1 consul.${domain} | grep 127.0.0.3")
-        client.succeed("dog @10.0.0.1 ${domain} | grep 127.0.0.4")
+      with subtest("Test Consul service query forwarding"):
+        consul.wait_for_open_port(8600)
+        client.wait_until_fails("dog @10.0.0.1 consul.service.${domain} | grep -i nxdomain")
 
-      with subtest("Test router service alias records"):
-        client.succeed("dog @10.0.0.1 router.${domain} | grep 10.0.0.1")
+      with subtest("Test custom service records"):
         client.succeed("dog @10.0.0.1 dns.${domain} | grep 10.0.0.1")
+        client.succeed("dog @10.0.0.1 ${domain} | grep 127.0.0.2")
     '';
   };
 }

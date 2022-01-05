@@ -30,11 +30,15 @@ in {
       webUi = true;
 
       extraConfig = {
+        inherit (import ../lib.nix) domain;
         server = cfg.server.enable;
         connect.enabled = true;
         ports.grpc = 8502;
-        addresses.http = "0.0.0.0";
         retry_join = [ "consul.service.selfhosted.city" ];
+        addresses = {
+          http = "0.0.0.0";
+          dns = "0.0.0.0";
+        };
       } // (optionalAttrs cfg.server.enable {
         bootstrap_expect = expectedServerCount;
       });

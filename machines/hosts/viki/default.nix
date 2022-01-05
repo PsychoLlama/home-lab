@@ -26,22 +26,10 @@ in {
       enable = true;
       debugging.enable = true;
 
-      dns.services = [
-        {
-          name = "consul.service";
-          addresses =
-            addressesWhere (node: node.config.lab.consul.server.enable);
-        }
-        {
-          name = "nomad.service";
-          addresses =
-            addressesWhere (node: node.config.lab.nomad.server.enable);
-        }
-        {
-          name = "vault.service";
-          addresses = addressesWhere (node: node.config.lab.vault.enable);
-        }
-      ];
+      dns.records = [{
+        name = "@";
+        addresses = [ "private-ingress.service" ];
+      }];
 
       network = {
         lan.interface = "eth0"; # Native hardware

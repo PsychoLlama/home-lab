@@ -5,14 +5,7 @@ rec {
     let unstable = import ./unstable-pkgs.nix { system = pkgs.system; };
 
     in {
-      imports = [
-        ./services/consul.nix
-        ./services/nomad.nix
-        ./services/vault.nix
-        ./services/router.nix
-        ./services/file-server.nix
-        path
-      ];
+      imports = [ ./services path ];
 
       # Match the directory name to the host's name.
       networking.hostName = lib.mkDefault (baseNameOf path);
