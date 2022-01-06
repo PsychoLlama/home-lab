@@ -3,11 +3,16 @@
   inputs.nixpkgs.url = "nixpkgs";
 
   outputs = { self, nixpkgs }:
-    let defineHost = import ./machines/define-host.nix;
+    let
+      defineHost = import ./machines/define-host.nix;
+      hostDefinitions = with nixpkgs.lib;
+        (mapAttrs (hostName: _: defineHost hostName)
+          (filterAttrs (_: pathType: pathType == "directory")
+            (builtins.readDir ./machines/hosts)));
 
     in {
       nixopsConfigurations = {
-        default = {
+        default = hostDefinitions // {
           inherit nixpkgs;
 
           network = let inherit (import ./machines/config.nix) domain;
@@ -16,14 +21,6 @@
             enableRollback = true;
             storage.legacy.databasefile = "~/.nixops/deployments.nixops";
           };
-
-          multivac = defineHost ./machines/hosts/multivac;
-          hactar = defineHost ./machines/hosts/hactar;
-          corvus = defineHost ./machines/hosts/corvus;
-          viki = defineHost ./machines/hosts/viki;
-          hal = defineHost ./machines/hosts/hal;
-          clu = defineHost ./machines/hosts/clu;
-          tron = defineHost ./machines/hosts/tron;
         };
       };
 

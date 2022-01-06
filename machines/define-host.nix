@@ -3,15 +3,15 @@
 
 let inherit (import ./config.nix) domain;
 
-in hostPath:
+in hostName:
 { config, lib, pkgs, ... }:
 let unstable = import ./unstable-pkgs.nix { system = pkgs.system; };
 
 in {
-  imports = [ ./services hostPath ];
+  imports = [ ./services (./hosts + "/${hostName}") ];
 
   # Match the directory name to the host's name.
-  networking.hostName = lib.mkDefault (baseNameOf hostPath);
+  networking.hostName = lib.mkDefault hostName;
 
   # All hosts are addressed as `{host}.host.{domain}`.
   networking.domain = "host.${domain}";
