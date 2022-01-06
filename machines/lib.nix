@@ -1,5 +1,6 @@
-rec {
-  domain = "selfhosted.city";
+let inherit (import ./config.nix) domain;
+
+in {
   defineHost = path:
     { config, lib, pkgs, ... }:
     let unstable = import ./unstable-pkgs.nix { system = pkgs.system; };

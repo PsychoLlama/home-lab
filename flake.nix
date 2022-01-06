@@ -3,7 +3,9 @@
   inputs.nixpkgs.url = "nixpkgs";
 
   outputs = { self, nixpkgs }:
-    let lib = import ./machines/lib.nix;
+    let
+      inherit (import ./machines/config.nix) domain;
+      lib = import ./machines/lib.nix;
 
     in {
       nixopsConfigurations = {
@@ -11,7 +13,7 @@
           inherit nixpkgs;
 
           network = {
-            description = lib.domain;
+            description = domain;
             enableRollback = true;
             storage.legacy = { databasefile = "~/.nixops/deployments.nixops"; };
           };

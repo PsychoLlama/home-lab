@@ -7,7 +7,7 @@
 with lib;
 
 let
-  inherit (import ../lib.nix) domain;
+  inherit (import ../config.nix) domain;
   cfg = config.lab.router;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
 
