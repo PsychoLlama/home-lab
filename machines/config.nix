@@ -1,1 +1,4 @@
-{ domain = "selfhosted.city"; }
+{
+  domain = "selfhosted.city";
+  datacenter = "lab";
+}

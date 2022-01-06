@@ -30,7 +30,7 @@ in {
       webUi = true;
 
       extraConfig = {
-        inherit (import ../config.nix) domain;
+        inherit (import ../config.nix) domain datacenter;
         server = cfg.server.enable;
         connect.enabled = true;
         ports.grpc = 8502;

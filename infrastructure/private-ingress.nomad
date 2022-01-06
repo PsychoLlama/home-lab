@@ -1,5 +1,5 @@
 job "private-ingress" {
-  datacenters = ["dc1"]
+  datacenters = ["lab"]
   type        = "system"
 
   group "ingress" {

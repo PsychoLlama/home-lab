@@ -30,6 +30,8 @@ in {
       extraPackages = with unstable; [ cni-plugins consul ];
 
       settings = {
+        inherit (import ../config.nix) datacenter;
+
         server = {
           enabled = cfg.server.enable;
           bootstrap_expect = expectedServerCount;

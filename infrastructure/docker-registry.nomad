@@ -1,5 +1,5 @@
 job "docker-registry" {
-  datacenters = ["dc1"]
+  datacenters = ["lab"]
 
   group "docker-registry" {
     network {
