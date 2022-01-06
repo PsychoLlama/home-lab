@@ -3,28 +3,27 @@
   inputs.nixpkgs.url = "nixpkgs";
 
   outputs = { self, nixpkgs }:
-    let
-      inherit (import ./machines/config.nix) domain;
-      lib = import ./machines/lib.nix;
+    let defineHost = import ./machines/define-host.nix;
 
     in {
       nixopsConfigurations = {
         default = {
           inherit nixpkgs;
 
-          network = {
+          network = let inherit (import ./machines/config.nix) domain;
+          in {
             description = domain;
             enableRollback = true;
-            storage.legacy = { databasefile = "~/.nixops/deployments.nixops"; };
+            storage.legacy.databasefile = "~/.nixops/deployments.nixops";
           };
 
-          multivac = lib.defineHost ./machines/hosts/multivac;
-          hactar = lib.defineHost ./machines/hosts/hactar;
-          corvus = lib.defineHost ./machines/hosts/corvus;
-          viki = lib.defineHost ./machines/hosts/viki;
-          hal = lib.defineHost ./machines/hosts/hal;
-          clu = lib.defineHost ./machines/hosts/clu;
-          tron = lib.defineHost ./machines/hosts/tron;
+          multivac = defineHost ./machines/hosts/multivac;
+          hactar = defineHost ./machines/hosts/hactar;
+          corvus = defineHost ./machines/hosts/corvus;
+          viki = defineHost ./machines/hosts/viki;
+          hal = defineHost ./machines/hosts/hal;
+          clu = defineHost ./machines/hosts/clu;
+          tron = defineHost ./machines/hosts/tron;
         };
       };
 
