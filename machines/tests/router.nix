@@ -188,7 +188,9 @@ in {
 
       with subtest("Test Consul service query forwarding"):
         consul.wait_for_open_port(8600)
-        client.wait_until_fails("dog @10.0.0.1 consul.service.${domain} | grep -i nxdomain")
+        client.wait_until_fails(
+          "dog @10.0.0.1 consul.service.lab.${domain} | grep -i nxdomain"
+        )
 
       with subtest("Test custom service records"):
         client.succeed("dog @10.0.0.1 dns.${domain} | grep 10.0.0.1")

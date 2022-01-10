@@ -8,5 +8,5 @@ terraform {
 }
 
 provider "nomad" {
-  address = "http://nomad.service.selfhosted.city:4646"
+  address = "http://nomad.service.lab.selfhosted.city:4646"
 }

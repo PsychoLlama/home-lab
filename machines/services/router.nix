@@ -255,7 +255,7 @@ in {
         }
 
         ${optionalString (length consulDnsAddresses > 0) ''
-          service.selfhosted.city {
+          lab.selfhosted.city {
             import common
 
             forward . ${toString consulDnsAddresses}

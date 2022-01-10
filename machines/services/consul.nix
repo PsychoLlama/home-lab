@@ -34,7 +34,7 @@ in {
         server = cfg.server.enable;
         connect.enabled = true;
         ports.grpc = 8502;
-        retry_join = [ "consul.service.selfhosted.city" ];
+        retry_join = [ "consul.service.lab.selfhosted.city" ];
         addresses = {
           http = "0.0.0.0";
           dns = "0.0.0.0";

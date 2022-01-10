@@ -40,7 +40,7 @@ in {
         client = {
           enabled = cfg.client.enable;
           cni_path = "${unstable.cni-plugins}/bin";
-          servers = [ "nomad.service.selfhosted.city" ];
+          servers = [ "nomad.service.lab.selfhosted.city" ];
 
           # Force downgrade Envoy. See:
           # https://github.com/envoyproxy/envoy/issues/15235
