@@ -1,7 +1,7 @@
 # Creates a top-level NixOS config, applied to all machines in the home lab.
 # This is responsible for setting the baseline configuration.
 
-let inherit (import ./config.nix) domain;
+let inherit (import ./config.nix) domain certificates;
 
 in hostName:
 { config, lib, pkgs, ... }:
@@ -19,6 +19,9 @@ in {
   networking.domain = "host.${domain}";
 
   deployment.targetHost = config.networking.fqdn;
+
+  # These are self-signed root certificates issued by Vault.
+  security.pki.certificates = certificates;
 
   # Enable flakes.
   nix = {
