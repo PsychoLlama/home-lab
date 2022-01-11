@@ -71,7 +71,7 @@ in {
           rpc = true;
           http = true;
 
-          ca_file = "/etc/ssl/certs/ca-certificates.crt";
+          ca_file = "/etc/ssl/certs/home-lab.crt";
           cert_file = "/run/keys/nomad-tls-cert";
           key_file = "/run/keys/nomad-tls-key";
         };
