@@ -10,6 +10,13 @@ let
     (mapAttrsToList (_: node: node.config.networking.fqdn)
       (filterAttrs (_: node: node.config.lab.consul.server.enable) nodes));
 
+  key = file: {
+    user = "consul";
+    group = "keys";
+    permissions = "550";
+    text = builtins.readFile file;
+  };
+
 in {
   options.lab.consul = {
     enable = mkEnableOption "Run Consul as part of a cluster";
@@ -23,6 +30,11 @@ in {
   };
 
   config = mkIf cfg.enable {
+    deployment.keys = {
+      consul-tls-cert = key ../../consul.cert;
+      consul-tls-key = key ../../consul.key;
+    };
+
     services.consul = {
       enable = true;
       forceIpv4 = true;
@@ -37,18 +49,35 @@ in {
         ports.grpc = 8502;
         retry_join = serverAddresses;
         addresses = {
-          http = "0.0.0.0";
+          https = "0.0.0.0";
           dns = "0.0.0.0";
         };
+
+        # This is the recommended port for HTTPS.
+        ports.https = 8501;
+
+        verify_incoming = true;
+        verify_outgoing = true;
+        verify_server_hostname = true;
+
+        ca_file = "/etc/ssl/certs/home-lab.crt";
+        cert_file = "/run/keys/consul-tls-cert";
+        key_file = "/run/keys/consul-tls-key";
       } // (optionalAttrs cfg.server.enable {
         bootstrap_expect = length serverAddresses + 1;
       });
     };
 
+    systemd.services.consul = {
+      serviceConfig.SupplementaryGroups = [ "keys" ];
+      after = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
+      wants = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
+    };
+
     networking.firewall = {
       allowedTCPPorts = [
         8600 # DNS
-        8500 # HTTP API
+        8501 # HTTPS API
         8502 # gRPC API
         8300 # Server-to-server RPC
         8301 # LAN Serf
