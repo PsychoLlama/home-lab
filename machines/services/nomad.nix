@@ -11,8 +11,8 @@ let
 
   key = file: {
     user = "nomad";
-    group = "keys";
-    permissions = "550";
+    group = "nomad";
+    permissions = "440";
     text = builtins.readFile file;
   };
 

@@ -12,8 +12,8 @@ let
 
   key = file: {
     user = "consul";
-    group = "keys";
-    permissions = "550";
+    group = "consul";
+    permissions = "440";
     text = builtins.readFile file;
   };
 
@@ -35,6 +35,7 @@ in {
       consul-tls-key = key ../../consul.key;
     };
 
+    users.users.consul.extraGroups = [ "keys" ];
     services.consul = {
       enable = true;
       forceIpv4 = true;
