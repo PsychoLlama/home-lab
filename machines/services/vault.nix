@@ -29,6 +29,11 @@ in with lib; {
       tlsKeyFile = "/run/keys/vault-tls-key";
     };
 
+    systemd.services.vault = {
+      after = [ "vault-tls-cert-key.service" "vault-tls-key-key.service" ];
+      wants = [ "vault-tls-cert-key.service" "vault-tls-key-key.service" ];
+    };
+
     environment.systemPackages = [ unstable.vault ];
 
     networking.firewall.allowedTCPPorts = [

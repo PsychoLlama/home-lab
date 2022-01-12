@@ -70,7 +70,6 @@ in {
     };
 
     systemd.services.consul = {
-      serviceConfig.SupplementaryGroups = [ "keys" ];
       after = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
       wants = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
     };
