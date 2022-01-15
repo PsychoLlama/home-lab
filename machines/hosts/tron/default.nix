@@ -7,15 +7,7 @@
       ipAddress = "10.0.0.204";
     };
 
-    consul = {
-      server.enable = true;
-      enable = true;
-    };
-
-    nomad = {
-      server.enable = true;
-      enable = true;
-    };
+    nomad.enable = true;
   };
 
   system.stateVersion = "21.05";

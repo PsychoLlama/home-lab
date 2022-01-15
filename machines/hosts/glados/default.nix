@@ -6,6 +6,16 @@
       ethernetAddress = "e4:5f:01:0e:c7:66";
       ipAddress = "10.0.0.208";
     };
+
+    consul = {
+      server.enable = true;
+      enable = true;
+    };
+
+    nomad = {
+      server.enable = true;
+      enable = true;
+    };
   };
 
   system.stateVersion = "21.11";
