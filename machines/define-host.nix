@@ -10,6 +10,8 @@ let unstable = import ./unstable-pkgs.nix { system = pkgs.system; };
 in {
   imports = [ ./services (./hosts + "/${hostName}") ];
 
+  lab.administration.enable = lib.mkDefault true;
+
   # Match the directory name to the host's name.
   networking.hostName = lib.mkDefault hostName;
 
@@ -31,58 +33,6 @@ in {
       experimental-features = nix-command flakes
     '';
   };
-
-  services.openssh = {
-    enable = true;
-    passwordAuthentication = false;
-  };
-
-  programs.zsh = {
-    enable = true;
-    syntaxHighlighting.enable = true;
-    autosuggestions.enable = true;
-    histSize = 500;
-    promptInit = ''
-      eval "$(starship init zsh)"
-    '';
-
-    setOptions = [
-      "auto_cd"
-      "auto_pushd"
-      "hist_ignore_all_dups"
-      "hist_ignore_space"
-      "hist_no_functions"
-      "hist_reduce_blanks"
-      "interactive_comments"
-      "pipefail"
-      "pushd_ignore_dups"
-      "share_history"
-    ];
-  };
-
-  users = {
-    groups.pantheon = { };
-    users.admin = {
-      description = "Server administrator";
-      extraGroups = [ "wheel" "pantheon" "docker" ];
-      isNormalUser = true;
-      packages = [ pkgs.starship ];
-
-      openssh.authorizedKeys.keyFiles = [ ./keys/admin.pub ];
-    };
-
-    defaultUserShell = pkgs.zsh;
-  };
-
-  # Passwords are for programs. The Law has entered the game.
-  # https://www.youtube.com/watch?v=pEHZLcFMVo0&t=130s
-  security.sudo.extraRules = [{
-    groups = [ "pantheon" ];
-    commands = [{
-      command = "ALL";
-      options = [ "NOPASSWD" ];
-    }];
-  }];
 
   users.users.root.openssh.authorizedKeys.keyFiles =
     [ ./keys/deploy.pub ./keys/admin.pub ];
