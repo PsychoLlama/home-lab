@@ -6,8 +6,9 @@ let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.lab.consul;
 
-  expectedServerCount = length (attrValues
-    (filterAttrs (_: node: node.config.lab.consul.server.enable) nodes));
+  serverAddresses = filter (fqdn: fqdn != config.networking.fqdn)
+    (mapAttrsToList (_: node: node.config.networking.fqdn)
+      (filterAttrs (_: node: node.config.lab.consul.server.enable) nodes));
 
 in {
   options.lab.consul = {
@@ -34,13 +35,13 @@ in {
         server = cfg.server.enable;
         connect.enabled = true;
         ports.grpc = 8502;
-        retry_join = [ "consul.service.lab.selfhosted.city" ];
+        retry_join = serverAddresses;
         addresses = {
           http = "0.0.0.0";
           dns = "0.0.0.0";
         };
       } // (optionalAttrs cfg.server.enable {
-        bootstrap_expect = expectedServerCount;
+        bootstrap_expect = length serverAddresses + 1;
       });
     };
 
