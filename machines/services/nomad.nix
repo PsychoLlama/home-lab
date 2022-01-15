@@ -37,6 +37,14 @@ in {
     environment.variables.NOMAD_ADDR =
       "https://nomad.service.lab.selfhosted.city:4646";
 
+    users.groups.nomad = { };
+    users.users.nomad = {
+      description = "Nomad agent daemon user";
+      isSystemUser = true;
+      group = "nomad";
+      extraGroups = [ "keys" ];
+    };
+
     services.nomad = {
       enable = true;
       package = unstable.nomad;
@@ -79,7 +87,6 @@ in {
     };
 
     systemd.services.nomad = {
-      serviceConfig.SupplementaryGroups = mkForce [ "docker" "keys" ];
       after = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
       wants = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
     };
