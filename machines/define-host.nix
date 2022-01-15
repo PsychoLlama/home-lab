@@ -84,5 +84,6 @@ in {
     }];
   }];
 
-  users.users.root.openssh.authorizedKeys.keyFiles = [ ./keys/deploy.pub ];
+  users.users.root.openssh.authorizedKeys.keyFiles =
+    [ ./keys/deploy.pub ./keys/admin.pub ];
 }
