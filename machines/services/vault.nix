@@ -3,16 +3,35 @@
 let
   cfg = config.lab.vault;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
+  key = file: {
+    user = "vault";
+    group = "vault";
+    permissions = "440";
+    text = builtins.readFile file;
+  };
 
 in with lib; {
-  options.lab.vault = { enable = mkEnableOption "Run HashiCorp Vault"; };
+  options.lab.vault.enable = mkEnableOption "Run HashiCorp Vault";
 
   config = mkIf cfg.enable {
+    deployment.keys = {
+      vault-tls-cert = key ../../vault.cert;
+      vault-tls-key = key ../../vault.key;
+    };
+
+    users.users.vault.extraGroups = [ "keys" ];
     services.vault = {
       enable = true;
       package = unstable.vault;
       address = "0.0.0.0:8200";
       storageBackend = "consul";
+      tlsCertFile = "/run/keys/vault-tls-cert";
+      tlsKeyFile = "/run/keys/vault-tls-key";
+    };
+
+    systemd.services.vault = {
+      after = [ "vault-tls-cert-key.service" "vault-tls-key-key.service" ];
+      wants = [ "vault-tls-cert-key.service" "vault-tls-key-key.service" ];
     };
 
     environment.systemPackages = [ unstable.vault ];

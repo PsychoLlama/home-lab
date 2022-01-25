@@ -9,6 +9,13 @@ let
   expectedServerCount = length (attrValues
     (filterAttrs (_: node: node.config.lab.nomad.server.enable) nodes));
 
+  key = file: {
+    user = "nomad";
+    group = "nomad";
+    permissions = "440";
+    text = builtins.readFile file;
+  };
+
 in {
   options.lab.nomad = {
     enable = mkEnableOption "Run Nomad as part of a cluster";
@@ -21,9 +28,25 @@ in {
   };
 
   config = mkIf cfg.enable {
+    deployment.keys = {
+      nomad-tls-cert = key ../../nomad.cert;
+      nomad-tls-key = key ../../nomad.key;
+    };
+
+    # Without this, the Nomad CLI will attempt API calls over insecure HTTP.
+    environment.variables.NOMAD_ADDR =
+      "https://nomad.service.lab.selfhosted.city:4646";
+
+    users.groups.nomad = { };
+    users.users.nomad = {
+      description = "Nomad agent daemon user";
+      isSystemUser = true;
+      group = "nomad";
+      extraGroups = [ "keys" ];
+    };
+
     services.nomad = {
       enable = true;
-      dropPrivileges = false;
       package = unstable.nomad;
 
       # Provides network support for the Consul sidecar proxy.
@@ -51,7 +74,21 @@ in {
           address = "127.0.0.1:8500";
           grpc_address = "127.0.0.1:8502";
         };
+
+        tls = {
+          rpc = true;
+          http = true;
+
+          ca_file = "/etc/ssl/certs/home-lab.crt";
+          cert_file = "/run/keys/nomad-tls-cert";
+          key_file = "/run/keys/nomad-tls-key";
+        };
       };
+    };
+
+    systemd.services.nomad = {
+      after = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
+      wants = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
     };
 
     networking.firewall = {

@@ -38,7 +38,7 @@ in with lib; {
       groups.pantheon = { };
       users.admin = {
         description = "Server administrator";
-        extraGroups = [ "wheel" "pantheon" "docker" ];
+        extraGroups = [ "wheel" "pantheon" "docker" "keys" ];
         isNormalUser = true;
         packages = [ pkgs.starship ];
         shell = pkgs.zsh;
