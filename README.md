@@ -21,4 +21,6 @@ The network is managed declaratively by a Raspberry Pi 3 configured to act as a 
 - `machines/`: provisions physical resources & manages operating systems
   - `hosts/`: host-level configuration
   - `hardware/`: settings for different hardware classes (e.g. Raspberry Pi)
+  - `services/`: custom services run on the hosts
 - `infrastructure/`: higher-level terraform configs and service definitions
+- `tests/`: automated QEMU tests

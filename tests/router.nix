@@ -1,9 +1,9 @@
 { pkgs ? import ../unstable-pkgs.nix { } }:
 
 let
-  inherit (import ../config.nix) domain;
+  inherit (import ../machines/config.nix) domain;
   routerBase = {
-    imports = [ ../services ];
+    imports = [ ./services ];
     virtualisation.vlans = [ 1 2 ];
     networking.interfaces.eth1.useDHCP = false;
     services.openssh.enable = true;
@@ -17,7 +17,7 @@ let
   };
 
   clientBase = {
-    imports = [ ../services ];
+    imports = [ ./services ];
     virtualisation.vlans = [ 2 ];
     environment.systemPackages = [ pkgs.dogdns ];
     networking = {
@@ -29,7 +29,10 @@ let
   consulBase = let ethernetAddress = "ee:ee:ee:ff:ff:ff";
   in { config, ... }: {
     imports = [ clientBase ];
-    networking.interfaces.eth1.macAddress = ethernetAddress;
+    networking = {
+      interfaces.eth1.macAddress = ethernetAddress;
+      domain = "example.com";
+    };
 
     lab = {
       consul = {
@@ -89,7 +92,7 @@ in {
       router = routerBase;
       client = clientBase;
       server = {
-        imports = [ ../services ];
+        imports = [ ./services ];
         virtualisation.vlans = [ 1 ];
         services.httpd.enable = true;
         services.httpd.adminAddr = "foo@example.com";
