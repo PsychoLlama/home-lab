@@ -31,7 +31,7 @@ let
     imports = [ clientBase ];
     networking = {
       interfaces.eth1.macAddress = ethernetAddress;
-      domain = "example.com";
+      inherit domain;
     };
 
     lab = {
