@@ -45,6 +45,10 @@ let
         path "secret/*" {
           capabilities = ["read"]
         }
+
+        path "auth/approle/role/test/secret-id" {
+          capabilities = ["update"]
+        }
         EOF
 
         vault auth enable approle
@@ -53,8 +57,9 @@ let
         vault read -format=json auth/approle/role/test/role-id \
           | jq .data.role_id -r > /tmp/role-id
 
-        vault write -force -format=json auth/approle/role/test/secret-id \
-          | jq .data.secret_id -r > /tmp/secret-id
+        vault write -wrap-ttl=5m -force -format=json \
+          auth/approle/role/test/secret-id \
+          | jq .wrap_info.token -r > /tmp/secret-id
       '';
 
       serviceConfig = {
@@ -76,6 +81,8 @@ let
             config = {
               role_id_file_path = "/tmp/role-id";
               secret_id_file_path = "/tmp/secret-id";
+              secret_id_response_wrapping_path =
+                "auth/approle/role/test/secret-id";
             };
           }];
         };
