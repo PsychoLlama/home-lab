@@ -22,6 +22,18 @@ in with lib; {
         default = "https://vault.service.lab.${domain}:8200";
       };
 
+      options.user = mkOption {
+        description = "UNIX user to execute the process under";
+        type = types.str;
+        default = "root";
+      };
+
+      options.group = mkOption {
+        description = "UNIX group to execute the process under";
+        type = types.str;
+        default = "root";
+      };
+
       options.extraSettings = mkOption {
         description = ''
           Extra settings to merge into Vault's config file.
@@ -80,6 +92,11 @@ in with lib; {
           exec ${pkgs.vault}/bin/vault agent \
             -config ${generateConfig agent}
         '';
+
+        serviceConfig = {
+          User = agent.user;
+          Group = agent.group;
+        };
       }) cfg));
   };
 }

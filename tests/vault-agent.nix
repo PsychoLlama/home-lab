@@ -115,4 +115,41 @@ in {
         agent.succeed("grep 'hello world' /tmp/vault-template-output")
     '';
   };
+
+  permissions = pkgs.nixosTest {
+    name = "vault-agent-permissions";
+    nodes = {
+      server = vaultDevServer;
+      agent = {
+        imports = [ vaultAgent ];
+        users = {
+          groups.test-group = { };
+          users.test-user = {
+            isSystemUser = true;
+            group = "test-group";
+          };
+        };
+
+        lab.vault-agents.test = {
+          user = "test-user";
+          group = "test-group";
+          templates = [{
+            contents = "Just plain text.";
+            destination = "/tmp/template-output";
+            perms = "0654";
+          }];
+        };
+      };
+    };
+
+    testScript = ''
+      start_all()
+
+      with subtest("Test user, group, and permission assignments"):
+        agent.wait_for_file("/tmp/template-output")
+        agent.succeed("ls -l /tmp/template-output | grep test-user")
+        agent.succeed("ls -l /tmp/template-output | grep test-group")
+        agent.succeed("ls -l /tmp/template-output | grep rw-r-xr--")
+    '';
+  };
 }
