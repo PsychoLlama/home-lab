@@ -53,7 +53,7 @@ in {
       extraPackages = with unstable; [ cni-plugins consul ];
 
       settings = {
-        inherit (import ../config.nix) datacenter;
+        inherit (import ../config) datacenter;
 
         server = {
           enabled = cfg.server.enable;

@@ -15,7 +15,7 @@
         default = hostDefinitions // {
           inherit nixpkgs;
 
-          network = let inherit (import ./machines/config.nix) domain;
+          network = let inherit (import ./machines/config) domain;
           in {
             description = domain;
             enableRollback = true;

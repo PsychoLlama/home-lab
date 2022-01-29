@@ -1,4 +1,3 @@
-config/
 .terraform/
 result
 result-*

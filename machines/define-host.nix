@@ -5,7 +5,7 @@ hostName:
 { config, lib, pkgs, ... }:
 
 let
-  inherit (import ./config.nix) domain certificates;
+  inherit (import ./config) domain certificates;
   unstable = import ./unstable-pkgs.nix { system = pkgs.system; };
 
 in with lib; {

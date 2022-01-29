@@ -1,7 +1,7 @@
 { lib, config, pkgs, ... }:
 
 let
-  inherit (import ../config.nix) domain;
+  inherit (import ../config) domain;
   cfg = config.lab.vault-agents;
   generateConfig = agent:
     (pkgs.formats.json { }).generate "vault-agent-config.json" ({

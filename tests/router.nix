@@ -1,7 +1,7 @@
 { pkgs ? import ../unstable-pkgs.nix { } }:
 
 let
-  inherit (import ../machines/config.nix) domain;
+  inherit (import ../machines/config) domain;
   routerBase = {
     imports = [ ./services ];
     virtualisation.vlans = [ 1 2 ];
