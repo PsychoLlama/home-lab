@@ -1,8 +1,11 @@
 {
   description = "Hobbyist home lab";
-  inputs.nixpkgs.url = "nixpkgs";
+  inputs = {
+    nixpkgs.url = "nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, flake-utils }:
     let
       defineHost = import ./machines/define-host.nix;
       hostDefinitions = with nixpkgs.lib;
@@ -23,11 +26,32 @@
           };
         };
       };
+    } // flake-utils.lib.eachDefaultSystem (system:
+      let unstable = import ./machines/unstable-pkgs.nix { inherit system; };
 
-      checks = with nixpkgs.lib;
-        listToAttrs (forEach [ "x86_64-linux" "aarch64-linux" ] (system:
-          nameValuePair system (import ./tests {
-            pkgs = import ./machines/unstable-pkgs.nix { inherit system; };
-          })));
-    };
+      in {
+        checks = import ./tests { pkgs = unstable; };
+
+        devShell = with nixpkgs.legacyPackages.${system};
+          mkShell {
+            nativeBuildInputs = [
+              (unstable.callPackage ./machines/pkgs/vault-client.nix { })
+              unstable.vault
+
+              nixopsUnstable
+              nixUnstable
+            ];
+
+            # TODO: Configure remote builders here instead.
+            NIX_CONFIG = ''
+              experimental-features = nix-command flakes
+            '';
+
+            shellHook = ''
+              if [[ -z "$VAULT_TOKEN" ]]; then
+                echo '--- Remember to set $VAULT_TOKEN ---' >&2
+              fi
+            '';
+          };
+      });
 }
