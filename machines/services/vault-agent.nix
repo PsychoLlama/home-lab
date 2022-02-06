@@ -64,6 +64,12 @@ in with lib; {
             type = types.str;
           };
 
+          options.command = mkOption {
+            description = "Command to run after the template renders";
+            type = types.str;
+            default = "";
+          };
+
           options.error_on_missing_key = mkOption {
             description = "Exit if the template breaks the schema";
             type = types.bool;

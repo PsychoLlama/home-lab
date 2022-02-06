@@ -139,6 +139,9 @@ in {
           '';
         }
         {
+          command =
+            "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart nomad.service";
+
           destination = "/run/keys/nomad/tls.key";
           perms = "660";
           contents = ''
