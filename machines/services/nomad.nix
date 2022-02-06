@@ -3,17 +3,18 @@
 with lib;
 
 let
+  inherit (import ../config) domain;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.lab.nomad;
 
   expectedServerCount = length (attrValues
     (filterAttrs (_: node: node.config.lab.nomad.server.enable) nodes));
 
-  key = file: {
+  vaultKey = cmd: {
     user = "nomad";
     group = "nomad";
-    permissions = "440";
-    text = builtins.readFile file;
+    permissions = "660";
+    keyCommand = [ "vault-client" cmd "nomad" ];
   };
 
 in {
@@ -29,8 +30,8 @@ in {
 
   config = mkIf cfg.enable {
     deployment.keys = {
-      nomad-tls-cert = key ../../nomad.cert;
-      nomad-tls-key = key ../../nomad.key;
+      nomad-role-id = vaultKey "role-id";
+      nomad-role-token = vaultKey "role-token";
     };
 
     # Without this, the Nomad CLI will attempt API calls over insecure HTTP.
@@ -80,15 +81,15 @@ in {
           http = true;
 
           ca_file = "/etc/ssl/certs/home-lab.crt";
-          cert_file = "/run/keys/nomad-tls-cert";
-          key_file = "/run/keys/nomad-tls-key";
+          cert_file = "/run/keys/nomad/tls.cert";
+          key_file = "/run/keys/nomad/tls.key";
         };
       };
     };
 
     systemd.services.nomad = {
-      after = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
-      wants = [ "nomad-tls-cert-key.service" "nomad-tls-key-key.service" ];
+      after = [ "vault-agent-nomad.service" "consul.service" ];
+      wants = [ "vault-agent-nomad.service" "consul.service" ];
     };
 
     networking.firewall = {
@@ -118,5 +119,47 @@ in {
     # Nomad tightly integrates with Consul and strongly discourages use over
     # the network; It must run locally.
     lab.consul.enable = mkDefault cfg.client.enable;
+
+    systemd.services.vault-agent-nomad = {
+      after = [ "nomad-role-id-key.service" "nomad-role-token-key.service" ];
+      wants = [ "nomad-role-id-key.service" "nomad-role-token-key.service" ];
+    };
+
+    lab.vault-agents.nomad = {
+      vault.address = "https://vault.service.lab.${domain}:8200";
+      user = "root";
+      group = "nomad";
+      templates = [
+        {
+          destination = "/run/keys/nomad/tls.cert";
+          perms = "660";
+          contents = ''
+            {{ with secret "pki/issue/nomad" "common_name=nomad.service.lab.${domain}" }}
+            {{ .Data.certificate }}{{ end }}
+          '';
+        }
+        {
+          destination = "/run/keys/nomad/tls.key";
+          perms = "660";
+          contents = ''
+            {{ with secret "pki/issue/nomad" "common_name=nomad.service.lab.${domain}" }}
+            {{ .Data.private_key }}{{ end }}
+          '';
+        }
+      ];
+
+      extraSettings = {
+        storage.inmem = { };
+        auto_auth.method = [{
+          type = "approle";
+          config = {
+            role_id_file_path = "/run/keys/nomad-role-id";
+            secret_id_file_path = "/run/keys/nomad-role-token";
+            secret_id_response_wrapping_path =
+              "auth/approle/role/nomad/secret-id";
+          };
+        }];
+      };
+    };
   };
 }
