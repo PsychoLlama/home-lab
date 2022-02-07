@@ -83,6 +83,7 @@ in {
 
         # Avoids swapping the decryption key to disk.
         AmbientCapabilities = "cap_ipc_lock";
+        LimitCORE = 0;
       };
     };
 
@@ -91,7 +92,12 @@ in {
       8201 # HA Coordination.
     ];
 
-    environment.etc."vault/config.json".source =
-      (pkgs.formats.json { }).generate "vault-config.json" cfg.settings;
+    environment.etc."vault/config.json" = {
+      mode = "440";
+      group = "vault";
+      user = "vault";
+      source =
+        (pkgs.formats.json { }).generate "vault-config.json" cfg.settings;
+    };
   };
 }
