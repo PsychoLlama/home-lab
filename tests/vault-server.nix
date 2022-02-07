@@ -87,7 +87,17 @@ in {
     name = "vault-server-full";
 
     nodes = {
-      vault1.imports = [ vaultServer vaultInitializer ];
+      vault1 = {
+        imports = [ vaultServer vaultInitializer ];
+        environment.etc."vault/recovery.json".text = ''
+          [{
+            "id": "vault1",
+            "address": "vault1.lan:8201",
+            "non_voter": false
+          }]
+        '';
+      };
+
       vault2 = vaultServer;
       consul = consulServer;
     };
@@ -97,6 +107,7 @@ in {
 
       consul.wait_for_unit("consul.service")
       consul.wait_for_open_port(8500)
+      unseal_key = None
 
       with subtest("Test Vault initialization"):
         vault1.wait_for_unit("initialize-vault.service")
@@ -121,6 +132,19 @@ in {
         vault1.succeed("vault secrets enable kv")
         vault1.succeed("vault kv put kv/data contents=hello")
         vault2.succeed("vault kv get kv/data | grep hello")
+
+      # If the lab goes offline for too long, the Vault certificates will
+      # expire and manual intervention is necessary. This test ensures it's
+      # possible to recover the cluster.
+      with subtest("Test manual recovery after network partition"):
+        vault1.block()
+
+        vault1.succeed("cp /etc/vault/recovery.json /var/lib/vault/raft/peers.json")
+        vault1.systemctl("restart vault")
+        vault1.wait_for_open_port(8200)
+
+        vault1.succeed(f"vault operator unseal {unseal_key}")
+        vault1.wait_until_succeeds("vault kv get kv/data | grep hello")
     '';
   };
 }
