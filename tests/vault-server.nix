@@ -1,7 +1,7 @@
 { pkgs ? import ../machines/unstable-pkgs.nix { } }:
 
 let
-  vaultServer = {
+  vaultServer = { config, ... }: {
     imports = [ ./services ];
     environment.variables.VAULT_ADDR = "http://127.0.0.1:8200";
     networking.domain = "lan";
@@ -11,9 +11,13 @@ let
       allowedUDPPorts = [ 8600 8301 ];
     };
 
+    # Not technically correct, but whatever.
+    lab.network.ipAddress = config.networking.fqdn;
+    systemd.services.vault-agent-vault.enable = false;
+
     lab.vault-server = {
       enable = true;
-      settings.storage.raft = { };
+      tls.enable = false;
     };
 
     services.consul = {
