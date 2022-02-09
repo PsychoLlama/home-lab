@@ -7,6 +7,5 @@
     ./router.nix
     ./vault-agent.nix
     ./vault-server.nix
-    ./vault.nix
   ];
 }
