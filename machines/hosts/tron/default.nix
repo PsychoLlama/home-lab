@@ -7,7 +7,17 @@
       ipAddress = "10.0.0.204";
     };
 
-    nomad.enable = true;
+    vault-server.enable = true;
+
+    consul = {
+      server.enable = true;
+      enable = true;
+    };
+
+    nomad = {
+      server.enable = true;
+      enable = true;
+    };
   };
 
   system.stateVersion = "21.05";
