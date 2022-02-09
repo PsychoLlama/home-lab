@@ -3,7 +3,7 @@
 with lib;
 
 let
-  inherit (import ../config) domain;
+  inherit (import ../config) domain datacenter;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.lab.nomad;
 
@@ -81,8 +81,8 @@ in {
           http = true;
 
           ca_file = "/etc/ssl/certs/home-lab.crt";
-          cert_file = "/run/keys/nomad/tls.cert";
-          key_file = "/run/keys/nomad/tls.key";
+          cert_file = "/var/lib/nomad/certs/tls.cert";
+          key_file = "/var/lib/nomad/certs/tls.key";
         };
       };
     };
@@ -126,15 +126,15 @@ in {
     };
 
     lab.vault-agents.nomad = {
-      vault.address = "https://vault.service.lab.${domain}:8200";
+      vault.address = "https://vault.service.${datacenter}.${domain}:8200";
       user = "root";
       group = "nomad";
       templates = [
         {
-          destination = "/run/keys/nomad/tls.cert";
+          destination = "/var/lib/nomad/certs/tls.cert";
           perms = "660";
           contents = ''
-            {{ with secret "pki/issue/nomad" "common_name=nomad.service.lab.${domain}" }}
+            {{ with secret "pki/issue/nomad" "common_name=nomad.service.${datacenter}.${domain}" }}
             {{ .Data.certificate }}{{ end }}
           '';
         }
@@ -142,10 +142,10 @@ in {
           command =
             "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart nomad.service";
 
-          destination = "/run/keys/nomad/tls.key";
+          destination = "/var/lib/nomad/certs/tls.key";
           perms = "660";
           contents = ''
-            {{ with secret "pki/issue/nomad" "common_name=nomad.service.lab.${domain}" }}
+            {{ with secret "pki/issue/nomad" "common_name=nomad.service.${datacenter}.${domain}" }}
             {{ .Data.private_key }}{{ end }}
           '';
         }
