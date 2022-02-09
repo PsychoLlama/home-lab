@@ -52,6 +52,7 @@ in {
 
       # Provides network support for the Consul sidecar proxy.
       extraPackages = with unstable; [ cni-plugins consul ];
+      dropPrivileges = cfg.client.enable == false;
 
       settings = {
         inherit (import ../config) datacenter;
