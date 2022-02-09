@@ -3,6 +3,7 @@
 with lib;
 
 let
+  inherit (import ../config) domain datacenter;
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
   cfg = config.lab.consul;
 
@@ -15,6 +16,13 @@ let
     group = "consul";
     permissions = "440";
     text = builtins.readFile file;
+  };
+
+  vaultKey = cmd: {
+    user = "consul";
+    group = "consul";
+    permissions = "660";
+    keyCommand = [ "vault-client" cmd "consul" ];
   };
 
 in {
@@ -31,8 +39,8 @@ in {
 
   config = mkIf cfg.enable {
     deployment.keys = {
-      consul-tls-cert = key ../../consul.cert;
-      consul-tls-key = key ../../consul.key;
+      consul-role-id = vaultKey "role-id";
+      consul-role-token = vaultKey "role-token";
     };
 
     users.users.consul.extraGroups = [ "keys" ];
@@ -62,16 +70,16 @@ in {
         verify_server_hostname = true;
 
         ca_file = "/etc/ssl/certs/home-lab.crt";
-        cert_file = "/run/keys/consul-tls-cert";
-        key_file = "/run/keys/consul-tls-key";
+        cert_file = "/var/lib/consul/certs/tls.cert";
+        key_file = "/var/lib/consul/certs/tls.key";
       } // (optionalAttrs cfg.server.enable {
         bootstrap_expect = length serverAddresses + 1;
       });
     };
 
     systemd.services.consul = {
-      after = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
-      wants = [ "consul-tls-cert-key.service" "consul-tls-key-key.service" ];
+      after = [ "vault-agent-consul.service" ];
+      wants = [ "vault-agent-consul.service" ];
     };
 
     networking.firewall = {
@@ -95,6 +103,59 @@ in {
         from = 21000;
         to = 21255;
       }];
+    };
+
+    systemd.services.vault-agent-consul = {
+      after = [ "consul-role-id-key.service" "consul-role-token-key.service" ];
+      wants = [ "consul-role-id-key.service" "consul-role-token-key.service" ];
+    };
+
+    lab.vault-agents.consul = {
+      vault.address = "https://vault.service.${datacenter}.${domain}:8200";
+      user = "root";
+      group = "consul";
+      templates = [
+        {
+          destination = "/var/lib/consul/certs/tls.cert";
+          perms = "660";
+          contents = ''
+            {{
+               with secret "pki/issue/consul"
+                 "common_name=consul.service.${datacenter}.${domain}"
+                 "alt_names=server.${datacenter}.${domain}"
+            }}
+            {{ .Data.certificate }}{{ end }}
+          '';
+        }
+        {
+          command =
+            "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart consul.service";
+
+          destination = "/var/lib/consul/certs/tls.key";
+          perms = "660";
+          contents = ''
+            {{
+               with secret "pki/issue/consul"
+                 "common_name=consul.service.${datacenter}.${domain}"
+                 "alt_names=server.${datacenter}.${domain}"
+            }}
+            {{ .Data.private_key }}{{ end }}
+          '';
+        }
+      ];
+
+      extraSettings = {
+        storage.inmem = { };
+        auto_auth.method = [{
+          type = "approle";
+          config = {
+            role_id_file_path = "/run/keys/consul-role-id";
+            secret_id_file_path = "/run/keys/consul-role-token";
+            secret_id_response_wrapping_path =
+              "auth/approle/role/consul/secret-id";
+          };
+        }];
+      };
     };
   };
 }
