@@ -54,16 +54,18 @@ in {
       extraConfig = {
         inherit (import ../config) domain datacenter;
         server = cfg.server.enable;
-        connect.enabled = true;
-        ports.grpc = 8502;
         retry_join = serverAddresses;
+        connect.enabled = true;
+
         addresses = {
           https = "0.0.0.0";
           dns = "0.0.0.0";
         };
 
-        # This is the recommended port for HTTPS.
-        ports.https = 8501;
+        ports = {
+          https = 8501;
+          grpc = 8502;
+        };
 
         verify_incoming = true;
         verify_outgoing = true;
@@ -123,6 +125,7 @@ in {
                with secret "pki/issue/consul"
                  "common_name=consul.service.${datacenter}.${domain}"
                  "alt_names=server.${datacenter}.${domain}"
+                 "ip_sans=${config.lab.network.ipAddress},127.0.0.1"
             }}
             {{ .Data.certificate }}{{ end }}
           '';
@@ -138,6 +141,7 @@ in {
                with secret "pki/issue/consul"
                  "common_name=consul.service.${datacenter}.${domain}"
                  "alt_names=server.${datacenter}.${domain}"
+                 "ip_sans=${config.lab.network.ipAddress},127.0.0.1"
             }}
             {{ .Data.private_key }}{{ end }}
           '';

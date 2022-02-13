@@ -73,8 +73,13 @@ in {
         };
 
         consul = {
-          address = "127.0.0.1:8500";
+          address = "127.0.0.1:8501";
           grpc_address = "127.0.0.1:8502";
+          ssl = true;
+
+          ca_file = "/etc/ssl/certs/home-lab.crt";
+          cert_file = "/var/lib/nomad/certs/tls.cert";
+          key_file = "/var/lib/nomad/certs/tls.key";
         };
 
         tls = {
