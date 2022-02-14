@@ -42,7 +42,6 @@
               nixUnstable
             ];
 
-            # TODO: Configure remote builders here instead.
             NIX_CONFIG = ''
               experimental-features = nix-command flakes
             '';
