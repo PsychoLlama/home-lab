@@ -305,6 +305,14 @@ in {
     # SSH should not be accessible from the open internet.
     services.openssh.openFirewall = mkDefault false;
 
+    # Enable strict reverse path filtering. This guards against some forms of
+    # IP spoofing.
+    boot.kernel.sysctl = {
+      "net.ipv4.conf.default.rp_filter" = mkDefault 1;
+      "net.ipv4.conf.${cfg.network.wan.interface}.rp_filter" = mkDefault 1;
+      "net.ipv4.conf.${cfg.network.lan.interface}.rp_filter" = mkDefault 1;
+    };
+
     assertions = forEach cfg.dns.records (service: {
       assertion = length service.addresses > 0;
       message = ''
