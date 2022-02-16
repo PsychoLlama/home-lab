@@ -135,7 +135,6 @@ in {
       templates = [
         {
           destination = "/var/lib/vault/certs/tls.cert";
-          perms = "660";
           contents = ''
             {{
                with secret "pki/issue/vault"
@@ -151,7 +150,6 @@ in {
             "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart vault.service";
 
           destination = "/var/lib/vault/certs/tls.key";
-          perms = "660";
           contents = ''
             {{
                with secret "pki/issue/vault"
@@ -164,18 +162,15 @@ in {
         }
       ];
 
-      extraSettings = {
-        storage.inmem = { };
-        auto_auth.method = [{
-          type = "approle";
-          config = {
-            role_id_file_path = "/run/keys/vault-role-id";
-            secret_id_file_path = "/run/keys/vault-role-token";
-            secret_id_response_wrapping_path =
-              "auth/approle/role/vault/secret-id";
-          };
-        }];
-      };
+      extraSettings.auto_auth.method = [{
+        type = "approle";
+        config = {
+          role_id_file_path = "/run/keys/vault-role-id";
+          secret_id_file_path = "/run/keys/vault-role-token";
+          secret_id_response_wrapping_path =
+            "auth/approle/role/vault/secret-id";
+        };
+      }];
     };
   };
 }

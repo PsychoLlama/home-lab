@@ -132,13 +132,11 @@ in {
     };
 
     lab.vault-agents.nomad = {
-      vault.address = "https://vault.service.${datacenter}.${domain}:8200";
       user = "root";
       group = "nomad";
       templates = [
         {
           destination = "/var/lib/nomad/certs/tls.cert";
-          perms = "660";
           contents = ''
             {{ with secret "pki/issue/nomad" "common_name=nomad.service.${datacenter}.${domain}" }}
             {{ .Data.certificate }}{{ end }}
@@ -149,7 +147,6 @@ in {
             "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart nomad.service";
 
           destination = "/var/lib/nomad/certs/tls.key";
-          perms = "660";
           contents = ''
             {{ with secret "pki/issue/nomad" "common_name=nomad.service.${datacenter}.${domain}" }}
             {{ .Data.private_key }}{{ end }}
@@ -157,18 +154,15 @@ in {
         }
       ];
 
-      extraSettings = {
-        storage.inmem = { };
-        auto_auth.method = [{
-          type = "approle";
-          config = {
-            role_id_file_path = "/run/keys/nomad-role-id";
-            secret_id_file_path = "/run/keys/nomad-role-token";
-            secret_id_response_wrapping_path =
-              "auth/approle/role/nomad/secret-id";
-          };
-        }];
-      };
+      extraSettings.auto_auth.method = [{
+        type = "approle";
+        config = {
+          role_id_file_path = "/run/keys/nomad-role-id";
+          secret_id_file_path = "/run/keys/nomad-role-token";
+          secret_id_response_wrapping_path =
+            "auth/approle/role/nomad/secret-id";
+        };
+      }];
     };
   };
 }

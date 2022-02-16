@@ -1,14 +1,13 @@
 { lib, config, pkgs, ... }:
 
 let
-  inherit (import ../config) domain;
+  inherit (import ../config) domain datacenter;
   cfg = config.lab.vault-agents;
   generateConfig = agent:
     (pkgs.formats.json { }).generate "vault-agent-config.json" ({
-      # NOTE: JSON configuration is slightly different from HCL. See here:
-      # https://github.com/hashicorp/vault/issues/7380
       vault.address = agent.vault.address;
       template = agent.templates;
+      storage.inmem = { };
     } // agent.extraSettings);
 
 in with lib; {
@@ -19,7 +18,7 @@ in with lib; {
       options.vault.address = mkOption {
         description = "The address of the vault server";
         type = types.str;
-        default = "https://vault.service.lab.${domain}:8200";
+        default = "https://vault.service.${datacenter}.${domain}:8200";
       };
 
       options.user = mkOption {

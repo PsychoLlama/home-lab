@@ -113,13 +113,11 @@ in {
     };
 
     lab.vault-agents.consul = {
-      vault.address = "https://vault.service.${datacenter}.${domain}:8200";
       user = "root";
       group = "consul";
       templates = [
         {
           destination = "/var/lib/consul/certs/tls.cert";
-          perms = "660";
           contents = ''
             {{
                with secret "pki/issue/consul"
@@ -135,7 +133,6 @@ in {
             "${pkgs.systemd}/bin/systemctl --no-block try-reload-or-restart consul.service";
 
           destination = "/var/lib/consul/certs/tls.key";
-          perms = "660";
           contents = ''
             {{
                with secret "pki/issue/consul"
@@ -148,18 +145,15 @@ in {
         }
       ];
 
-      extraSettings = {
-        storage.inmem = { };
-        auto_auth.method = [{
-          type = "approle";
-          config = {
-            role_id_file_path = "/run/keys/consul-role-id";
-            secret_id_file_path = "/run/keys/consul-role-token";
-            secret_id_response_wrapping_path =
-              "auth/approle/role/consul/secret-id";
-          };
-        }];
-      };
+      extraSettings.auto_auth.method = [{
+        type = "approle";
+        config = {
+          role_id_file_path = "/run/keys/consul-role-id";
+          secret_id_file_path = "/run/keys/consul-role-token";
+          secret_id_response_wrapping_path =
+            "auth/approle/role/consul/secret-id";
+        };
+      }];
     };
   };
 }
