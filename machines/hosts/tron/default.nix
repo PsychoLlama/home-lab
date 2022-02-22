@@ -18,6 +18,8 @@
       server.enable = true;
       enable = true;
     };
+
+    acme.enable = true;
   };
 
   system.stateVersion = "21.05";

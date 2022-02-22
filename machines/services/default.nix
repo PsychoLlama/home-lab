@@ -1,5 +1,6 @@
 {
   imports = [
+    ./acme.nix
     ./administration.nix
     ./consul.nix
     ./file-server.nix
