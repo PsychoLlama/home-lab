@@ -42,8 +42,19 @@
               nixUnstable
             ];
 
+            # NOTE: Configuring remote builds through the client assumes you
+            # are a trusted Nix user. Without permission, you'll see errors
+            # where it refuses to compile a foreign architecture.
             NIX_CONFIG = ''
               experimental-features = nix-command flakes
+              builders-use-substitutes = true
+              builders = @${
+                writeText "nix-remote-builders" ''
+                  ssh://root@glados.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
+                  ssh://root@tron.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
+                  ssh://root@clu.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
+                ''
+              }
             '';
 
             shellHook = ''
