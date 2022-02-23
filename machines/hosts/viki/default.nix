@@ -35,11 +35,18 @@ in {
         lan.interface = "eth0"; # Native hardware
         wan.interface = "eth1"; # Dongle
 
-        extraHosts = [{
-          ethernetAddress = "98:5f:d3:14:0b:30";
-          ipAddress = "10.0.0.250";
-          hostName = "xbox-one";
-        }];
+        extraHosts = [
+          {
+            ethernetAddress = "98:5f:d3:14:0b:30";
+            ipAddress = "10.0.0.250";
+            hostName = "xbox-one";
+          }
+          {
+            ethernetAddress = "b0:60:88:19:d2:55";
+            ipAddress = "10.0.0.251";
+            hostName = "ava";
+          }
+        ];
       };
     };
   };

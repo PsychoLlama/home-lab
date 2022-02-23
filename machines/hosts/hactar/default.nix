@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
-let unstable = import ../../unstable-pkgs.nix { system = pkgs.system; };
+let
+  unstable = import ../../unstable-pkgs.nix { system = pkgs.system; };
+  inherit (import ../../config) domain;
 
 in {
   imports = [ ../../hardware/poweredge-r720.nix ];
@@ -38,7 +40,7 @@ in {
 
         devices = {
           laptop = {
-            addresses = [ "dynamic" ];
+            addresses = [ "tcp://ava.host.${domain}" ];
             id =
               "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
           };
