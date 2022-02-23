@@ -4,6 +4,7 @@
 
 let
   unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
+  inherit (import ../config) domain;
   cfg = config.lab.file-server;
 
 in with lib; {
@@ -31,6 +32,20 @@ in with lib; {
       example = { "/mnt/data" = "tank/data"; };
 
       default = { };
+    };
+
+    services.borg = {
+      enable = mkEnableOption "Manage and share Borg backup directories";
+      basePath = mkOption {
+        default = "Root directory holding all backups";
+        type = types.str;
+      };
+
+      backups = mkOption {
+        description = "A list of backups (hostnames) to share over NFS";
+        type = types.listOf types.str;
+        default = [ ];
+      };
     };
 
     services.syncthing = filterAttrs (field: _:
@@ -66,8 +81,30 @@ in with lib; {
       options = [ "zfsutil" ];
     }) cfg.mounts;
 
+    services.nfs.server = {
+      enable = true;
+      createMountPoints = true;
+
+      exports = let
+        uid = toString config.users.users.nfs.uid;
+        gid = toString config.users.groups.nfs.gid;
+
+      in concatMapStringsSep "\n" (hostName: ''
+        ${cfg.services.borg.basePath}/${hostName}  ${hostName}.host.${domain}(rw,all_squash,anonuid=${uid},anongid=${gid})
+      '') cfg.services.borg.backups;
+    };
+
+    users = {
+      groups.nfs.gid = 400;
+      users.nfs = {
+        description = "Owner for all NFS-managed files";
+        group = "nfs";
+        uid = 400;
+      };
+    };
+
     networking.firewall = mkIf cfg.services.syncthing.enable {
-      allowedTCPPorts = [ 22000 ]; # TCP Sync
+      allowedTCPPorts = [ 22000 2049 ]; # TCP Sync + NFS
       allowedUDPPorts = [ 22000 21027 ]; # QUIC + Discovery
     };
 

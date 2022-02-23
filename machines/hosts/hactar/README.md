@@ -37,3 +37,28 @@ Then mount it using the `dataDir` option:
 ```nix
 lab.file-server.services.syncthing.dataDir = "/mnt/pool0/syncthing";
 ```
+
+## Borg
+
+This serves as a place for encrypted machine backups using [BorgBackup](https://www.borgbackup.org/). It's made available over NFS. (SSH backups are avoided due to a chicken and egg problem of missing keys while rebuilding a machine from scratch.)
+
+Backups are structured as a list of computer names:
+
+```
+/mnt/pool0/borg/
+  - my-laptop/
+  - my-desktop/
+```
+
+NFS sharing is restricted to `{hostname}.host.{domain}`. Make sure each device is registered with DNS.
+
+```bash
+zfs create pool0/borg
+mount -t zfs -o zfsutil pool0/borg /mnt/pool0/borg
+
+# Create a directory for each computer.
+mkdir -p /mnt/pool0/{comp1,comp2}
+
+# Transfer ownership to NFS.
+chown 400:400 --recursive /mnt/pool0/borg
+```

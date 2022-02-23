@@ -22,9 +22,17 @@ in {
       enable = true;
       hostId = "a26860d3";
       pools = [ "pool0" ];
+
       mounts = {
         "/mnt/pool0" = "pool0";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
+        "/mnt/pool0/borg" = "pool0/borg";
+      };
+
+      services.borg = {
+        enable = true;
+        basePath = "/mnt/pool0/borg";
+        backups = [ "ava" ];
       };
 
       services.syncthing = {
