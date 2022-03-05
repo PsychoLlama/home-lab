@@ -1,4 +1,4 @@
-{ pkgs ? import ../unstable-pkgs.nix { } }:
+{ pkgs ? import ../machines/unstable-pkgs.nix { } }:
 
 let
   inherit (import ../machines/config) domain;
@@ -38,6 +38,7 @@ let
       consul = {
         interface = "eth1";
         server.enable = true;
+        tls.enable = false;
         enable = true;
       };
 

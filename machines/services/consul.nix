@@ -28,6 +28,13 @@ let
 in {
   options.lab.consul = {
     enable = mkEnableOption "Run Consul as part of a cluster";
+
+    tls.enable = mkOption {
+      description = "Assume TLS certificates";
+      type = types.bool;
+      default = true;
+    };
+
     interface = mkOption {
       type = types.str;
       default = "eth0";
@@ -66,7 +73,9 @@ in {
           https = 8501;
           grpc = 8502;
         };
-
+      } // (optionalAttrs cfg.server.enable {
+        bootstrap_expect = length serverAddresses + 1;
+      }) // (optionalAttrs cfg.tls.enable {
         verify_incoming = true;
         verify_outgoing = true;
         verify_server_hostname = true;
@@ -74,12 +83,10 @@ in {
         ca_file = "/etc/ssl/certs/home-lab.crt";
         cert_file = "/var/lib/consul/certs/tls.cert";
         key_file = "/var/lib/consul/certs/tls.key";
-      } // (optionalAttrs cfg.server.enable {
-        bootstrap_expect = length serverAddresses + 1;
       });
     };
 
-    systemd.services.consul = {
+    systemd.services.consul = mkIf cfg.tls.enable {
       after = [ "vault-agent-consul.service" ];
       wants = [ "vault-agent-consul.service" ];
     };
@@ -107,7 +114,7 @@ in {
       }];
     };
 
-    systemd.services.vault-agent-consul = {
+    systemd.services.vault-agent-consul = mkIf cfg.tls.enable {
       after = [ "consul-role-id-key.service" "consul-role-token-key.service" ];
       wants = [ "consul-role-id-key.service" "consul-role-token-key.service" ];
     };
