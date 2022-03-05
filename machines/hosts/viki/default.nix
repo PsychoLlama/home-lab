@@ -34,22 +34,40 @@ in {
       network = {
         wan.interface = "eth1"; # Dongle to WAN
 
-        subnets = [{
-          mask = "255.255.255.0";
-          bits = 24;
-          start = "10.0.0.0";
-          broadcast = "10.0.0.255";
+        subnets = [
+          {
+            mask = "255.255.255.0";
+            bits = 24;
+            start = "10.0.0.0";
+            broadcast = "10.0.0.255";
 
-          lease = {
-            start = "10.0.0.10";
-            end = "10.0.0.200";
-          };
+            lease = {
+              start = "10.0.0.10";
+              end = "10.0.0.200";
+            };
 
-          link = {
-            interface = "eth0"; # Dongle to ethernet switch
-            address = "10.0.0.1";
-          };
-        }];
+            link = {
+              interface = "eth0"; # Dongle to ethernet switch
+              address = "10.0.0.1";
+            };
+          }
+          {
+            mask = "255.255.255.0";
+            bits = 24;
+            start = "10.0.1.0";
+            broadcast = "10.0.1.255";
+
+            lease = {
+              start = "10.0.1.10";
+              end = "10.0.1.250";
+            };
+
+            link = {
+              interface = "eth2"; # Dongle to WAP (no VLAN)
+              address = "10.0.1.1";
+            };
+          }
+        ];
 
         extraHosts = [
           {
