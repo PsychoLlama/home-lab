@@ -15,17 +15,17 @@ in {
   networking.vlans = {
     vlan0 = {
       id = 10;
-      interface = "eth2";
+      interface = "eth1";
     };
 
     vlan1 = {
       id = 20;
-      interface = "eth2";
+      interface = "eth1";
     };
 
     vlan2 = {
       id = 30;
-      interface = "eth2";
+      interface = "eth1";
     };
   };
 
@@ -45,7 +45,7 @@ in {
       }];
 
       network = {
-        wan.interface = "eth1"; # Dongle to WAN
+        wan.interface = "eth2"; # Dongle to WAN
 
         subnets = [
           {
@@ -76,7 +76,7 @@ in {
             };
 
             link = {
-              interface = "eth2"; # Dongle to WAP (no VLAN)
+              interface = "eth1"; # Dongle to WAP (no VLAN)
               address = "10.0.1.1";
             };
           }
