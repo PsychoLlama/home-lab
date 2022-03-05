@@ -3,11 +3,6 @@
 with lib;
 
 let
-  # IP Addresses of nodes where `fn(node) == true`.
-  addressesWhere = predicate:
-    forEach (attrValues (filterAttrs (key: predicate) nodes))
-    (node: node.config.lab.network.ipAddress);
-
   xbox-live-ports = {
     tcp = [ 3074 ];
     udp = [ 3074 3075 88 500 3544 4500 ];
@@ -15,6 +10,24 @@ let
 
 in {
   imports = [ ../../hardware/raspberry-pi-3.nix ];
+
+  # VLANs are sent by the WAP (a UniFi U6 Lite).
+  networking.vlans = {
+    vlan0 = {
+      id = 10;
+      interface = "eth2";
+    };
+
+    vlan1 = {
+      id = 20;
+      interface = "eth2";
+    };
+
+    vlan2 = {
+      id = 30;
+      interface = "eth2";
+    };
+  };
 
   lab = {
     network = {
@@ -67,18 +80,66 @@ in {
               address = "10.0.1.1";
             };
           }
+          {
+            mask = "255.255.255.0";
+            bits = 24;
+            start = "10.0.2.0";
+            broadcast = "10.0.2.255";
+
+            lease = {
+              start = "10.0.2.10";
+              end = "10.0.2.250";
+            };
+
+            link = {
+              interface = "vlan0"; # IoT/Untrusted VLAN
+              address = "10.0.2.1";
+            };
+          }
+          {
+            mask = "255.255.255.0";
+            bits = 24;
+            start = "10.0.3.0";
+            broadcast = "10.0.3.255";
+
+            lease = {
+              start = "10.0.3.10";
+              end = "10.0.3.250";
+            };
+
+            link = {
+              interface = "vlan1"; # Work VLAN
+              address = "10.0.3.1";
+            };
+          }
+          {
+            mask = "255.255.255.0";
+            bits = 24;
+            start = "10.0.4.0";
+            broadcast = "10.0.4.255";
+
+            lease = {
+              start = "10.0.4.10";
+              end = "10.0.4.250";
+            };
+
+            link = {
+              interface = "vlan2"; # Guest VLAN
+              address = "10.0.4.1";
+            };
+          }
         ];
 
         extraHosts = [
           {
-            ethernetAddress = "98:5f:d3:14:0b:30";
-            ipAddress = "10.0.0.250";
-            hostName = "xbox-one";
+            ethernetAddress = "b0:60:88:19:d2:55";
+            ipAddress = "10.0.1.250";
+            hostName = "ava";
           }
           {
-            ethernetAddress = "b0:60:88:19:d2:55";
-            ipAddress = "10.0.0.251";
-            hostName = "ava";
+            ethernetAddress = "98:5f:d3:14:0b:30";
+            ipAddress = "10.0.2.250";
+            hostName = "xbox-one";
           }
         ];
       };
