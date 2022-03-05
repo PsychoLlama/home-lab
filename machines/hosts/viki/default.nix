@@ -32,8 +32,24 @@ in {
       }];
 
       network = {
-        lan.interface = "eth0"; # Native hardware
-        wan.interface = "eth1"; # Dongle
+        wan.interface = "eth1"; # Dongle to WAN
+
+        subnets = [{
+          mask = "255.255.255.0";
+          bits = 24;
+          start = "10.0.0.0";
+          broadcast = "10.0.0.255";
+
+          lease = {
+            start = "10.0.0.10";
+            end = "10.0.0.200";
+          };
+
+          link = {
+            interface = "eth0"; # Dongle to ethernet switch
+            address = "10.0.0.1";
+          };
+        }];
 
         extraHosts = [
           {

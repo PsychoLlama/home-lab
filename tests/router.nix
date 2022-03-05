@@ -12,7 +12,23 @@ let
       enable = true;
       debugging.enable = true;
       network.wan.interface = "eth1";
-      network.lan.interface = "eth2";
+
+      network.subnets = [{
+        mask = "255.255.255.0";
+        bits = 24;
+        start = "10.0.0.0";
+        broadcast = "10.0.0.255";
+
+        lease = {
+          start = "10.0.0.10";
+          end = "10.0.0.200";
+        };
+
+        link = {
+          interface = "eth2";
+          address = "10.0.0.1";
+        };
+      }];
     };
   };
 

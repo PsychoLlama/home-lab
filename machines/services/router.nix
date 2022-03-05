@@ -25,7 +25,7 @@ let
   defaultAliases = [{
     name = "dns";
     kind = "A";
-    addresses = [ cfg.network.lan.address ];
+    addresses = forEach cfg.network.subnets (subnet: subnet.link.address);
   }];
 
   consulDnsAddresses =
@@ -121,69 +121,65 @@ in {
     network = {
       extraHosts = options.services.dhcpd4.machines;
 
-      wan = {
-        interface = mkOption {
-          type = types.str;
-          description = "WAN interface";
-        };
+      wan.interface = mkOption {
+        type = types.str;
+        description = "WAN interface";
       };
 
-      lan = {
-        interface = mkOption {
-          type = types.str;
-          description = "LAN interface";
-        };
-
-        address = mkOption {
-          type = types.str;
-          default = "10.0.0.1";
-          description = "Static LAN IP of the router";
-        };
+      subnets = mkOption {
+        description = "IP ranges assigned by DHCP";
+        default = [ ];
 
         # Some of this is redundant, but the complexity of parsing IPs is too
         # tedious to be worthwhile.
-        subnet = {
-          mask = mkOption {
+        type = types.listOf (types.submodule {
+          options.mask = mkOption {
             type = types.str;
-            default = "255.255.255.0";
-            description = "Subnet mask for the LAN";
+            description = "Subnet mask in string form (e.g. '255.0.0.0')";
           };
 
-          bits = mkOption {
+          options.bits = mkOption {
             type = types.int;
-            default = 24;
             description = ''
               The corresponding number of bits in the subnet mask.
               It must be kept in sync with `subnet.mask`.
             '';
           };
 
-          base = mkOption {
+          options.start = mkOption {
             type = types.str;
-            default = "10.0.0.0";
             description = "The first IP address in the subnet";
           };
 
-          broadcast = mkOption {
+          options.broadcast = mkOption {
             type = types.str;
-            default = "10.0.0.255";
             description = "Subnet broadcast address";
           };
 
-          range = {
+          options.lease = {
             start = mkOption {
               type = types.str;
-              default = "10.0.0.10";
               description = "Starting range for DHCP";
             };
 
             end = mkOption {
               type = types.str;
-              default = "10.0.0.200";
               description = "Ending range for DHCP";
             };
           };
-        };
+
+          options.link = {
+            interface = mkOption {
+              type = types.str;
+              description = "Name of a LAN interface";
+            };
+
+            address = mkOption {
+              type = types.str;
+              description = "Static IP for the interface";
+            };
+          };
+        });
       };
     };
   };
@@ -207,31 +203,33 @@ in {
   config = mkIf cfg.enable {
     networking = {
       useDHCP = false;
-      interfaces.${cfg.network.wan.interface}.useDHCP = mkDefault true;
-      interfaces.${cfg.network.lan.interface} = {
-        useDHCP = false;
 
-        ipv4.addresses = [{
-          address = cfg.network.lan.address;
-          prefixLength = cfg.network.lan.subnet.bits;
-        }];
-      };
+      # Assign static IPs to the appropriate interfaces and configure DHCP for
+      # the WAN upstream.
+      interfaces = recursiveUpdate (listToAttrs (forEach cfg.network.subnets
+        (subnet:
+          nameValuePair subnet.link.interface {
+            useDHCP = false;
+            ipv4.addresses = [{
+              address = subnet.link.address;
+              prefixLength = subnet.bits;
+            }];
+          }))) { ${cfg.network.wan.interface}.useDHCP = mkDefault true; };
 
       nat = {
         enable = true;
         externalInterface = cfg.network.wan.interface;
-        internalInterfaces = [ cfg.network.lan.interface ];
-        internalIPs = [
-          "${cfg.network.lan.address}/${
-            builtins.toString cfg.network.lan.subnet.bits
-          }"
-        ];
+        internalInterfaces = forEach cfg.network.subnets (x: x.link.interface);
+        internalIPs = forEach cfg.network.subnets
+          (subnet: "${subnet.link.address}/${toString subnet.bits}");
       };
 
-      firewall.interfaces.${cfg.network.lan.interface} = {
-        allowedTCPPorts = [ 22 ];
-        allowedUDPPorts = [ 53 ];
-      };
+      # Expose SSH and DNS to all LAN subnets.
+      firewall.interfaces = listToAttrs (forEach cfg.network.subnets (subnet:
+        nameValuePair subnet.link.interface {
+          allowedTCPPorts = [ 22 ];
+          allowedUDPPorts = [ 53 ];
+        }));
     };
 
     environment.systemPackages = mkIf cfg.debugging.enable [
@@ -246,7 +244,10 @@ in {
       package = unstable.coredns;
       config = ''
         (common) {
-          bind lo ${cfg.network.lan.interface}
+          bind lo ${
+            toString
+            (forEach cfg.network.subnets (subnet: subnet.link.interface))
+          }
 
           log
           errors
@@ -287,18 +288,19 @@ in {
     services.dhcpd4 = with cfg.network; {
       enable = true;
       authoritative = true;
-      interfaces = [ lan.interface ];
+      interfaces = forEach cfg.network.subnets (subnet: subnet.link.interface);
       machines = allHosts;
 
       extraConfig = ''
-        option subnet-mask ${lan.subnet.mask};
-        option broadcast-address ${lan.subnet.broadcast};
-        option routers ${lan.address};
-        option domain-name-servers ${lan.address};
-
-        subnet ${lan.subnet.base} netmask ${lan.subnet.mask} {
-          range ${lan.subnet.range.start} ${lan.subnet.range.end};
-        }
+        ${concatMapStringsSep "\n" (subnet: ''
+          subnet ${subnet.start} netmask ${subnet.mask} {
+            option subnet-mask ${subnet.mask};
+            option broadcast-address ${subnet.broadcast};
+            option routers ${subnet.link.address};
+            option domain-name-servers ${subnet.link.address};
+            range ${subnet.lease.start} ${subnet.lease.end};
+          }
+        '') cfg.network.subnets}
       '';
     };
 
@@ -310,8 +312,9 @@ in {
     boot.kernel.sysctl = {
       "net.ipv4.conf.default.rp_filter" = mkDefault 1;
       "net.ipv4.conf.${cfg.network.wan.interface}.rp_filter" = mkDefault 1;
-      "net.ipv4.conf.${cfg.network.lan.interface}.rp_filter" = mkDefault 1;
-    };
+    } // (listToAttrs (forEach cfg.network.subnets (subnet:
+      nameValuePair "net.ipv4.conf.${subnet.link.interface}.rp_filter"
+      (mkDefault 1))));
 
     assertions = forEach cfg.dns.records (service: {
       assertion = length service.addresses > 0;
