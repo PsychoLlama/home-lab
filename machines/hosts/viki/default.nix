@@ -3,6 +3,7 @@
 with lib;
 
 let
+  xbox-ip-address = "10.0.2.250";
   xbox-live-ports = {
     tcp = [ 3074 ];
     udp = [ 3074 3075 88 500 3544 4500 ];
@@ -138,7 +139,7 @@ in {
           }
           {
             ethernetAddress = "98:5f:d3:14:0b:30";
-            ipAddress = "10.0.2.250";
+            ipAddress = xbox-ip-address;
             hostName = "xbox-one";
           }
         ];
@@ -153,11 +154,11 @@ in {
   networking = {
     nat.forwardPorts = forEach xbox-live-ports.tcp (port: {
       sourcePort = port;
-      destination = "10.0.0.250:${builtins.toString port}";
+      destination = "${xbox-ip-address}:${builtins.toString port}";
       proto = "tcp";
     }) ++ forEach xbox-live-ports.udp (port: {
       sourcePort = port;
-      destination = "10.0.0.250:${builtins.toString port}";
+      destination = "${xbox-ip-address}:${builtins.toString port}";
       proto = "udp";
     });
 
