@@ -3,6 +3,9 @@
 with lib;
 
 let
+  mdns-interfaces = [ "vlan0" "eth1" ];
+  mdns-ports = [ 5353 ];
+
   xbox-ip-address = "10.0.2.250";
   xbox-live-ports = {
     tcp = [ 3074 ];
@@ -28,6 +31,15 @@ in {
       id = 30;
       interface = "eth1";
     };
+  };
+
+  # Bridge mDNS between my IoT and private LAN.
+  services.avahi = {
+    enable = true;
+    reflector = true;
+    openFirewall = false;
+    nssmdns = true;
+    interfaces = mdns-interfaces;
   };
 
   lab = {
@@ -166,6 +178,9 @@ in {
       allowedUDPPorts = xbox-live-ports.udp;
       allowedTCPPorts = xbox-live-ports.tcp;
     };
+
+    firewall.interfaces.vlan0.allowedUDPPorts = mdns-ports;
+    firewall.interfaces.eth1.allowedUDPPorts = mdns-ports;
   };
 
   system.stateVersion = "21.11";
