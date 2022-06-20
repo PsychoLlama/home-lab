@@ -77,9 +77,9 @@ in {
       blocklist = mkOption {
         type = types.either types.str types.path;
         default = builtins.fetchurl {
-          sha256 = "1iy4lijfmaigj987hq9ncbalcbw9lc81s6kn3jmwayvs930jg052";
+          sha256 = "1whnmb3jkh8anqnpsrs47x4jyqal32fsmxyrfgq0gljhgz2d9dz2";
           url =
-            "https://raw.githubusercontent.com/StevenBlack/hosts/3.9.57/hosts";
+            "https://raw.githubusercontent.com/StevenBlack/hosts/3.10.9/hosts";
         };
       };
 
