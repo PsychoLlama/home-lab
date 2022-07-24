@@ -3,7 +3,7 @@
 with lib;
 
 let
-  mdns-interfaces = [ "vlan0" "eth1" ];
+  mdns-interfaces = [ "vlan0" "eth1" "vlan2" ];
   mdns-ports = [ 5353 ];
 
   xbox-ip-address = "10.0.2.250";
@@ -33,7 +33,7 @@ in {
     };
   };
 
-  # Bridge mDNS between my IoT and private LAN.
+  # Bridge mDNS between my IoT, Guest, and private LAN.
   services.avahi = {
     enable = true;
     reflector = true;
