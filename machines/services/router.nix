@@ -76,11 +76,11 @@ in {
       # Facilitates DNS-level adblock.
       blocklist = mkOption {
         type = types.either types.str types.path;
-        default = builtins.fetchurl {
-          sha256 = "1whnmb3jkh8anqnpsrs47x4jyqal32fsmxyrfgq0gljhgz2d9dz2";
-          url =
-            "https://raw.githubusercontent.com/StevenBlack/hosts/3.10.9/hosts";
-        };
+        default = pkgs.writeText "empty" "# no hosts";
+        description = ''
+          Domains to replace with a sinkhole address. Works with popular
+          blocklists. The file contents should be structured as `/etc/hosts`.
+        '';
       };
 
       records = mkOption {

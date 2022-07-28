@@ -1,4 +1,4 @@
-{ config, lib, nodes, ... }:
+{ config, lib, nodes, inputs, ... }:
 
 with lib;
 
@@ -52,10 +52,13 @@ in {
       enable = true;
       debugging.enable = true;
 
-      dns.records = [{
-        name = "@";
-        addresses = [ "private-ingress.service" ];
-      }];
+      dns = {
+        blocklist = "${inputs.dns-blocklist}/hosts";
+        records = [{
+          name = "@";
+          addresses = [ "private-ingress.service" ];
+        }];
+      };
 
       network = {
         wan.interface = "eth2"; # Dongle to WAN

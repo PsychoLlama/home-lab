@@ -3,9 +3,13 @@
   inputs = {
     nixpkgs.url = "nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
+    dns-blocklist = {
+      url = "github:StevenBlack/hosts";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = inputs@{ self, nixpkgs, flake-utils, dns-blocklist }:
     let
       defineHost = import ./machines/define-host.nix;
       hostDefinitions = with nixpkgs.lib;
@@ -24,6 +28,9 @@
             enableRollback = true;
             storage.legacy.databasefile = "~/.nixops/deployments.nixops";
           };
+
+          # Pass flake inputs to all NixOS modules.
+          defaults._module.args.inputs = inputs;
         };
       };
     } // flake-utils.lib.eachDefaultSystem (system:

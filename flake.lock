@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "dns-blocklist": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1658930648,
+        "narHash": "sha256-C8JzwnzGbgvA5ExU3SBY6aWBcNmuM6y3PjmQnb3bMJU=",
+        "owner": "StevenBlack",
+        "repo": "hosts",
+        "rev": "fa41eaa31e8247b283ab04052df24511c8f0ce69",
+        "type": "github"
+      },
+      "original": {
+        "owner": "StevenBlack",
+        "repo": "hosts",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "locked": {
         "lastModified": 1642700792,
@@ -31,6 +47,7 @@
     },
     "root": {
       "inputs": {
+        "dns-blocklist": "dns-blocklist",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }
