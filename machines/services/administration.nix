@@ -18,6 +18,7 @@ in with lib; {
       histSize = 500;
       promptInit = ''
         eval "$(starship init zsh)"
+        set -o vi
       '';
 
       setOptions = [
