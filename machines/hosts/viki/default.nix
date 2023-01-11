@@ -153,9 +153,9 @@ in {
             hostName = "ava";
           }
           {
-            ethernetAddress = "98:5f:d3:14:0b:30";
+            ethernetAddress = "20:16:42:06:2c:e3";
             ipAddress = xbox-ip-address;
-            hostName = "xbox-one";
+            hostName = "xbox-console";
           }
         ];
       };
