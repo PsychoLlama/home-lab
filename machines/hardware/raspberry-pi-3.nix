@@ -5,14 +5,12 @@
 
   boot = {
     loader = {
-      generic-extlinux-compatible.enable = true;
+      # Grub is not compatible here. Prefer the Extlinux boot loader.
       grub.enable = false;
 
-      raspberryPi = {
-        enable = true;
-        version = 3;
-        uboot.enable = true;
-      };
+      # The RPI3 module for U-Boot works just as well, but Extlinux should be
+      # lighter. I don't need anything fancy.
+      generic-extlinux-compatible.enable = true;
     };
   };
 

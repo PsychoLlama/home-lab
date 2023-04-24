@@ -1,7 +1,7 @@
 {
   description = "Hobbyist home lab";
   inputs = {
-    nixpkgs.url = "nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/22.11";
     flake-utils.url = "github:numtide/flake-utils";
     dns-blocklist = {
       url = "github:StevenBlack/hosts";
