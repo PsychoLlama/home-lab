@@ -1,7 +1,9 @@
 {
   description = "Hobbyist home lab";
   inputs = {
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/22.11";
+    hardware.url = "github:NixOS/nixos-hardware";
     flake-utils.url = "github:numtide/flake-utils";
     dns-blocklist = {
       url = "github:StevenBlack/hosts";
@@ -9,7 +11,9 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, dns-blocklist }:
+  outputs = inputs@{ self, nixpkgs-unstable, nixpkgs, hardware, flake-utils
+    , dns-blocklist }:
+
     let
       defineHost = import ./machines/define-host.nix;
       hostDefinitions = with nixpkgs.lib;
@@ -17,32 +21,40 @@
           (filterAttrs (_: pathType: pathType == "directory")
             (builtins.readDir ./machines/hosts)));
 
+      pkgs = import inputs.nixpkgs { system = "aarch64-linux"; };
+      unstable = import inputs.nixpkgs-unstable { system = pkgs.system; };
+
     in {
       colmena = hostDefinitions // {
         meta = let inherit (import ./machines/config) domain;
-        in {
-          nixpkgs = import nixpkgs { system = "aarch64-linux"; };
+
+        in rec {
+          description = domain;
+
+          nixpkgs = import inputs.nixpkgs { system = "aarch64-linux"; };
+
+          # Pass flake inputs to all NixOS modules.
+          specialArgs = {
+            inherit inputs;
+
+            unstable = import nixpkgs-unstable { system = nixpkgs.system; };
+          };
 
           # TODO: Test `machinesFile` as an alternative way to configure
           # remote builders.
-
-          description = domain;
         };
-
-        # Pass flake inputs to all NixOS modules.
-        defaults._module.args.inputs = inputs;
       };
     } // flake-utils.lib.eachDefaultSystem (system:
-      let unstable = import ./machines/unstable-pkgs.nix { inherit system; };
+      let unstable = import nixpkgs-unstable { inherit system; };
 
       in {
         checks = import ./tests { pkgs = unstable; };
 
-        devShell = with nixpkgs.legacyPackages.${system};
+        devShell = with unstable;
           mkShell {
             nativeBuildInputs = [
-              (unstable.callPackage ./machines/pkgs/vault-client.nix { })
-              unstable.vault
+              (callPackage ./machines/pkgs/vault-client.nix { })
+              vault
               nixUnstable
               colmena
             ];

@@ -1,4 +1,4 @@
-{ config, lib, pkgs, options, nodes, ... }:
+{ config, lib, pkgs, unstable, options, nodes, ... }:
 
 # Turns the device into a simple router.
 #
@@ -9,7 +9,6 @@ with lib;
 let
   inherit (import ../config) domain;
   cfg = config.lab.router;
-  unstable = import ../unstable-pkgs.nix { system = pkgs.system; };
 
   # Each host optionally defines an ethernet+ip pairing. This extracts it from
   # every machine and converts it to the `services.dhcpd4.machines` format.
