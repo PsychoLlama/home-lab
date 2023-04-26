@@ -1,8 +1,4 @@
-# NixOps doesn't allow custom arguments in NixOS configurations. Unstable
-# packages cannot reasonably be passed through the Flake.
-#
-# Update: That's false. I can use `_module.args`. But I'm not in a position to
-# fix that right now.
+# TODO: Pass this as a flake input with `_module.args`.
 #
 # Note: the result still expects a config argument.
 import (fetchTarball {

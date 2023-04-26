@@ -4,7 +4,7 @@ let cfg = config.deployment.keys;
 
 in with lib; {
   options.deployment.keys = mkOption {
-    description = "Mounted secrets (stubbed from NixOps)";
+    description = "Mounted secrets";
     default = { };
     type = types.attrsOf (types.submodule {
       options = {

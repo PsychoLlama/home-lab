@@ -18,20 +18,19 @@
             (builtins.readDir ./machines/hosts)));
 
     in {
-      nixopsConfigurations = {
-        default = hostDefinitions // {
-          inherit nixpkgs;
+      colmena = hostDefinitions // {
+        meta = let inherit (import ./machines/config) domain;
+        in {
+          nixpkgs = import nixpkgs { system = "aarch64-linux"; };
 
-          network = let inherit (import ./machines/config) domain;
-          in {
-            description = domain;
-            enableRollback = true;
-            storage.legacy.databasefile = "~/.nixops/deployments.nixops";
-          };
+          # TODO: Test `machinesFile` as an alternative way to configure
+          # remote builders.
 
-          # Pass flake inputs to all NixOS modules.
-          defaults._module.args.inputs = inputs;
+          description = domain;
         };
+
+        # Pass flake inputs to all NixOS modules.
+        defaults._module.args.inputs = inputs;
       };
     } // flake-utils.lib.eachDefaultSystem (system:
       let unstable = import ./machines/unstable-pkgs.nix { inherit system; };
@@ -44,9 +43,8 @@
             nativeBuildInputs = [
               (unstable.callPackage ./machines/pkgs/vault-client.nix { })
               unstable.vault
-
-              nixopsUnstable
               nixUnstable
+              colmena
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
@@ -57,9 +55,9 @@
               builders-use-substitutes = true
               builders = @${
                 writeText "nix-remote-builders" ''
-                  ssh://root@glados.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
-                  ssh://root@tron.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
-                  ssh://root@clu.host.selfhosted.city aarch64-linux /root/.ssh/nixops_deploy 4
+                  ssh://root@glados.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                  ssh://root@tron.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                  ssh://root@clu.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
                 ''
               }
             '';
