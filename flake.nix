@@ -1,5 +1,6 @@
 {
   description = "Hobbyist home lab";
+
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/22.11";
@@ -10,7 +11,7 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs-unstable, nixpkgs, hardware, dns-blocklist }:
+  outputs = inputs@{ nixpkgs-unstable, nixpkgs, ... }:
     with nixpkgs.lib;
 
     let
@@ -18,8 +19,6 @@
       hostDefinitions = (mapAttrs (hostName: _: defineHost hostName)
         (filterAttrs (_: pathType: pathType == "directory")
           (builtins.readDir ./machines/hosts)));
-
-      pkgs = import inputs.nixpkgs { system = "aarch64-linux"; };
 
     in {
       colmena = hostDefinitions // {
