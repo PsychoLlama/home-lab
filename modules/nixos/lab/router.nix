@@ -7,7 +7,7 @@
 with lib;
 
 let
-  inherit (import ../config) domain;
+  inherit (config.lab.settings) domain;
   cfg = config.lab.router;
 
   # Each host optionally defines an ethernet+ip pairing. This extracts it from
@@ -26,10 +26,6 @@ let
     kind = "A";
     addresses = forEach cfg.network.subnets (subnet: subnet.link.address);
   }];
-
-  consulDnsAddresses =
-    mapAttrsToList (_: node: node.config.lab.network.ipAddress + ":8600")
-    (flip filterAttrs nodes (_: node: node.config.lab.consul.server.enable));
 
   zoneFile = pkgs.unstable.writeText "local.zone" ''
     $ORIGIN ${domain}.
@@ -253,14 +249,6 @@ in {
           local
           nsid router
         }
-
-        ${optionalString (length consulDnsAddresses > 0) ''
-          lab.selfhosted.city {
-            import common
-
-            forward . ${toString consulDnsAddresses}
-          }
-        ''}
 
         . {
           import common
