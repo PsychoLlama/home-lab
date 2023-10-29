@@ -3,7 +3,7 @@
 with lib;
 
 let
-  mdns-interfaces = [ "vlan0" "eth1" "vlan2" ];
+  mdns-interfaces = [ "vlan-iot" "wap" "vlan-guest" ];
   mdns-ports = [ 5353 ];
 
   xbox-ip-address = "10.0.2.250";
@@ -15,21 +15,28 @@ let
 in {
   imports = [ ../../modules/hardware/raspberry-pi-3.nix ];
 
+  # Assign sensible names to the network interfaces.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="net", ENV{ID_BUS}=="usb", ATTR{address}=="60:a4:b7:59:07:f2", NAME="wan"
+    ACTION=="add", SUBSYSTEM=="net", ENV{ID_BUS}=="usb", ATTR{address}=="b0:a7:b9:2c:a9:b5", NAME="wap"
+    ACTION=="add", SUBSYSTEM=="net", ENV{ID_BUS}=="usb", ATTR{address}=="b8:27:eb:60:f5:88", NAME="lan"
+  '';
+
   # VLANs are sent by the WAP (a UniFi U6 Lite).
   networking.vlans = {
-    vlan0 = {
+    vlan-iot = {
       id = 10;
-      interface = "eth1";
+      interface = "wap";
     };
 
-    vlan1 = {
+    vlan-work = {
       id = 20;
-      interface = "eth1";
+      interface = "wap";
     };
 
-    vlan2 = {
+    vlan-guest = {
       id = 30;
-      interface = "eth1";
+      interface = "wap";
     };
   };
 
@@ -58,7 +65,7 @@ in {
       };
 
       network = {
-        wan.interface = "eth2"; # Dongle to WAN
+        wan.interface = "wan"; # Dongle to WAN
 
         subnets = [
           {
@@ -73,7 +80,7 @@ in {
             };
 
             link = {
-              interface = "eth0"; # Dongle to ethernet switch
+              interface = "lan"; # Dongle to ethernet switch
               address = "10.0.0.1";
             };
           }
@@ -89,7 +96,7 @@ in {
             };
 
             link = {
-              interface = "eth1"; # Dongle to WAP (no VLAN)
+              interface = "wap"; # Dongle to WAP (no VLAN)
               address = "10.0.1.1";
             };
           }
@@ -105,7 +112,7 @@ in {
             };
 
             link = {
-              interface = "vlan0"; # IoT/Untrusted VLAN
+              interface = "vlan-iot"; # IoT/Untrusted VLAN
               address = "10.0.2.1";
             };
           }
@@ -121,7 +128,7 @@ in {
             };
 
             link = {
-              interface = "vlan1"; # Work VLAN
+              interface = "vlan-work"; # Work VLAN
               address = "10.0.3.1";
             };
           }
@@ -137,7 +144,7 @@ in {
             };
 
             link = {
-              interface = "vlan2"; # Guest VLAN
+              interface = "vlan-guest"; # Guest VLAN
               address = "10.0.4.1";
             };
           }
@@ -179,8 +186,8 @@ in {
       allowedTCPPorts = xbox-live-ports.tcp;
     };
 
-    firewall.interfaces.vlan0.allowedUDPPorts = mdns-ports;
-    firewall.interfaces.eth1.allowedUDPPorts = mdns-ports;
+    firewall.interfaces.vlan-iot.allowedUDPPorts = mdns-ports;
+    firewall.interfaces.wap.allowedUDPPorts = mdns-ports;
   };
 
   system.stateVersion = "21.11";
