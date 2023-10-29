@@ -1,26 +1,27 @@
 # Home Lab
 
-Declarative infrastructure for my home lab.
+A set of [NixOS](https://nixos.org/) modules for building your own on-premise cloud (according to a hobbyist).
 
-Stack:
+## Project Status
 
-| Category                | Tool                                                                                      |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| Operating System        | [NixOS](https://nixos.org/)                                                               |
-| Deployment Tools        | [Colmena](https://github.com/zhaofengli/colmena) & [Terraform](https://www.terraform.io/) |
-| Container Orchestration | [Nomad](https://www.nomadproject.io/)                                                     |
-| Secrets Management      | [Vault](https://www.vaultproject.io/)                                                     |
-| Service Discovery       | [Consul](https://www.consul.io/)                                                          |
-| DNS                     | [CoreDNS](https://coredns.io/)                                                            |
-| Storage Backend         | [ZFS](https://github.com/openzfs/zfs)                                                     |
+:construction: Under Construction :construction:
 
-The network is managed declaratively by a Raspberry Pi 3 configured to act as a router (see [here](./machines/hosts/viki/default.nix) and [here](./machines/services/router.nix)).
+This is undergoing a rewrite to incorporate learnings from a few years of working with NixOS. See [ye-olden-days](https://github.com/PsychoLlama/home-lab/tree/ye-olden-days) for a more elaborate, albiet messy example.
 
-## Structure
+## Components
 
-- `machines/`: provisions physical resources & manages operating systems
-  - `hosts/`: host-level configuration
-  - `hardware/`: settings for different hardware classes (e.g. Raspberry Pi)
-  - `services/`: custom services run on the hosts
-- `infrastructure/`: higher-level terraform configs and service definitions
-- `tests/`: automated QEMU tests
+### Router
+
+The router module configures a basic router (nat, dhcp, dns, ...) and declaratively manages the network for everything else in the lab.
+
+### File Server
+
+The file server module configures a ZFS cluster with an attached syncthing service. (This is not a generalized service yet.)
+
+## Inspiration
+
+The Nix Tradition is reading source code until you figure it out. Here are resources that helped me.
+
+- [bitte](https://github.com/input-output-hk/bitte)
+- [hlissner's dotfiles](https://github.com/hlissner/dotfiles/)
+- [ideas for a NixOS router](https://francis.begyn.be/blog/nixos-home-router)

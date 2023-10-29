@@ -1,22 +1,6 @@
 {
   "nodes": {
-    "dns-blocklist": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1683293759,
-        "narHash": "sha256-xK20e/Ld7HMKYRCRmfmd+FJ7JLSxwcKDCKGtKOxxNCE=",
-        "owner": "StevenBlack",
-        "repo": "hosts",
-        "rev": "791dd9d63129f687c58175446e101c44794343f4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "StevenBlack",
-        "repo": "hosts",
-        "type": "github"
-      }
-    },
-    "hardware": {
+    "nixos-hardware": {
       "locked": {
         "lastModified": 1680876084,
         "narHash": "sha256-eP9yxP0wc7XuVaODugh+ajgbFGaile2O1ihxiLxOuvU=",
@@ -65,8 +49,7 @@
     },
     "root": {
       "inputs": {
-        "dns-blocklist": "dns-blocklist",
-        "hardware": "hardware",
+        "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }
