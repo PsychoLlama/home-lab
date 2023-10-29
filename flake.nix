@@ -87,5 +87,7 @@
             }
           '';
         });
+
+      formatter = eachSystem (system: pkgs: pkgs.nixfmt);
     };
 }
