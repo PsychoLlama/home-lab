@@ -15,19 +15,18 @@
       # A subset of Hydra's standard architectures.
       standardSystems = [ "x86_64-linux" "aarch64-linux" ];
 
+      # Load nixpkgs with home-lab overrides.
       loadPkgs = { system }:
         import nixpkgs {
           inherit system;
           overlays = [ self.overlays.unstable-packages ];
         };
 
-      eachSystem = f:
-        lib.pipe standardSystems [
-          (map (system: loadPkgs { inherit system; }))
-          (map (pkgs: lib.nameValuePair pkgs.system pkgs))
-          lib.listToAttrs
-          (lib.mapAttrs f)
-        ];
+      # Attrs { system -> pkgs }
+      packageUniverse =
+        lib.genAttrs standardSystems (system: loadPkgs { inherit system; });
+
+      eachSystem = lib.flip lib.mapAttrs packageUniverse;
 
       hosts = (lib.mapAttrs defineHost {
         clu = ./hosts/clu;
