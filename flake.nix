@@ -29,11 +29,11 @@
       eachSystem = lib.flip lib.mapAttrs packageUniverse;
 
       hosts = (lib.mapAttrs defineHost {
-        clu = ./hosts/clu;
-        glados = ./hosts/glados;
-        tron = ./hosts/tron;
-        hal = ./hosts/hal;
-        viki = ./hosts/viki;
+        rpi3-001 = ./hosts/rpi3-001;
+        rpi3-002 = ./hosts/rpi3-002;
+        rpi4-001 = ./hosts/rpi4-001;
+        rpi4-002 = ./hosts/rpi4-002;
+        rpi4-003 = ./hosts/rpi4-003;
       });
 
     in {
@@ -79,9 +79,9 @@
             builders-use-substitutes = true
             builders = @${
               pkgs.writeText "nix-remote-builders" ''
-                ssh://root@glados.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@tron.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@clu.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-001.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-002.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-003.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
               ''
             }
           '';
