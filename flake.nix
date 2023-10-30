@@ -59,6 +59,8 @@
       hive = lib.mapAttrs defineHost hosts;
 
     in {
+      test = hosts;
+
       overlays = {
         # Add `pkgs.unstable` to the package set.
         unstable-packages = self: pkgs: {
@@ -96,9 +98,15 @@
             builders-use-substitutes = true
             builders = @${
               pkgs.writeText "nix-remote-builders" ''
-                ssh://root@rpi4-001.host.${domain} aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@rpi4-002.host.${domain} aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@rpi4-003.host.${domain} aarch64-linux /root/.ssh/home_lab 4
+                ${lib.pipe hosts (with lib; [
+                  (filterAttrs
+                    (_: host: host.device == deviceProfiles.raspberry-pi-4))
+
+                  (mapAttrsToList (hostName: host:
+                    "ssh://root@${hostName}.host.${domain} aarch64-linux /root/.ssh/home_lab 4"))
+
+                  (concatStringsSep "\n")
+                ])}
               ''
             }
           '';
