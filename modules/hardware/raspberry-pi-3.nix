@@ -1,5 +1,4 @@
 {
-  # TODO: Verify that this is actually necessary.
   hardware.enableRedistributableFirmware = true;
 
   boot.loader = {
