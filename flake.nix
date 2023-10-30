@@ -7,10 +7,15 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 
-  outputs = { self, nixpkgs-unstable, nixpkgs, nixos-hardware, ... }:
+  outputs = { self, nixpkgs-unstable, nixpkgs, nixos-hardware }@flake-inputs:
     let
       inherit (nixpkgs) lib;
-      inherit (import ./lib) defineHost;
+      inherit (import ./lib flake-inputs) defineHost deviceProfiles;
+
+      constants = {
+        domain = "selfhosted.city";
+        datacenter = "lab1";
+      };
 
       # A subset of Hydra's standard architectures.
       standardSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -28,13 +33,30 @@
 
       eachSystem = lib.flip lib.mapAttrs packageUniverse;
 
-      hosts = (lib.mapAttrs defineHost {
-        rpi3-001 = ./hosts/rpi3-001;
-        rpi3-002 = ./hosts/rpi3-002;
-        rpi4-001 = ./hosts/rpi4-001;
-        rpi4-002 = ./hosts/rpi4-002;
-        rpi4-003 = ./hosts/rpi4-003;
-      });
+      hosts = with deviceProfiles; {
+        rpi3-001 = {
+          module = ./hosts/rpi3-001;
+          device = raspberry-pi-3;
+        };
+        rpi3-002 = {
+          module = ./hosts/rpi3-002;
+          device = raspberry-pi-3;
+        };
+        rpi4-001 = {
+          module = ./hosts/rpi4-001;
+          device = raspberry-pi-4;
+        };
+        rpi4-002 = {
+          module = ./hosts/rpi4-002;
+          device = raspberry-pi-4;
+        };
+        rpi4-003 = {
+          module = ./hosts/rpi4-003;
+          device = raspberry-pi-4;
+        };
+      };
+
+      hive = lib.mapAttrs defineHost hosts;
 
     in {
       overlays = {
@@ -44,9 +66,9 @@
         };
       };
 
-      colmena = hosts // rec {
+      colmena = hive // {
         meta = {
-          description = defaults.lab.settings.domain;
+          description = constants.domain;
 
           nixpkgs = loadPkgs {
             # This value is required, but I want host to specify it instead.
@@ -55,16 +77,11 @@
             system = "riscv64-linux";
           };
 
-          specialArgs = { inherit nixos-hardware; };
-
           # TODO: Test `machinesFile` as an alternative way to configure
           # remote builders.
         };
 
-        defaults.lab.settings = {
-          domain = "selfhosted.city";
-          datacenter = "lab1";
-        };
+        defaults.lab.settings = constants;
       };
 
       devShell = eachSystem (system: pkgs:
@@ -74,14 +91,14 @@
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors
           # where it refuses to compile a foreign architecture.
-          NIX_CONFIG = ''
+          NIX_CONFIG = with constants; ''
             experimental-features = nix-command flakes
             builders-use-substitutes = true
             builders = @${
               pkgs.writeText "nix-remote-builders" ''
-                ssh://root@rpi4-001.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@rpi4-002.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
-                ssh://root@rpi4-003.host.selfhosted.city aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-001.host.${domain} aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-002.host.${domain} aarch64-linux /root/.ssh/home_lab 4
+                ssh://root@rpi4-003.host.${domain} aarch64-linux /root/.ssh/home_lab 4
               ''
             }
           '';

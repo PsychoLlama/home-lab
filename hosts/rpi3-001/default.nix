@@ -1,6 +1,4 @@
 {
-  imports = [ ../../modules/hardware/raspberry-pi-3.nix ];
-
   lab.network = {
     ethernetAddress = "b8:27:eb:60:f5:88";
     ipAddress = "10.0.0.203";

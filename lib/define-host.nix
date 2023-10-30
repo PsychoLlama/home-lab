@@ -1,14 +1,14 @@
 # Creates a top-level NixOS config, applied to all machines in the home lab.
 # This is responsible for setting the baseline configuration.
 
-hostName: modulePath:
+hostName: host:
 
 { config, lib, pkgs, ... }:
 
 let inherit (config.lab.settings) domain;
 
 in with lib; {
-  imports = [ ../modules/nixos/lab modulePath ];
+  imports = [ ../modules/nixos/lab host.device host.module ];
 
   # Match the directory name to the host's name.
   networking.hostName = mkDefault hostName;

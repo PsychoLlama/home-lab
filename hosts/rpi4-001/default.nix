@@ -1,4 +1,4 @@
-{ config, lib, pkgs, nodes, ... }:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
@@ -13,8 +13,6 @@ let
   };
 
 in {
-  imports = [ ../../modules/hardware/raspberry-pi-4.nix ];
-
   # Assign sensible names to the network interfaces. Anything with vlans needs
   # a hardware-related filter to avoid conflicts with virtual devices.
   services.udev.extraRules = ''
