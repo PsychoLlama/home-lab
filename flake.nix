@@ -37,22 +37,27 @@
         rpi3-001 = {
           module = ./hosts/rpi3-001;
           device = raspberry-pi-3;
+          system = "aarch64-linux";
         };
         rpi3-002 = {
           module = ./hosts/rpi3-002;
           device = raspberry-pi-3;
+          system = "aarch64-linux";
         };
         rpi4-001 = {
           module = ./hosts/rpi4-001;
           device = raspberry-pi-4;
+          system = "aarch64-linux";
         };
         rpi4-002 = {
           module = ./hosts/rpi4-002;
           device = raspberry-pi-4;
+          system = "aarch64-linux";
         };
         rpi4-003 = {
           module = ./hosts/rpi4-003;
           device = raspberry-pi-4;
+          system = "aarch64-linux";
         };
       };
 
@@ -79,8 +84,9 @@
             system = "riscv64-linux";
           };
 
-          # TODO: Test `machinesFile` as an alternative way to configure
-          # remote builders.
+          # Match each host with the packages for its architecture.
+          nodeNixpkgs =
+            lib.mapAttrs (_: host: packageUniverse.${host.system}) hosts;
         };
 
         defaults.lab.settings = constants;
@@ -103,7 +109,7 @@
                     (_: host: host.device == deviceProfiles.raspberry-pi-4))
 
                   (mapAttrsToList (hostName: host:
-                    "ssh://root@${hostName}.host.${domain} aarch64-linux /root/.ssh/home_lab 4"))
+                    "ssh://root@${hostName}.host.${domain} ${host.system} /root/.ssh/home_lab 4"))
 
                   (concatStringsSep "\n")
                 ])}
