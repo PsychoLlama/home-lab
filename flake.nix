@@ -12,13 +12,13 @@
       inherit (nixpkgs) lib;
       inherit (import ./lib flake-inputs) defineHost deviceProfiles;
 
-      constants = {
+      # A subset of Hydra's standard architectures.
+      standardSystems = [ "x86_64-linux" "aarch64-linux" ];
+
+      labSettings = {
         domain = "selfhosted.city";
         datacenter = "lab1";
       };
-
-      # A subset of Hydra's standard architectures.
-      standardSystems = [ "x86_64-linux" "aarch64-linux" ];
 
       # Load nixpkgs with home-lab overrides.
       loadPkgs = { system }:
@@ -64,8 +64,6 @@
       hive = lib.mapAttrs defineHost hosts;
 
     in {
-      test = hosts;
-
       overlays = {
         # Add `pkgs.unstable` to the package set.
         unstable-packages = self: pkgs: {
@@ -74,8 +72,10 @@
       };
 
       colmena = hive // {
+        defaults.lab.settings = labSettings;
+
         meta = {
-          description = constants.domain;
+          description = labSettings.domain;
 
           nixpkgs = loadPkgs {
             # This value is required, but I want host to specify it instead.
@@ -88,8 +88,6 @@
           nodeNixpkgs =
             lib.mapAttrs (_: host: packageUniverse.${host.system}) hosts;
         };
-
-        defaults.lab.settings = constants;
       };
 
       devShell = eachSystem (system: pkgs:
@@ -99,7 +97,7 @@
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors
           # where it refuses to compile a foreign architecture.
-          NIX_CONFIG = with constants; ''
+          NIX_CONFIG = with labSettings; ''
             experimental-features = nix-command flakes
             builders-use-substitutes = true
             builders = @${
