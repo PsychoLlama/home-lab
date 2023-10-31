@@ -4,6 +4,7 @@
 {
   raspberry-pi-3 = {
     imports = [ nixpkgs.nixosModules.notDetected ];
+    deployment.tags = [ "rpi3" ];
 
     boot.loader = {
       # Grub is not compatible here. Prefer the Extlinux boot loader.
@@ -32,6 +33,8 @@
       nixos-hardware.nixosModules.raspberry-pi-4
       nixpkgs.nixosModules.notDetected
     ];
+
+    deployment.tags = [ "rpi4" ];
 
     fileSystems."/" = {
       device = "/dev/disk/by-label/NIXOS_SD";
