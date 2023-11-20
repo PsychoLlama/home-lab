@@ -10,15 +10,13 @@ let inherit (config.lab.settings) domain;
 in with lib; {
   imports = [ ../modules/nixos/lab host.device host.module ];
 
-  # Match the directory name to the host's name.
-  networking.hostName = mkDefault hostName;
-
-  # All hosts are addressed as `{host}.host.{domain}`.
-  networking.domain = "host.${domain}";
-
   deployment.targetHost = config.networking.fqdn;
 
-  # Enable flakes.
+  networking = {
+    hostName = mkDefault hostName;
+    domain = "host.${domain}";
+  };
+
   nix = {
     # Run garbage collection on a schedule.
     gc.automatic = true;
@@ -26,10 +24,8 @@ in with lib; {
     # Use hard links to save disk space.
     optimise.automatic = true;
 
-    package = pkgs.unstable.nix;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-    '';
+    # Enable Flake support.
+    settings.experimental-features = [ "nix-command" "flakes" ];
   };
 
   services.openssh = {
