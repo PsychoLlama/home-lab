@@ -38,26 +38,36 @@
           module = ./hosts/rpi3-001;
           device = raspberry-pi-3;
           system = "aarch64-linux";
+          ethernet = "b8:27:eb:60:f5:88";
+          ip4 = "10.0.0.203";
         };
         rpi3-002 = {
           module = ./hosts/rpi3-002;
           device = raspberry-pi-3;
           system = "aarch64-linux";
+          ethernet = "b8:27:eb:0b:a2:ff";
+          ip4 = "10.0.0.202";
         };
         rpi4-001 = {
           module = ./hosts/rpi4-001;
           device = raspberry-pi-4;
           system = "aarch64-linux";
+          ethernet = "dc:a6:32:e1:42:81";
+          ip4 = "10.0.0.1"; # Router
         };
         rpi4-002 = {
           module = ./hosts/rpi4-002;
           device = raspberry-pi-4;
           system = "aarch64-linux";
+          ethernet = "e4:5f:01:0e:c7:66";
+          ip4 = "10.0.0.208";
         };
         rpi4-003 = {
           module = ./hosts/rpi4-003;
           device = raspberry-pi-4;
           system = "aarch64-linux";
+          ethernet = "dc:a6:32:77:bb:82";
+          ip4 = "10.0.0.204";
         };
       };
 

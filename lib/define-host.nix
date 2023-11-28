@@ -7,15 +7,17 @@ hostName: host:
 
 let inherit (config.lab.settings) domain;
 
-in with lib; {
+in {
   imports = [ ../modules/nixos/lab host.device host.module ];
 
   deployment.targetHost = config.networking.fqdn;
 
   networking = {
-    hostName = mkDefault hostName;
+    hostName = lib.mkDefault hostName;
     domain = "host.${domain}";
   };
+
+  lab.host = { inherit (host) ethernet ip4; };
 
   nix = {
     # Run garbage collection on a schedule.

@@ -10,14 +10,18 @@ let
   inherit (config.lab.settings) domain;
   cfg = config.lab.router;
 
-  # Each host optionally defines an ethernet+ip pairing. This extracts it from
-  # every machine and converts it to the `services.dhcpd4.machines` format.
-  labHosts = forEach (attrValues (filterAttrs (_: node:
-    hasAttr "ethernetAddress" ((node.config.lab or { }).network or { })
-    && node.config.lab.network.ethernetAddress != null) nodes)) (node: {
-      inherit (node.config.lab.network) ethernetAddress ipAddress;
-      hostName = node.config.networking.hostName;
-    });
+  # Each host defines an ethernet+ip pairing. This extracts it from every
+  # machine and converts it to the `services.dhcpd4.machines` format.
+  labHosts = lib.mapAttrsToList (_: node:
+    let
+      inherit (node.config) networking;
+      inherit (node.config.lab) host;
+
+    in {
+      hostName = networking.hostName;
+      ethernetAddress = host.ethernet;
+      ipAddress = host.ip4;
+    }) nodes;
 
   allHosts = labHosts ++ cfg.network.extraHosts;
 
@@ -176,22 +180,6 @@ in {
           };
         });
       };
-    };
-  };
-
-  # DHCP can sync ethernet addresses with IPs for more consistent topologies.
-  # Each host that wants a reservation should set this field.
-  options.lab.network = {
-    ethernetAddress = mkOption {
-      type = types.nullOr types.str;
-      description = "MAC address of the machine.";
-      default = null;
-    };
-
-    ipAddress = mkOption {
-      type = types.nullOr types.str;
-      description = "IP address of the machine.";
-      default = null;
     };
   };
 

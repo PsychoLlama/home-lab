@@ -49,11 +49,6 @@ in {
   };
 
   lab = {
-    network = {
-      ethernetAddress = "dc:a6:32:e1:42:81";
-      ipAddress = "10.0.0.1";
-    };
-
     router = {
       enable = true;
       debugging.enable = true;

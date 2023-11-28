@@ -6,11 +6,6 @@ let
   decryptionTarget = "${decryptionTargetName}.target";
 
 in {
-  lab.network = {
-    ethernetAddress = "b8:27:eb:0b:a2:ff";
-    ipAddress = "10.0.0.202";
-  };
-
   # -----------------------------------------
   # TODO: Migrate this to a file server role.
   # -----------------------------------------
