@@ -5,12 +5,20 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/23.05";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
+    colmena = {
+      url = "github:zhaofengli/colmena/release-0.4.x";
+      inputs = {
+        nixpkgs.follows = "nixpkgs-unstable";
+        stable.follows = "nixpkgs";
+      };
+    };
   };
 
-  outputs = { self, nixpkgs-unstable, nixpkgs, nixos-hardware }@flake-inputs:
+  outputs =
+    { self, nixpkgs-unstable, nixpkgs, nixos-hardware, colmena }@flake-inputs:
     let
       inherit (nixpkgs) lib;
-      inherit (import ./lib flake-inputs) defineHost deviceProfiles;
+      inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;
 
       # A subset of Hydra's standard architectures.
       standardSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -71,8 +79,6 @@
         };
       };
 
-      hive = lib.mapAttrs defineHost hosts;
-
     in {
       overlays = {
         # Add `pkgs.unstable` to the package set.
@@ -81,7 +87,7 @@
         };
       };
 
-      colmena = hive // {
+      colmena = (lib.mapAttrs defineHost hosts) // {
         defaults.lab.settings = labSettings;
 
         meta = {
@@ -102,7 +108,7 @@
 
       devShell = eachSystem (system: pkgs:
         pkgs.mkShell {
-          buildInputs = with pkgs; [ nixUnstable colmena ];
+          buildInputs = [ pkgs.nixUnstable pkgs.colmena ];
 
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors
@@ -117,7 +123,7 @@
                     (_: host: host.device == deviceProfiles.raspberry-pi-4))
 
                   (mapAttrsToList (hostName: host:
-                    "ssh://root@${hostName}.host.${domain} ${host.system} /root/.ssh/home_lab 4"))
+                    "ssh://root@${hostName}.host.${domain} ${host.system} /root/.ssh/home_lab 4 1 kvm"))
 
                   (concatStringsSep "\n")
                 ])}
@@ -127,5 +133,15 @@
         });
 
       formatter = eachSystem (system: pkgs: pkgs.nixfmt);
+
+      # Create a bootable SD image for each machine.
+      packages = let hive = colmena.lib.makeHive self.colmena;
+      in lib.foldlAttrs (packages: hostName: node:
+        lib.recursiveUpdate packages {
+          ${node.pkgs.system}.${hostName} = makeImage {
+            inherit nixpkgs;
+            nixosSystem = node;
+          };
+        }) { } hive.nodes;
     };
 }
