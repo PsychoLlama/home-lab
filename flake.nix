@@ -138,7 +138,7 @@
       packages = let hive = colmena.lib.makeHive self.colmena;
       in lib.foldlAttrs (packages: hostName: node:
         lib.recursiveUpdate packages {
-          ${node.pkgs.system}.${hostName} = makeImage {
+          ${node.pkgs.system}."${hostName}-image" = makeImage {
             inherit nixpkgs;
             nixosSystem = node;
           };
