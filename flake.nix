@@ -23,11 +23,6 @@
       # A subset of Hydra's standard architectures.
       standardSystems = [ "x86_64-linux" "aarch64-linux" ];
 
-      labSettings = {
-        domain = "selfhosted.city";
-        datacenter = "lab1";
-      };
-
       # Load nixpkgs with home-lab overrides.
       loadPkgs = { system }:
         import nixpkgs {
@@ -41,43 +36,48 @@
 
       eachSystem = lib.flip lib.mapAttrs packageUniverse;
 
+      # Each record maps to `config.lab.host`.
       hosts = with deviceProfiles; {
         rpi3-001 = {
           module = ./hosts/rpi3-001;
-          device = raspberry-pi-3;
+          profile = raspberry-pi-3;
           system = "aarch64-linux";
           ethernet = "b8:27:eb:60:f5:88";
           ip4 = "10.0.0.203";
         };
         rpi3-002 = {
           module = ./hosts/rpi3-002;
-          device = raspberry-pi-3;
+          profile = raspberry-pi-3;
           system = "aarch64-linux";
           ethernet = "b8:27:eb:0b:a2:ff";
           ip4 = "10.0.0.202";
         };
         rpi4-001 = {
           module = ./hosts/rpi4-001;
-          device = raspberry-pi-4;
+          profile = raspberry-pi-4;
           system = "aarch64-linux";
           ethernet = "dc:a6:32:e1:42:81";
           ip4 = "10.0.0.1"; # Router
         };
         rpi4-002 = {
           module = ./hosts/rpi4-002;
-          device = raspberry-pi-4;
+          profile = raspberry-pi-4;
           system = "aarch64-linux";
           ethernet = "e4:5f:01:0e:c7:66";
           ip4 = "10.0.0.208";
+          builder.enable = true;
         };
         rpi4-003 = {
           module = ./hosts/rpi4-003;
-          device = raspberry-pi-4;
+          profile = raspberry-pi-4;
           system = "aarch64-linux";
           ethernet = "dc:a6:32:77:bb:82";
           ip4 = "10.0.0.204";
+          builder.enable = true;
         };
       };
+
+      hive = colmena.lib.makeHive self.colmena;
 
     in {
       overlays = {
@@ -87,11 +87,14 @@
         };
       };
 
-      colmena = (lib.mapAttrs defineHost hosts) // {
-        defaults.lab.settings = labSettings;
+      colmena = (lib.mapAttrs defineHost hosts) // rec {
+        defaults.lab.settings = {
+          domain = "selfhosted.city";
+          datacenter = "lab1";
+        };
 
         meta = {
-          description = labSettings.domain;
+          description = defaults.lab.settings.domain;
 
           nixpkgs = loadPkgs {
             # This value is required, but I want host to specify it instead.
@@ -113,20 +116,17 @@
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors
           # where it refuses to compile a foreign architecture.
-          NIX_CONFIG = with labSettings; ''
+          NIX_CONFIG = ''
             experimental-features = nix-command flakes
             builders-use-substitutes = true
             builders = @${
               pkgs.writeText "nix-remote-builders" ''
-                ${lib.pipe hosts (with lib; [
-                  (filterAttrs
-                    (_: host: host.device == deviceProfiles.raspberry-pi-4))
-
-                  (mapAttrsToList (hostName: host:
-                    "ssh://root@${hostName}.host.${domain} ${host.system} /root/.ssh/home_lab 4 1 kvm"))
-
-                  (concatStringsSep "\n")
-                ])}
+                ${lib.pipe hive.nodes [
+                  (lib.mapAttrs (_: node: node.config.lab.host))
+                  (lib.filterAttrs (_: host: host.builder.enable))
+                  (lib.mapAttrsToList (_: host: host.builder.conf))
+                  (lib.concatStringsSep "\n")
+                ]}
               ''
             }
           '';
@@ -135,8 +135,7 @@
       formatter = eachSystem (system: pkgs: pkgs.nixfmt);
 
       # Create a bootable SD image for each machine.
-      packages = let hive = colmena.lib.makeHive self.colmena;
-      in lib.foldlAttrs (packages: hostName: node:
+      packages = lib.foldlAttrs (packages: hostName: node:
         lib.recursiveUpdate packages {
           ${node.pkgs.system}."${hostName}-image" = makeImage {
             inherit nixpkgs;

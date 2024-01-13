@@ -8,7 +8,7 @@ hostName: host:
 let inherit (config.lab.settings) domain;
 
 in {
-  imports = [ ../modules/nixos/lab host.device host.module ];
+  imports = [ ../modules/nixos/lab host.profile host.module ];
 
   deployment.targetHost = config.networking.fqdn;
 
@@ -17,7 +17,7 @@ in {
     domain = "host.${domain}";
   };
 
-  lab.host = { inherit (host) ethernet ip4; };
+  lab.host = host;
 
   nix = {
     # Run garbage collection on a schedule.
