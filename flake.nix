@@ -91,6 +91,14 @@
         defaults.lab = {
           domain = "selfhosted.city";
           datacenter = "lab1";
+
+          networks = {
+            datacenter.ipv4.cidr = "10.0.0.1/24";
+            home.ipv4.cidr = "10.0.1.1/24";
+            iot.ipv4.cidr = "10.0.2.1/24";
+            work.ipv4.cidr = "10.0.3.1/24";
+            guest.ipv4.cidr = "10.0.4.1/24";
+          };
         };
 
         meta = {

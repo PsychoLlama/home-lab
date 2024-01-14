@@ -61,6 +61,7 @@ in {
       network = {
         wan.interface = "wan"; # Dongle to WAN
 
+        # TODO: Merge with `lab.networks`.
         subnets = [
           {
             mask = "255.255.255.0";
