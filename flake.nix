@@ -111,7 +111,7 @@
 
       devShell = eachSystem (system: pkgs:
         pkgs.mkShell {
-          buildInputs = [ pkgs.nixUnstable pkgs.colmena ];
+          packages = [ pkgs.nixUnstable pkgs.colmena pkgs.just ];
 
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors
