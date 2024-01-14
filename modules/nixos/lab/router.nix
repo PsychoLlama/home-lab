@@ -7,7 +7,7 @@
 with lib;
 
 let
-  inherit (config.lab.settings) domain;
+  inherit (config.lab) domain;
   cfg = config.lab.router;
 
   # Each host defines an ethernet+ip pairing. This extracts it from every

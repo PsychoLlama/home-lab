@@ -88,13 +88,13 @@
       };
 
       colmena = (lib.mapAttrs defineHost hosts) // rec {
-        defaults.lab.settings = {
+        defaults.lab = {
           domain = "selfhosted.city";
           datacenter = "lab1";
         };
 
         meta = {
-          description = defaults.lab.settings.domain;
+          description = defaults.lab.domain;
 
           nixpkgs = loadPkgs {
             # This value is required, but I want host to specify it instead.

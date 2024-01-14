@@ -5,7 +5,7 @@ hostName: host:
 
 { config, lib, pkgs, ... }:
 
-let inherit (config.lab.settings) domain;
+let inherit (config.lab) domain;
 
 in {
   imports = [ ../modules/nixos/lab host.profile host.module ];

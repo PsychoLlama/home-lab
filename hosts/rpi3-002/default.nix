@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
-  inherit (config.lab.settings) domain;
+  inherit (config.lab) domain;
   decryptionTargetName = "pool-decryption";
   decryptionTarget = "${decryptionTargetName}.target";
 
