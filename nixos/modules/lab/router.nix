@@ -163,6 +163,9 @@ in {
     networking = {
       useDHCP = false;
 
+      # Don't use the ISP nameservers, use the locally configured DNS.
+      nameservers = [ "127.0.0.1" ];
+
       interfaces = mkMerge [
         {
           # Get a public IP from the WAN link, presumably an ISP.
