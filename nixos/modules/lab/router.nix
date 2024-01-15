@@ -23,7 +23,7 @@ let
       ipAddress = host.ip4;
     }) nodes;
 
-  allHosts = labHosts ++ cfg.network.extraHosts;
+  allHosts = labHosts ++ cfg.dhcp.leases;
 
   defaultAliases = [{
     name = "dns";
@@ -55,7 +55,8 @@ let
 in {
   options.lab.router = {
     enable = mkEnableOption "Act as a router";
-    debugging.enable = mkEnableOption "Enable the debugging toolkit";
+
+    dhcp.leases = options.services.dhcpd4.machines;
 
     dns = {
       upstream = {
@@ -152,13 +153,9 @@ in {
       }));
     };
 
-    network = {
-      extraHosts = options.services.dhcpd4.machines;
-
-      wan.interface = mkOption {
-        type = types.str;
-        description = "WAN interface";
-      };
+    wan.interface = mkOption {
+      type = types.str;
+      description = "WAN interface";
     };
   };
 
@@ -169,7 +166,7 @@ in {
       interfaces = mkMerge [
         {
           # Get a public IP from the WAN link, presumably an ISP.
-          ${cfg.network.wan.interface}.useDHCP = mkDefault true;
+          ${cfg.wan.interface}.useDHCP = mkDefault true;
         }
 
         # Statically assign the gateway IP to all managed LAN interfaces.
@@ -187,7 +184,7 @@ in {
 
       nat = {
         enable = true;
-        externalInterface = cfg.network.wan.interface;
+        externalInterface = cfg.wan.interface;
         internalInterfaces =
           mapAttrsToList (_: network: network.interface) cfg.networks;
 
@@ -206,7 +203,7 @@ in {
       }) cfg.networks;
     };
 
-    environment.systemPackages = mkIf cfg.debugging.enable [
+    environment.systemPackages = [
       pkgs.unstable.bottom # System load observer
       pkgs.unstable.dogdns # DNS testing
       pkgs.unstable.tcpdump # Inspect traffic (used with Wireshark)
@@ -251,7 +248,7 @@ in {
       '';
     };
 
-    services.dhcpd4 = with cfg.network; {
+    services.dhcpd4 = {
       enable = true;
       authoritative = true;
       interfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
@@ -286,7 +283,7 @@ in {
       {
         # Enable for the WAN interface.
         "net.ipv4.conf.default.rp_filter" = mkDefault 1;
-        "net.ipv4.conf.${cfg.network.wan.interface}.rp_filter" = mkDefault 1;
+        "net.ipv4.conf.${cfg.wan.interface}.rp_filter" = mkDefault 1;
       }
 
       # Enable for all LAN interfaces.
