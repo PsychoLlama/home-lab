@@ -8,7 +8,7 @@ hostName: host:
 let inherit (config.lab) domain;
 
 in {
-  imports = [ ../nixos/modules/lab host.profile host.module ];
+  imports = [ ../nixos/modules host.profile host.module ];
 
   deployment.targetHost = config.networking.fqdn;
 
