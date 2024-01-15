@@ -7,7 +7,7 @@
 with lib;
 
 let
-  inherit (config.lab) domain;
+  inherit (config.lab) domain networks;
   cfg = config.lab.router;
 
   # Each host defines an ethernet+ip pairing. This extracts it from every
@@ -115,6 +115,32 @@ in {
         description = "TTL for custom DNS records";
         default = "60";
       };
+    };
+
+    networks = mkOption {
+      description = "Map of networks to create from `lab.networks`";
+      default = { };
+      type = types.attrsOf (types.submodule ({ name, config, ... }: {
+        options = {
+          name = mkOption {
+            description = "One of `lab.networks`";
+            type = types.enum (attrNames networks);
+            default = name;
+          };
+
+          interface = mkOption {
+            description = "Name of the network interface to use";
+            type = types.str;
+          };
+
+          # Aliases into `lab.networks` for convenience.
+          ipv4 = mkOption {
+            type = types.anything;
+            readOnly = true;
+            default = networks.${config.name}.ipv4;
+          };
+        };
+      }));
     };
 
     network = {

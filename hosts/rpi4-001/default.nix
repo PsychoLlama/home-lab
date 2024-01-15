@@ -58,6 +58,14 @@ in {
         records = [ ];
       };
 
+      networks = {
+        datacenter.interface = "lan"; # Dongle to ethernet switch
+        home.interface = "wap"; # Dongle to WAP (no VLAN)
+        iot.interface = "vlan-iot";
+        work.interface = "vlan-work";
+        guest.interface = "vlan-guest";
+      };
+
       network = {
         wan.interface = "wan"; # Dongle to WAN
 
