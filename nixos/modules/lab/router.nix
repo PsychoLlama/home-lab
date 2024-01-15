@@ -28,7 +28,7 @@ let
   defaultAliases = [{
     name = "dns";
     kind = "A";
-    addresses = forEach cfg.network.subnets (subnet: subnet.link.address);
+    addresses = mapAttrsToList (_: network: network.ipv4.gateway) cfg.networks;
   }];
 
   zoneFile = pkgs.unstable.writeText "local.zone" ''
@@ -70,6 +70,15 @@ in {
           default = "cloudflare-dns.com";
           description = "Server hostname (used for TLS)";
         };
+      };
+
+      zoneFile = mkOption {
+        type = types.path;
+        default = zoneFile;
+        description = ''
+          Path to a BIND zone file. Setting this option will override
+          the generated config.
+        '';
       };
 
       # Facilitates DNS-level adblock.
@@ -150,62 +159,6 @@ in {
         type = types.str;
         description = "WAN interface";
       };
-
-      subnets = mkOption {
-        description = "IP ranges assigned by DHCP";
-        default = [ ];
-
-        # Some of this is redundant, but the complexity of parsing IPs is too
-        # tedious to be worthwhile.
-        type = types.listOf (types.submodule {
-          options.mask = mkOption {
-            type = types.str;
-            description = "Subnet mask in string form (e.g. '255.0.0.0')";
-          };
-
-          options.bits = mkOption {
-            type = types.int;
-            description = ''
-              The corresponding number of bits in the subnet mask.
-              It must be kept in sync with `subnet.mask`.
-            '';
-          };
-
-          options.start = mkOption {
-            type = types.str;
-            description = "The first IP address in the subnet";
-          };
-
-          options.broadcast = mkOption {
-            type = types.str;
-            description = "Subnet broadcast address";
-          };
-
-          options.lease = {
-            start = mkOption {
-              type = types.str;
-              description = "Starting range for DHCP";
-            };
-
-            end = mkOption {
-              type = types.str;
-              description = "Ending range for DHCP";
-            };
-          };
-
-          options.link = {
-            interface = mkOption {
-              type = types.str;
-              description = "Name of a LAN interface";
-            };
-
-            address = mkOption {
-              type = types.str;
-              description = "Static IP for the interface";
-            };
-          };
-        });
-      };
     };
   };
 
@@ -213,32 +166,44 @@ in {
     networking = {
       useDHCP = false;
 
-      # Assign static IPs to the appropriate interfaces and configure DHCP for
-      # the WAN upstream.
-      interfaces = recursiveUpdate (listToAttrs (forEach cfg.network.subnets
-        (subnet:
-          nameValuePair subnet.link.interface {
+      interfaces = mkMerge [
+        {
+          # Get a public IP from the WAN link, presumably an ISP.
+          ${cfg.network.wan.interface}.useDHCP = mkDefault true;
+        }
+
+        # Statically assign the gateway IP to all managed LAN interfaces.
+        (mapAttrs' (_: network: {
+          name = network.interface;
+          value = {
             useDHCP = false;
             ipv4.addresses = [{
-              address = subnet.link.address;
-              prefixLength = subnet.bits;
+              address = network.ipv4.gateway;
+              prefixLength = network.ipv4.prefixLength;
             }];
-          }))) { ${cfg.network.wan.interface}.useDHCP = mkDefault true; };
+          };
+        }) cfg.networks)
+      ];
 
       nat = {
         enable = true;
         externalInterface = cfg.network.wan.interface;
-        internalInterfaces = forEach cfg.network.subnets (x: x.link.interface);
-        internalIPs = forEach cfg.network.subnets
-          (subnet: "${subnet.link.address}/${toString subnet.bits}");
+        internalInterfaces =
+          mapAttrsToList (_: network: network.interface) cfg.networks;
+
+        internalIPs = mapAttrsToList (_: network:
+          "${network.ipv4.gateway}/${toString network.ipv4.prefixLength}")
+          cfg.networks;
       };
 
-      # Expose SSH and DNS to all LAN subnets.
-      firewall.interfaces = listToAttrs (forEach cfg.network.subnets (subnet:
-        nameValuePair subnet.link.interface {
+      # Expose SSH and DNS to all LAN interfaces.
+      firewall.interfaces = mapAttrs' (_: network: {
+        name = network.interface;
+        value = {
           allowedTCPPorts = [ 22 ];
           allowedUDPPorts = [ 53 ];
-        }));
+        };
+      }) cfg.networks;
     };
 
     environment.systemPackages = mkIf cfg.debugging.enable [
@@ -255,7 +220,7 @@ in {
         (common) {
           bind lo ${
             toString
-            (forEach cfg.network.subnets (subnet: subnet.link.interface))
+            (mapAttrsToList (_: network: network.interface) cfg.networks)
           }
 
           log
@@ -268,7 +233,7 @@ in {
           import common
           cache
 
-          file ${zoneFile} ${domain} {
+          file ${cfg.dns.zoneFile} ${domain} {
             reload 0
           }
 
@@ -289,19 +254,26 @@ in {
     services.dhcpd4 = with cfg.network; {
       enable = true;
       authoritative = true;
-      interfaces = forEach cfg.network.subnets (subnet: subnet.link.interface);
+      interfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
       machines = allHosts;
 
       extraConfig = ''
-        ${concatMapStringsSep "\n" (subnet: ''
-          subnet ${subnet.start} netmask ${subnet.mask} {
-            option subnet-mask ${subnet.mask};
-            option broadcast-address ${subnet.broadcast};
-            option routers ${subnet.link.address};
-            option domain-name-servers ${subnet.link.address};
-            range ${subnet.lease.start} ${subnet.lease.end};
-          }
-        '') cfg.network.subnets}
+        ${lib.pipe cfg.networks [
+          # TODO: Use network.ipv4.nameservers and support multiple ranges.
+          (mapAttrsToList (_: network: ''
+            subnet ${network.ipv4.network} netmask ${network.ipv4.netmask} {
+              option subnet-mask ${network.ipv4.netmask};
+              option broadcast-address ${network.ipv4.broadcast};
+              option routers ${network.ipv4.gateway};
+              option domain-name-servers ${network.ipv4.gateway};
+              range ${(head network.ipv4.dhcp.ranges).start} ${
+                (head network.ipv4.dhcp.ranges).end
+              };
+            }
+          ''))
+
+          (concatStringsSep "\n")
+        ]}
       '';
     };
 
@@ -310,12 +282,19 @@ in {
 
     # Enable strict reverse path filtering. This guards against some forms of
     # IP spoofing.
-    boot.kernel.sysctl = {
-      "net.ipv4.conf.default.rp_filter" = mkDefault 1;
-      "net.ipv4.conf.${cfg.network.wan.interface}.rp_filter" = mkDefault 1;
-    } // (listToAttrs (forEach cfg.network.subnets (subnet:
-      nameValuePair "net.ipv4.conf.${subnet.link.interface}.rp_filter"
-      (mkDefault 1))));
+    boot.kernel.sysctl = mkMerge [
+      {
+        # Enable for the WAN interface.
+        "net.ipv4.conf.default.rp_filter" = mkDefault 1;
+        "net.ipv4.conf.${cfg.network.wan.interface}.rp_filter" = mkDefault 1;
+      }
+
+      # Enable for all LAN interfaces.
+      (mapAttrs' (_: network: {
+        name = "net.ipv4.conf.${network.interface}.rp_filter";
+        value = mkDefault 1;
+      }) cfg.networks)
+    ];
 
     assertions = forEach cfg.dns.records (service: {
       assertion = length service.addresses > 0;
