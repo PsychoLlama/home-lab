@@ -6,6 +6,11 @@ let
   decryptionTarget = "${decryptionTargetName}.target";
 
 in {
+  lab.static-network = {
+    enable = true;
+    interface = "enu1u1";
+  };
+
   # -----------------------------------------
   # TODO: Migrate this to a file server role.
   # -----------------------------------------
