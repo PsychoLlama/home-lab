@@ -91,6 +91,24 @@ let
           # TODO: Remove assumption that all gateways run DNS.
           default = [ config.ipv4.gateway ];
         };
+
+        dhcp.ranges = mkOption {
+          description = "Assignable address ranges used by DHCP";
+          default = [ ];
+          type = types.listOf (types.submodule {
+            options.start = mkOption {
+              type = types.str;
+              description = "Starting range for DHCP";
+              example = "192.168.1.10";
+            };
+
+            options.end = mkOption {
+              type = types.str;
+              description = "Ending range for DHCP";
+              example = "192.168.1.254";
+            };
+          });
+        };
       };
     };
 
