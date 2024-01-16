@@ -8,7 +8,22 @@ in {
   options.lab.dhcp = {
     enable = mkEnableOption "Run a DHCP server";
     networks = options.lab.router.networks;
-    leases = options.services.dhcpd4.machines;
+    reservations = mkOption {
+      type = types.listOf (types.submodule {
+        options.hw-address = mkOption {
+          type = types.str;
+          description = "MAC address of the host";
+        };
+
+        options.ip-address = mkOption {
+          type = types.str;
+          description = "IP address to assign to the host";
+        };
+      });
+
+      description = "Static DHCP reservations";
+      default = [ ];
+    };
   };
 
   config = mkIf cfg.enable {
@@ -54,6 +69,12 @@ in {
               }
             ];
           }) cfg.networks;
+
+          host-reservation-identifiers = [ "hw-address" "client-id" ];
+          reservations-global = true;
+          reservations-in-subnet = true;
+          reservations-out-of-pool = false;
+          reservations = cfg.reservations;
         };
       };
     };

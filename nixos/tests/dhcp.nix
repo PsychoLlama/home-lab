@@ -21,6 +21,10 @@
         lab.dhcp = {
           enable = true;
           networks.test.interface = "eth1";
+          reservations = [{
+            hw-address = "52:54:00:12:01:02";
+            ip-address = "10.0.5.68";
+          }];
         };
 
         assertions = [{
@@ -52,8 +56,20 @@
         networking = {
           useNetworkd = true;
           useDHCP = false;
-          firewall.enable = false;
           interfaces.eth1.useDHCP = true;
+        };
+      };
+
+      reserved = {
+        virtualisation.vlans = [ 1 ];
+
+        networking = {
+          useNetworkd = true;
+          useDHCP = false;
+          interfaces.eth1 = {
+            useDHCP = true;
+            macAddress = "52:54:00:12:01:02";
+          };
         };
       };
     };
@@ -86,6 +102,13 @@
 
       with subtest("expected DNS servers are provided"):
         client.succeed("resolvectl dns eth1 | grep -q '10.0.5.3'")
+
+      with subtest("reservations are given to recognized hosts"):
+        reserved.wait_for_unit("systemd-networkd-wait-online.service")
+
+        info = json.loads(reserved.succeed("ip --json addr show eth1"))
+        local_ips = { addr["local"] for addr in info[0]["addr_info"] }
+        assert "10.0.5.68" in local_ips, f"IP was not assigned: {local_ips}"
     '';
   };
 }
