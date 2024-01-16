@@ -176,13 +176,38 @@
 
       formatter = eachSystem (system: pkgs: pkgs.nixfmt);
 
-      # Create a bootable SD image for each machine.
-      packages = lib.foldlAttrs (packages: hostName: node:
-        lib.recursiveUpdate packages {
-          ${node.pkgs.system}."${hostName}-image" = makeImage {
-            inherit nixpkgs;
-            nixosSystem = node;
+      packages = let
+        # Create a bootable disk image for each machine.
+        hostImages = lib.foldlAttrs (packages: hostName: node:
+          lib.recursiveUpdate packages {
+            ${node.pkgs.system}."${hostName}-image" = makeImage {
+              inherit nixpkgs;
+              nixosSystem = node;
+            };
+          }) { } hive.nodes;
+
+        # Create a pseudo-package `tests` that holds all `nixosTest` drvs
+        # underneath. This is useful to escape the flat namespace constraint
+        # of `flake.packages` while remaining easily scriptable.
+        testScripts = eachSystem (system: pkgs: {
+          tests = pkgs.stdenvNoCC.mkDerivation {
+            name = "tests";
+            phases = [ "installPhase" ];
+            installPhase = lib.warn ''
+              This is not meant to be built. It only exists to hold other tests.
+            '' ''
+              touch $out
+            '';
+
+            # All tests are exposed as attributes on this derivation. You can
+            # build them by path:
+            # ```
+            # nix build .#tests.<module>.<test-name>
+            # ```
+            passthru = pkgs.callPackage ./nixos/tests { };
           };
-        }) { } hive.nodes;
+        });
+
+      in lib.recursiveUpdate hostImages testScripts;
     };
 }
