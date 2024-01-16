@@ -18,6 +18,44 @@ in {
       value.allowedUDPPorts = [ 67 ];
     }) cfg.networks;
 
-    # TODO: ... the rest ...
+    services.kea = {
+      dhcp4 = {
+        enable = true;
+        settings = {
+          valid-lifetime = 3600;
+          renew-timer = 900;
+          rebind-timer = 1800;
+
+          lease-database = {
+            type = "memfile";
+            persist = true;
+            name = "/var/lib/kea/dhcp4.leases";
+          };
+
+          interfaces-config = {
+            dhcp-socket-type = "raw";
+            interfaces =
+              mapAttrsToList (_: network: network.interface) cfg.networks;
+          };
+
+          subnet4 = mapAttrsToList (_: network: {
+            subnet = network.ipv4.subnet;
+            pools = forEach network.ipv4.dhcp.ranges
+              (lease: { pool = "${lease.start} - ${lease.end}"; });
+
+            option-data = [
+              {
+                name = "domain-name-servers";
+                data = concatStringsSep ", " network.ipv4.nameservers;
+              }
+              {
+                name = "routers";
+                data = network.ipv4.gateway;
+              }
+            ];
+          }) cfg.networks;
+        };
+      };
+    };
   };
 }

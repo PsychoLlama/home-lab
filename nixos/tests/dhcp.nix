@@ -6,7 +6,7 @@
     imports = [ baseModule ];
 
     defaults.lab.networks.test.ipv4 = {
-      cidr = "10.0.5.1/24";
+      cidr = "10.0.5.3/24";
       dhcp.ranges = [{
         start = "10.0.5.22";
         end = "10.0.5.22";
@@ -31,18 +31,61 @@
             DHCP server did not open firewall.
           '';
         }];
+
+        systemd.network = {
+          enable = true;
+          networks = {
+            "01-eth1" = {
+              name = "eth1";
+              networkConfig.Address = "10.0.5.11/24";
+            };
+          };
+        };
       };
 
       client = {
-        # TODO
+        virtualisation.vlans = [ 1 ];
+        systemd.services.systemd-networkd = {
+          environment.SYSTEMD_LOG_LEVEL = "debug";
+        };
+
+        networking = {
+          useNetworkd = true;
+          useDHCP = false;
+          firewall.enable = false;
+          interfaces.eth1.useDHCP = true;
+        };
       };
     };
 
     testScript = ''
+      import json
+
       start_all()
 
-      server.wait_for_unit("network-online.target")
-      server.shell_interact()
+      server.wait_for_unit("kea-dhcp4-server.service")
+      client.wait_for_unit("systemd-networkd-wait-online.service")
+
+      with subtest("correct client IP is assigned"):
+        info = json.loads(client.succeed("ip --json addr show eth1"))
+        local_ips = { addr["local"] for addr in info[0]["addr_info"] }
+        assert "10.0.5.22" in local_ips, f"IP was not assigned: {local_ips}"
+
+      with subtest("default gateway is assigned"):
+        routes = json.loads(client.succeed("ip --json route"))
+        gateways = {
+          route["gateway"] for route in routes
+          if (
+            route["dev"] == "eth1" and
+            route["protocol"] == "dhcp" and
+            "gateway" in route
+          )
+        }
+
+        assert "10.0.5.3" in gateways, f"Gateway was not assigned: {gateways}"
+
+      with subtest("expected DNS servers are provided"):
+        client.succeed("resolvectl dns eth1 | grep -q '10.0.5.3'")
     '';
   };
 }

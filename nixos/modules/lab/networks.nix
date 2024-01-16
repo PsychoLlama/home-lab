@@ -16,6 +16,7 @@ let
         "broadcastAddress": str(interface.network.broadcast_address),
         "prefixLength": interface.network.prefixlen,
         "subnetMask": str(interface.network.netmask),
+        "subnet": str(interface.network),
     })
 
     print(data)
@@ -81,6 +82,13 @@ let
           type = types.str;
           default = ipv4.subnetMask;
           example = "255.255.255.0";
+        };
+
+        subnet = mkOption {
+          description = "CIDR notation of the subnet";
+          type = types.str;
+          default = ipv4.subnet;
+          example = "192.168.1.0/24";
         };
 
         nameservers = mkOption {
