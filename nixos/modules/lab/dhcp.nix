@@ -55,7 +55,7 @@ in {
 
           subnet4 = mapAttrsToList (_: network: {
             subnet = network.ipv4.subnet;
-            pools = forEach network.ipv4.dhcp.ranges
+            pools = forEach network.ipv4.dhcp.pools
               (lease: { pool = "${lease.start} - ${lease.end}"; });
 
             option-data = [

@@ -7,7 +7,7 @@
 
     defaults.lab.networks.test.ipv4 = {
       cidr = "10.0.5.3/24";
-      dhcp.ranges = [{
+      dhcp.pools = [{
         start = "10.0.5.22";
         end = "10.0.5.22";
       }];

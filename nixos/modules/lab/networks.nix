@@ -100,7 +100,7 @@ let
           default = [ config.ipv4.gateway ];
         };
 
-        dhcp.ranges = mkOption {
+        dhcp.pools = mkOption {
           description = "Assignable address ranges used by DHCP";
           default = [ ];
           type = types.listOf (types.submodule {

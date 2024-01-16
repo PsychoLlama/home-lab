@@ -266,8 +266,8 @@ in {
               option broadcast-address ${network.ipv4.broadcast};
               option routers ${network.ipv4.gateway};
               option domain-name-servers ${network.ipv4.gateway};
-              range ${(head network.ipv4.dhcp.ranges).start} ${
-                (head network.ipv4.dhcp.ranges).end
+              range ${(head network.ipv4.dhcp.pools).start} ${
+                (head network.ipv4.dhcp.pools).end
               };
             }
           ''))
