@@ -67,6 +67,10 @@ in {
                 name = "routers";
                 data = network.ipv4.gateway;
               }
+              {
+                name = "broadcast-address";
+                data = network.ipv4.broadcast;
+              }
             ];
           }) cfg.networks;
 

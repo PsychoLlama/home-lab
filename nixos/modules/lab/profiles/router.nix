@@ -76,10 +76,9 @@ in {
         records = [ ];
       };
 
-      dhcp.leases = [{
-        ethernetAddress = "20:16:42:06:2c:e3";
-        ipAddress = xbox.ip;
-        hostName = "xbox-console";
+      dhcp.reservations = [{
+        hw-address = "20:16:42:06:2c:e3";
+        ip-address = xbox.ip;
       }];
     };
 

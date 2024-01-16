@@ -12,18 +12,12 @@ let
 
   # Each host defines an ethernet+ip pairing. This extracts it from every
   # machine and converts it to the `services.dhcpd4.machines` format.
-  labHosts = lib.mapAttrsToList (_: node:
-    let
-      inherit (node.config) networking;
-      inherit (node.config.lab) host;
-
-    in {
-      hostName = networking.hostName;
-      ethernetAddress = host.ethernet;
-      ipAddress = host.ip4;
-    }) nodes;
-
-  allHosts = labHosts ++ cfg.dhcp.leases;
+  #
+  # TODO: Move this into the router profile.
+  labHosts = lib.mapAttrsToList (_: node: {
+    hostName = node.config.networking.hostName;
+    ipAddress = node.config.lab.host.ip4;
+  }) nodes;
 
   defaultAliases = [{
     name = "dns";
@@ -43,7 +37,7 @@ let
     ; Hosts
     ${concatMapStringsSep "\n" (machine:
       "${machine.hostName}.host  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
-    allHosts}
+    labHosts}
 
     ; Custom records
     ${concatMapStringsSep "\n" (record:
@@ -56,7 +50,7 @@ in {
   options.lab.router = {
     enable = mkEnableOption "Act as a router";
 
-    dhcp.leases = options.services.dhcpd4.machines;
+    dhcp.reservations = options.lab.dhcp.reservations;
 
     dns = {
       upstream = {
@@ -146,7 +140,6 @@ in {
           # Aliases into `lab.networks` for convenience.
           ipv4 = mkOption {
             type = types.anything;
-            readOnly = true;
             default = networks.${config.name}.ipv4;
           };
         };
@@ -251,30 +244,10 @@ in {
       '';
     };
 
-    services.dhcpd4 = {
+    lab.dhcp = {
       enable = true;
-      authoritative = true;
-      interfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
-      machines = allHosts;
-
-      extraConfig = ''
-        ${lib.pipe cfg.networks [
-          # TODO: Use network.ipv4.nameservers and support multiple ranges.
-          (mapAttrsToList (_: network: ''
-            subnet ${network.ipv4.network} netmask ${network.ipv4.netmask} {
-              option subnet-mask ${network.ipv4.netmask};
-              option broadcast-address ${network.ipv4.broadcast};
-              option routers ${network.ipv4.gateway};
-              option domain-name-servers ${network.ipv4.gateway};
-              range ${(head network.ipv4.dhcp.pools).start} ${
-                (head network.ipv4.dhcp.pools).end
-              };
-            }
-          ''))
-
-          (concatStringsSep "\n")
-        ]}
-      '';
+      networks = cfg.networks;
+      reservations = cfg.dhcp.reservations;
     };
 
     # SSH should not be accessible from the open internet.
