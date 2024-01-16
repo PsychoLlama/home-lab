@@ -27,7 +27,7 @@
       loadPkgs = { system }:
         import nixpkgs {
           inherit system;
-          overlays = [ self.overlays.unstable-packages ];
+          overlays = [ self.overlays.unstable-packages self.overlays.testing ];
         };
 
       # Attrs { system -> pkgs }
@@ -82,8 +82,13 @@
     in {
       overlays = {
         # Add `pkgs.unstable` to the package set.
-        unstable-packages = self: pkgs: {
-          unstable = import nixpkgs-unstable { inherit (pkgs) system; };
+        unstable-packages = final: prev: {
+          unstable = import nixpkgs-unstable { inherit (prev) system; };
+        };
+
+        # `runTest` is a souped up version of `nixosTest`.
+        testing = final: prev: {
+          inherit (import (final.path + "/nixos/lib") { }) runTest;
         };
       };
 
@@ -204,7 +209,9 @@
             # ```
             # nix build .#tests.<module>.<test-name>
             # ```
-            passthru = pkgs.callPackage ./nixos/tests { };
+            passthru = pkgs.callPackage ./nixos/tests {
+              inherit (flake-inputs) colmena;
+            };
           };
         });
 
