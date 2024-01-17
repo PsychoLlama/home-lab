@@ -83,6 +83,7 @@
       client.wait_for_unit("systemd-networkd-wait-online.service")
 
       with subtest("correct client IP is assigned"):
+        client.succeed("sleep 5") # TODO: Find the right target to wait for.
         info = json.loads(client.succeed("ip --json addr show eth1"))
         local_ips = { addr["local"] for addr in info[0]["addr_info"] }
         assert "10.0.5.22" in local_ips, f"IP was not assigned: {local_ips}"

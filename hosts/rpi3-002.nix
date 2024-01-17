@@ -87,29 +87,29 @@ in {
       dataDir = "/mnt/pool0/syncthing";
       configDir = "/mnt/pool0/syncthing/.config";
 
-      folders."/mnt/pool0/syncthing/attic" = {
-        id = "attic";
-        devices = [ "laptop" "phone" ];
-        label = "Attic";
-      };
-
-      devices = {
-        laptop = {
-          addresses = [ "tcp://ava.host.${domain}" ];
-          id =
-            "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
-        };
-
-        phone = {
-          addresses = [ "dynamic" ];
-          id =
-            "S2U7KKV-SXJGOI3-6MSJWIT-U2JP32Y-HH7WZU5-ZDS6KAT-6CNYRAM-ZQTWZAQ";
-        };
-      };
-
-      extraOptions = {
+      settings = {
         options.urAccepted = 3;
         gui.theme = "dark";
+
+        folders."/mnt/pool0/syncthing/attic" = {
+          id = "attic";
+          devices = [ "laptop" "phone" ];
+          label = "Attic";
+        };
+
+        devices = {
+          laptop = {
+            addresses = [ "tcp://ava.host.${domain}" ];
+            id =
+              "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
+          };
+
+          phone = {
+            addresses = [ "dynamic" ];
+            id =
+              "S2U7KKV-SXJGOI3-6MSJWIT-U2JP32Y-HH7WZU5-ZDS6KAT-6CNYRAM-ZQTWZAQ";
+          };
+        };
       };
     };
 
