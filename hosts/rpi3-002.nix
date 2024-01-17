@@ -5,6 +5,19 @@ let
   decryptionTargetName = "pool-decryption";
   decryptionTarget = "${decryptionTargetName}.target";
 
+  makeTaskRunner = command: justfile:
+    pkgs.stdenvNoCC.mkDerivation {
+      name = command;
+      buildInputs = [ pkgs.makeWrapper ];
+      phases = [ "installPhase" ];
+      installPhase = ''
+        makeWrapper ${pkgs.just}/bin/just $out/bin/${command} \
+          --prefix PATH : ${placeholder "out"}/bin \
+          --add-flags --justfile \
+          --add-flags ${pkgs.writeText "justfile" justfile}
+      '';
+    };
+
 in {
   # -----------------------------------------
   # TODO: Migrate this to a file server role.
@@ -27,43 +40,33 @@ in {
   };
 
   environment.systemPackages = [
-    (pkgs.writers.writeBashBin "mount-zfs-datasets" ''
-      set -euo pipefail
+    (makeTaskRunner "nas-ctl" ''
+      default:
+        nas-ctl --list
 
-      echo "Importing pool"
-      ${pkgs.zfs}/bin/zpool import pool0
-      ${pkgs.zfs}/bin/zpool list
+      # Decrypt and mount all ZFS datasets.
+      attach-storage:
+        ${pkgs.zfs}/bin/zpool import pool0
+        ${pkgs.zfs}/bin/zpool list
 
-      echo "Loading decryption keys"
-      ${pkgs.zfs}/bin/zfs load-key -a
+        ${pkgs.zfs}/bin/zfs load-key -a
 
-      echo "Mounting datasets"
+        mount -t zfs -o zfsutil pool0 /mnt/pool0
+        mount -t zfs -o zfsutil pool0/syncthing /mnt/pool0/syncthing
 
-      mount -t zfs -o zfsutil pool0 /mnt/pool0
-      mount -t zfs -o zfsutil pool0/syncthing /mnt/pool0/syncthing
+        mount -t zfs
 
-      echo "Mounted successfully."
-      mount -t zfs
+        ${pkgs.systemd}/bin/systemctl start ${decryptionTarget}
 
-      echo "Enabling dependent systemd services"
-      ${pkgs.systemd}/bin/systemctl start ${decryptionTarget}
-    '')
+      # Unmount ZFS datasets.
+      detach-storage:
+        ${pkgs.systemd}/bin/systemctl stop ${decryptionTarget}
 
-    (pkgs.writers.writeBashBin "unmount-zfs-datasets" ''
-      set -euo pipefail
+        umount /mnt/pool0/syncthing
+        umount /mnt/pool0
 
-      echo "Stopping dependent systemd services"
-      ${pkgs.systemd}/bin/systemctl stop ${decryptionTarget}
-
-      echo "Unmounting ZFS datasets"
-      umount /mnt/pool0/syncthing
-      umount /mnt/pool0
-
-      echo "Releasing decryption keys"
-      ${pkgs.zfs}/bin/zfs unload-key -a
-
-      echo "Exporting ZFS pools"
-      ${pkgs.zfs}/bin/zpool export -a
+        ${pkgs.zfs}/bin/zfs unload-key -a
+        ${pkgs.zfs}/bin/zpool export -a
     '')
   ];
 
