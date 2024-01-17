@@ -5,6 +5,12 @@ let
   decryptionTargetName = "pool-decryption";
   decryptionTarget = "${decryptionTargetName}.target";
 
+  zfs = dataset: {
+    device = dataset;
+    fsType = "zfs";
+    options = [ "noauto" "zfsutil" ];
+  };
+
   makeTaskRunner = command: justfile:
     pkgs.stdenvNoCC.mkDerivation {
       name = command;
@@ -46,15 +52,10 @@ in {
 
       # Decrypt and mount all ZFS datasets.
       attach-storage:
-        ${pkgs.zfs}/bin/zpool import pool0
-        ${pkgs.zfs}/bin/zpool list
-
         ${pkgs.zfs}/bin/zfs load-key -a
 
-        mount -t zfs -o zfsutil pool0 /mnt/pool0
-        mount -t zfs -o zfsutil pool0/syncthing /mnt/pool0/syncthing
-
-        mount -t zfs
+        mount /mnt/pool0
+        mount /mnt/pool0/syncthing
 
         ${pkgs.systemd}/bin/systemctl start ${decryptionTarget}
 
@@ -66,7 +67,6 @@ in {
         umount /mnt/pool0
 
         ${pkgs.zfs}/bin/zfs unload-key -a
-        ${pkgs.zfs}/bin/zpool export -a
     '')
   ];
 
@@ -131,6 +131,13 @@ in {
       allowedTCPPorts = [ 22000 ]; # TCP Sync
       allowedUDPPorts = [ 22000 21027 ]; # QUIC + LAN Discovery
     };
+  };
+
+  # NOTE: ZFS mounts will fail unless the pool is decrypted. Make sure it does
+  # not attempt to mount at boot.
+  fileSystems = {
+    "/mnt/pool0" = zfs "pool0";
+    "/mnt/pool0/syncthing" = zfs "pool0/syncthing";
   };
 
   system.stateVersion = "23.05";
