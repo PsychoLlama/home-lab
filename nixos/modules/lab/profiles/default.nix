@@ -1,1 +1,1 @@
-{ imports = [ ./router.nix ]; }
+{ imports = [ ./file-server.nix ./router.nix ]; }
