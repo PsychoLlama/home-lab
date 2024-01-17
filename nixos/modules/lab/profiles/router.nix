@@ -7,6 +7,11 @@ let
   inherit (config.lab.router) wan;
   cfg = config.lab.profiles.router;
 
+  laptop = {
+    ip = "10.0.1.250";
+    hostName = "ava";
+  };
+
   xbox = {
     ip = "10.0.2.250";
     ports = {
@@ -73,13 +78,23 @@ in {
 
       dns = {
         blocklist = "${pkgs.unstable.stevenblack-blocklist}/hosts";
-        records = [ ];
+        records = [{
+          name = "${laptop.hostName}.host";
+          addresses = [ laptop.ip ];
+          kind = "A";
+        }];
       };
 
-      dhcp.reservations = [{
-        hw-address = "20:16:42:06:2c:e3";
-        ip-address = xbox.ip;
-      }];
+      dhcp.reservations = [
+        {
+          hw-address = "b0:60:88:19:d2:55";
+          ip-address = laptop.ip;
+        }
+        {
+          hw-address = "20:16:42:06:2c:e3";
+          ip-address = xbox.ip;
+        }
+      ];
     };
 
     # Although not technically part of the home lab, this is still my home
