@@ -1,4 +1,4 @@
-{ pkgs, callPackage, colmena }:
+{ pkgs, callPackage, colmena, runTest }:
 
 let
   baseModule = {
@@ -10,10 +10,12 @@ let
     ];
   };
 
-  loadTest = path: args:
-    callPackage path (args // { inherit loadTest baseModule; });
+  makeTest = testModule: runTest { imports = [ baseModule testModule ]; };
+
+  importTests = path: args:
+    callPackage path (args // { inherit importTests makeTest; });
 
 in {
-  dhcp = loadTest ./dhcp.nix { };
+  dhcp = importTests ./dhcp.nix { };
   # ...
 }

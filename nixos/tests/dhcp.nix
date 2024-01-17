@@ -1,9 +1,8 @@
-{ runTest, baseModule, lib, ... }:
+{ makeTest, lib, ... }:
 
 {
-  assignment = runTest {
+  assignment = makeTest {
     name = "assignment";
-    imports = [ baseModule ];
 
     defaults.lab.networks.test.ipv4 = {
       cidr = "10.0.5.3/24";
@@ -83,10 +82,7 @@
       client.wait_for_unit("systemd-networkd-wait-online.service")
 
       with subtest("correct client IP is assigned"):
-        client.succeed("sleep 5") # TODO: Find the right target to wait for.
-        info = json.loads(client.succeed("ip --json addr show eth1"))
-        local_ips = { addr["local"] for addr in info[0]["addr_info"] }
-        assert "10.0.5.22" in local_ips, f"IP was not assigned: {local_ips}"
+        client.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.22/24'")
 
       with subtest("default gateway is assigned"):
         routes = json.loads(client.succeed("ip --json route"))
@@ -106,10 +102,7 @@
 
       with subtest("reservations are given to recognized hosts"):
         reserved.wait_for_unit("systemd-networkd-wait-online.service")
-
-        info = json.loads(reserved.succeed("ip --json addr show eth1"))
-        local_ips = { addr["local"] for addr in info[0]["addr_info"] }
-        assert "10.0.5.68" in local_ips, f"IP was not assigned: {local_ips}"
+        reserved.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.68/24'")
     '';
   };
 }
