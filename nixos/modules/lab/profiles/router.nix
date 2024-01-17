@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, nodes, ... }:
 
 with lib;
 
@@ -7,13 +7,26 @@ let
   inherit (config.lab.router) wan;
   cfg = config.lab.profiles.router;
 
+  # Reserve IP addresses for all hosts.
+  hostReservations = mapAttrsToList (_: node: {
+    hw-address = node.config.lab.host.ethernet;
+    ip-address = node.config.lab.host.ip4;
+  }) nodes;
+
+  # Generate DNS records for every host.
+  hostRecords = mapAttrsToList (_: node: {
+    name = "${node.config.networking.hostName}.host";
+    value = node.config.lab.host.ip4;
+    type = "A";
+  }) nodes;
+
   laptop = {
-    ip = "10.0.1.250";
+    ip4 = "10.0.1.250";
     hostName = "ava";
   };
 
   xbox = {
-    ip = "10.0.2.250";
+    ip4 = "10.0.2.250";
     ports = {
       tcp = [ 3074 ];
       udp = [ 3074 3075 88 500 3544 4500 ];
@@ -78,21 +91,21 @@ in {
 
       dns = {
         blocklist = "${pkgs.unstable.stevenblack-blocklist}/hosts";
-        records = [{
+        records = hostRecords ++ [{
           name = "${laptop.hostName}.host";
-          addresses = [ laptop.ip ];
-          kind = "A";
+          value = laptop.ip4;
+          type = "A";
         }];
       };
 
-      dhcp.reservations = [
+      dhcp.reservations = hostReservations ++ [
         {
           hw-address = "b0:60:88:19:d2:55";
-          ip-address = laptop.ip;
+          ip-address = laptop.ip4;
         }
         {
           hw-address = "20:16:42:06:2c:e3";
-          ip-address = xbox.ip;
+          ip-address = xbox.ip4;
         }
       ];
     };
@@ -105,7 +118,7 @@ in {
         forEach ports (port: {
           inherit proto;
           sourcePort = port;
-          destination = "${xbox.ip}:${toString port}";
+          destination = "${xbox.ip4}:${toString port}";
         })) xbox.ports);
 
       firewall.interfaces = let mdns = [ 5353 ];

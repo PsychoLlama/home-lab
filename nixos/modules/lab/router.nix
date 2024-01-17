@@ -1,8 +1,4 @@
-{ config, lib, pkgs, options, nodes, ... }:
-
-# Turns the device into a simple router.
-#
-# Manages firewalls, routing, NAT, DHCP, and DNS.
+{ config, lib, pkgs, options, ... }:
 
 with lib;
 
@@ -10,45 +6,9 @@ let
   inherit (config.lab) domain networks;
   cfg = config.lab.router;
 
-  # Each host defines an ethernet+ip pairing. This extracts it from every
-  # machine and converts it to the `services.dhcpd4.machines` format.
-  #
-  # TODO: Move this into the router profile.
-  labHosts = lib.mapAttrsToList (_: node: {
-    hostName = node.config.networking.hostName;
-    ipAddress = node.config.lab.host.ip4;
-  }) nodes;
-
-  defaultAliases = [{
-    name = "dns";
-    kind = "A";
-    addresses = mapAttrsToList (_: network: network.ipv4.gateway) cfg.networks;
-  }];
-
-  zoneFile = pkgs.unstable.writeText "local.zone" ''
-    $ORIGIN ${domain}.
-    @       IN SOA dns trash (
-            1         ; Version number
-            60        ; Zone refresh interval
-            30        ; Zone update retry timeout
-            180       ; Zone TTL
-            3600)     ; Negative response TTL
-
-    ; Hosts
-    ${concatMapStringsSep "\n" (machine:
-      "${machine.hostName}.host  ${cfg.dns.ttl} IN A ${machine.ipAddress}")
-    labHosts}
-
-    ; Custom records
-    ${concatMapStringsSep "\n" (record:
-      concatMapStringsSep "\n"
-      (address: "${record.name}  ${cfg.dns.ttl} IN ${record.kind} ${address}")
-      record.addresses) (defaultAliases ++ cfg.dns.records)}
-  '';
-
 in {
   options.lab.router = {
-    enable = mkEnableOption "Act as a router";
+    enable = mkEnableOption "Turn the device into a simple router";
 
     dhcp.reservations = options.lab.dhcp.reservations;
 
@@ -69,7 +29,21 @@ in {
 
       zoneFile = mkOption {
         type = types.path;
-        default = zoneFile;
+        default = pkgs.unstable.writeText "local.zone" ''
+          $ORIGIN ${domain}.
+          @       IN SOA dns trash (
+                  1         ; Version number
+                  60        ; Zone refresh interval
+                  30        ; Zone update retry timeout
+                  180       ; Zone TTL
+                  3600)     ; Negative response TTL
+
+          ; Custom records
+          ${concatMapStringsSep "\n" (record:
+            "${record.name}  ${record.ttl} IN ${record.type} ${record.value}")
+          cfg.dns.records}
+        '';
+
         description = ''
           Path to a BIND zone file. Setting this option will override
           the generated config.
@@ -88,8 +62,8 @@ in {
 
       records = mkOption {
         type = types.listOf (types.submodule {
-          options.addresses = mkOption {
-            type = types.listOf types.str;
+          options.value = mkOption {
+            type = types.str;
             description = "IP addresses pointing to the service";
           };
 
@@ -103,21 +77,21 @@ in {
             '';
           };
 
-          options.kind = mkOption {
+          options.type = mkOption {
             type = types.str;
-            description = "DNS record kind";
+            description = "The type of DNS record to create";
             default = "CNAME";
+          };
+
+          options.ttl = mkOption {
+            type = types.str;
+            description = "Length of time in seconds to cache the record";
+            default = "60";
           };
         });
 
         description = "Insert custom DNS records";
         default = [ ];
-      };
-
-      ttl = mkOption {
-        type = types.str;
-        description = "TTL for custom DNS records";
-        default = "60";
       };
     };
 
@@ -268,12 +242,5 @@ in {
         value = mkDefault 1;
       }) cfg.networks)
     ];
-
-    assertions = forEach cfg.dns.records (service: {
-      assertion = length service.addresses > 0;
-      message = ''
-        DNS record "${service.name}" needs at least one address.
-      '';
-    });
   };
 }

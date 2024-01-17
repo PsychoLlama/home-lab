@@ -9,7 +9,7 @@ let cfg = config.lab.host;
 
 in {
   options.lab.host = {
-    # TODO: Hard-code lab IPs instead of leasing from DHCP.
+    # TODO: Use DHCP client IDs instead of MAC addresses.
     ethernet = mkOption {
       type = types.str;
       example = "11:22:33:aa:bb:cc";
