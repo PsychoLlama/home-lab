@@ -3,8 +3,8 @@
 with lib;
 
 let
-  inherit (config.lab.router.networks) home iot guest;
-  inherit (config.lab.router) wan;
+  inherit (config.lab.services.router.networks) home iot guest;
+  inherit (config.lab.services.router) wan;
   cfg = config.lab.profiles.router;
 
   # Reserve IP addresses for all hosts.
@@ -74,7 +74,7 @@ in {
       allowInterfaces = [ iot.interface home.interface guest.interface ];
     };
 
-    lab.router = {
+    lab.services.router = {
       enable = true;
 
       wan = {

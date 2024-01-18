@@ -3,7 +3,7 @@
 with lib;
 
 let
-  cfg = config.lab.file-storage;
+  cfg = config.lab.services.file-storage;
 
   # Example: "/mnt/tank" must be mounted before "/mnt/tank/library".
   # FS dependency order can be inferred by string length.
@@ -27,7 +27,7 @@ let
     };
 
 in {
-  options.lab.file-storage = {
+  options.lab.services.file-storage = {
     enable = mkEnableOption ''
       Mount and manage encrypted ZFS pools. This option changes the kernel and
       boot process. Reboot the machine after changing this option.
@@ -40,7 +40,7 @@ in {
       `file-storage.services.decryption.target`.
     '';
 
-    services.decryption = {
+    decryption = {
       name = mkOption {
         type = types.str;
         default = "zfs-decryption";
@@ -51,7 +51,7 @@ in {
 
       target = mkOption {
         type = types.str;
-        default = "${cfg.services.decryption.name}.target";
+        default = "${cfg.decryption.name}.target";
         internal = true;
         description = "Name of the systemd decryption target";
       };
@@ -77,7 +77,7 @@ in {
     };
 
     # This is used by other units to defer start until FS mounts are ready.
-    systemd.targets.${cfg.services.decryption.name} = {
+    systemd.targets.${cfg.decryption.name} = {
       description = "ZFS Dataset Decryption";
       wants = [ "local-fs.target" ];
       after = [ "local-fs.target" ];
@@ -97,11 +97,11 @@ in {
             topoSortedMounts
           }
 
-          systemctl start ${cfg.services.decryption.target}
+          systemctl start ${cfg.decryption.target}
 
         # Unmount ZFS datasets.
         detach:
-          systemctl stop ${cfg.services.decryption.target}
+          systemctl stop ${cfg.decryption.target}
 
           ${
             concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}")

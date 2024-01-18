@@ -2,7 +2,7 @@
 
 let
   inherit (config.lab) domain;
-  inherit (config.lab.file-storage.services) decryption;
+  inherit (config.lab.services.file-storage) decryption;
   cfg = config.lab.profiles.file-server;
 
 in {
@@ -13,7 +13,7 @@ in {
   config = lib.mkIf cfg.enable {
     deployment.tags = [ "file-server" ];
 
-    lab.file-storage = {
+    lab.services.file-storage = {
       enable = true;
       mounts = {
         "/mnt/pool0" = "pool0";

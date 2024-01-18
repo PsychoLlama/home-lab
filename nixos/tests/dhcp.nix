@@ -17,7 +17,7 @@
         virtualisation.vlans = [ 1 ];
         networking.useDHCP = false;
 
-        lab.dhcp = {
+        lab.services.dhcp = {
           enable = true;
           networks.test.interface = "eth1";
           reservations = [{

@@ -1,8 +1,8 @@
 { config, ... }:
 
 let
-  inherit (config.lab.router.networks) datacenter home;
-  inherit (config.lab.router) wan;
+  inherit (config.lab.services.router.networks) datacenter home;
+  inherit (config.lab.services.router) wan;
 
 in {
   lab.profiles.router.enable = true;

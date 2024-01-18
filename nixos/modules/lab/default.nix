@@ -3,14 +3,7 @@
 with lib;
 
 {
-  imports = [
-    ./dhcp.nix
-    ./file-storage.nix
-    ./host.nix
-    ./networks.nix
-    ./profiles
-    ./router.nix
-  ];
+  imports = [ ./host.nix ./networks.nix ./profiles ./services ];
 
   # A place to store constants. These should be set for every host. Not all
   # hosts need the same config, for example hosts in different datacenters may

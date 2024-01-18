@@ -4,13 +4,13 @@ with lib;
 
 let
   inherit (config.lab) domain networks;
-  cfg = config.lab.router;
+  cfg = config.lab.services.router;
 
 in {
-  options.lab.router = {
+  options.lab.services.router = {
     enable = mkEnableOption "Turn the device into a simple router";
 
-    dhcp.reservations = options.lab.dhcp.reservations;
+    dhcp.reservations = options.lab.services.dhcp.reservations;
 
     dns = {
       upstream = {
@@ -218,7 +218,7 @@ in {
       '';
     };
 
-    lab.dhcp = {
+    lab.services.dhcp = {
       enable = true;
       networks = cfg.networks;
       reservations = cfg.dhcp.reservations;

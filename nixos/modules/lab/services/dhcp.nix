@@ -2,12 +2,12 @@
 
 with lib;
 
-let cfg = config.lab.dhcp;
+let cfg = config.lab.services.dhcp;
 
 in {
-  options.lab.dhcp = {
+  options.lab.services.dhcp = {
     enable = mkEnableOption "Run a DHCP server";
-    networks = options.lab.router.networks;
+    networks = options.lab.services.router.networks;
     reservations = mkOption {
       type = types.listOf (types.submodule {
         options.hw-address = mkOption {
