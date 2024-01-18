@@ -2,85 +2,31 @@
 
 let
   inherit (config.lab) domain;
+  inherit (config.lab.file-storage.services) decryption;
   cfg = config.lab.profiles.file-server;
-  decryptionTargetName = "pool-decryption";
-  decryptionTarget = "${decryptionTargetName}.target";
-
-  zfs = dataset: {
-    device = dataset;
-    fsType = "zfs";
-    options = [ "noauto" "zfsutil" ];
-  };
-
-  makeTaskRunner = command: justfile:
-    pkgs.stdenvNoCC.mkDerivation {
-      name = command;
-      buildInputs = [ pkgs.makeWrapper ];
-      phases = [ "installPhase" ];
-      installPhase = ''
-        makeWrapper ${pkgs.just}/bin/just $out/bin/${command} \
-          --prefix PATH : ${placeholder "out"}/bin \
-          --add-flags --justfile \
-          --add-flags ${pkgs.writeText "justfile" justfile}
-      '';
-    };
 
 in {
   options.lab.profiles.file-server = {
     enable = lib.mkEnableOption "Run a file server";
   };
 
-  # TODO: Extract assumptions about the file structure and syncthing peers.
   config = lib.mkIf cfg.enable {
     deployment.tags = [ "file-server" ];
 
-    boot = {
-      kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
-      supportedFilesystems = [ "zfs" ];
-
-      # Disable the prompt for encryption credentials on boot. It blocks ssh,
-      # and RPi3 boot loaders aren't expressive enough to securely run an SSH
-      # server in stage 1.
-      zfs.requestEncryptionCredentials = false;
+    lab.file-storage = {
+      enable = true;
+      mounts = {
+        "/mnt/pool0" = "pool0";
+        "/mnt/pool0/syncthing" = "pool0/syncthing";
+      };
     };
-
-    systemd.targets.pool-decryption = {
-      description = "ZFS Pool Decryption";
-      wants = [ "local-fs.target" ];
-      after = [ "local-fs.target" ];
-    };
-
-    environment.systemPackages = [
-      (makeTaskRunner "nas-ctl" ''
-        default:
-          nas-ctl --list
-
-        # Decrypt and mount all ZFS datasets.
-        attach-storage:
-          ${pkgs.zfs}/bin/zfs load-key -a
-
-          mount /mnt/pool0
-          mount /mnt/pool0/syncthing
-
-          ${pkgs.systemd}/bin/systemctl start ${decryptionTarget}
-
-        # Unmount ZFS datasets.
-        detach-storage:
-          ${pkgs.systemd}/bin/systemctl stop ${decryptionTarget}
-
-          umount /mnt/pool0/syncthing
-          umount /mnt/pool0
-
-          ${pkgs.zfs}/bin/zfs unload-key -a
-      '')
-    ];
 
     systemd.services.syncthing = {
-      requires = [ decryptionTarget ];
-      after = [ decryptionTarget ];
+      requires = [ decryption.target ];
+      after = [ decryption.target ];
 
       # Don't start automatically. Wait for pool decryption.
-      wantedBy = lib.mkForce [ decryptionTarget ];
+      wantedBy = lib.mkForce [ decryption.target ];
     };
 
     services = {
@@ -132,13 +78,6 @@ in {
     networking.firewall = {
       allowedTCPPorts = [ 22000 ]; # TCP Sync
       allowedUDPPorts = [ 22000 21027 ]; # QUIC + LAN Discovery
-    };
-
-    # NOTE: ZFS mounts will fail unless the pool is decrypted. Make sure it does
-    # not attempt to mount at boot.
-    fileSystems = {
-      "/mnt/pool0" = zfs "pool0";
-      "/mnt/pool0/syncthing" = zfs "pool0/syncthing";
     };
   };
 }
