@@ -12,11 +12,15 @@ This is undergoing a rewrite to incorporate learnings from a few years of workin
 
 ### Router
 
-The router module configures a basic router (nat, dhcp, dns, ...) and declaratively manages the network for everything else in the lab.
+The router module configures a router (nat, dhcp, dns, ...) and manages the network for everything else in the lab.
 
 ### File Server
 
-The file server module configures a ZFS cluster with an attached syncthing service. (This is not a generalized service yet.)
+The file storage module manages ZFS pools and datasets. A host profile attaches Syncthing and adds snapshotting.
+
+### Tests
+
+Tests live in [nixos/tests](https://github.com/PsychoLlama/home-lab/tree/main/nixos/tests) and can be executed with `just test {path}`.
 
 ## Inspiration
 
