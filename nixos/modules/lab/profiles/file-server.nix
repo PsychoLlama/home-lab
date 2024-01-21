@@ -2,7 +2,7 @@
 
 let
   inherit (config.lab) domain;
-  inherit (config.lab.services.file-storage) decryption;
+  inherit (config.lab.services.file-storage) decryption pools;
   cfg = config.lab.profiles.file-server;
 
 in {
@@ -18,6 +18,25 @@ in {
       mounts = {
         "/mnt/pool0" = "pool0";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
+      };
+
+      pools.pool0 = {
+        vdevs = [{
+          type = "raidz1";
+          sources = [ "sda" "sdb" "sdc" ];
+        }];
+
+        properties = {
+          xattr = "sa";
+          acltype = "posixacl";
+          atime = "off";
+          encryption = "aes-256-gcm";
+          keyformat = "passphrase";
+          compression = "on";
+          mountpoint = "none";
+        };
+
+        datasets.syncthing.properties."com.sun:auto-snapshot" = true;
       };
     };
 
@@ -70,7 +89,7 @@ in {
 
         autoScrub = {
           enable = true;
-          pools = [ "pool0" ];
+          pools = lib.attrNames pools;
         };
       };
     };
