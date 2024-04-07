@@ -5,6 +5,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
+    clapfile.url = "github:PsychoLlama/clapfile";
     colmena = {
       url = "github:zhaofengli/colmena/release-0.4.x";
       inputs = {
@@ -14,8 +15,8 @@
     };
   };
 
-  outputs =
-    { self, nixpkgs-unstable, nixpkgs, nixos-hardware, colmena }@flake-inputs:
+  outputs = { self, nixpkgs-unstable, nixpkgs, nixos-hardware, colmena, clapfile
+    }@flake-inputs:
     let
       inherit (nixpkgs) lib;
       inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;
@@ -158,7 +159,70 @@
 
       devShell = eachSystem (system: pkgs:
         pkgs.mkShell {
-          packages = [ pkgs.nixUnstable pkgs.colmena pkgs.just ];
+          packages = [
+            pkgs.nixUnstable
+            pkgs.colmena
+
+            (clapfile.packages.${pkgs.system}.clapfile.command { } {
+              name = "project";
+              about = "Project task runner";
+
+              subcommands = {
+                bootstrap = {
+                  about = "Build a bootable image for a specific host.";
+                  run = pkgs.writers.writeBash "bootstrap" ''
+                    set -eux
+                    nix build ".#packages.$arch.$host-image"
+                    readlink -f result
+                  '';
+
+                  args = [
+                    {
+                      id = "host";
+                      required = true;
+                    }
+                    {
+                      id = "arch";
+                      long = "arch";
+                      value_name = "system";
+                      default_value = "aarch64-linux";
+                    }
+                  ];
+                };
+
+                test = {
+                  about = "Run one of the tests under `nixos/tests`.";
+                  run = pkgs.writers.writeBash "test" ''
+                    set -eux
+
+                    # This is the only way to use `.shell_interact()`.
+                    if [[ -n "$interactive" ]]; then
+                      nix build ".#tests.$expr.driver"
+                      ./result/bin/nixos-test-driver
+                    else
+                      nix build ".#tests.$expr"
+                    fi
+                  '';
+
+                  args = [
+                    {
+                      id = "expr";
+                      value_name = "test-path";
+                      help = "dot.separated test path under `outputs.tests`";
+                      required = true;
+                    }
+                    {
+                      id = "interactive";
+                      long = "interactive";
+                      short = "i";
+                      default_value = "";
+                      help = "Enable interaction via stdout/stdin.";
+                    }
+                  ];
+                };
+              };
+            })
+          ];
 
           # NOTE: Configuring remote builds through the client assumes you
           # are a trusted Nix user. Without permission, you'll see errors

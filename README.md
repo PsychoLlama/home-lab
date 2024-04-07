@@ -20,7 +20,7 @@ The file storage module manages ZFS pools and datasets. A host profile attaches 
 
 ### Tests
 
-Tests live in [nixos/tests](https://github.com/PsychoLlama/home-lab/tree/main/nixos/tests) and can be executed with `just test {path}`.
+Tests live in [nixos/tests](https://github.com/PsychoLlama/home-lab/tree/main/nixos/tests) and can be executed with `project test <path>`.
 
 ## Inspiration
 
