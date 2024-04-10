@@ -28,7 +28,12 @@
       loadPkgs = { system }:
         import nixpkgs {
           inherit system;
-          overlays = [ self.overlays.unstable-packages self.overlays.testing ];
+
+          overlays = [
+            self.overlays.unstable-packages
+            self.overlays.testing
+            clapfile.overlays.programs
+          ];
         };
 
       # Attrs { system -> pkgs }
@@ -163,62 +168,63 @@
             pkgs.nixUnstable
             pkgs.colmena
 
-            (clapfile.packages.${pkgs.system}.clapfile.command { } {
-              name = "project";
-              about = "Project task runner";
+            (pkgs.clapfile.command {
+              command = {
+                name = "project";
+                about = "Project task runner";
+                subcommands = {
+                  bootstrap = {
+                    about = "Build a bootable image for a specific host.";
+                    run = pkgs.writers.writeBash "bootstrap" ''
+                      set -eux
+                      nix build ".#packages.$arch.$host-image"
+                      readlink -f result
+                    '';
 
-              subcommands = {
-                bootstrap = {
-                  about = "Build a bootable image for a specific host.";
-                  run = pkgs.writers.writeBash "bootstrap" ''
-                    set -eux
-                    nix build ".#packages.$arch.$host-image"
-                    readlink -f result
-                  '';
+                    args = [
+                      {
+                        id = "host";
+                        required = true;
+                      }
+                      {
+                        id = "arch";
+                        long = "arch";
+                        value_name = "system";
+                        default_value = "aarch64-linux";
+                      }
+                    ];
+                  };
 
-                  args = [
-                    {
-                      id = "host";
-                      required = true;
-                    }
-                    {
-                      id = "arch";
-                      long = "arch";
-                      value_name = "system";
-                      default_value = "aarch64-linux";
-                    }
-                  ];
-                };
+                  test = {
+                    about = "Run one of the tests under `nixos/tests`.";
+                    run = pkgs.writers.writeBash "test" ''
+                      set -eux
 
-                test = {
-                  about = "Run one of the tests under `nixos/tests`.";
-                  run = pkgs.writers.writeBash "test" ''
-                    set -eux
+                      # This is the only way to use `.shell_interact()`.
+                      if [[ -n "$interactive" ]]; then
+                        nix build ".#tests.$expr.driver"
+                        ./result/bin/nixos-test-driver
+                      else
+                        nix build ".#tests.$expr"
+                      fi
+                    '';
 
-                    # This is the only way to use `.shell_interact()`.
-                    if [[ -n "$interactive" ]]; then
-                      nix build ".#tests.$expr.driver"
-                      ./result/bin/nixos-test-driver
-                    else
-                      nix build ".#tests.$expr"
-                    fi
-                  '';
-
-                  args = [
-                    {
-                      id = "expr";
-                      value_name = "test-path";
-                      help = "dot.separated test path under `outputs.tests`";
-                      required = true;
-                    }
-                    {
-                      id = "interactive";
-                      long = "interactive";
-                      short = "i";
-                      default_value = "";
-                      help = "Enable interaction via stdout/stdin.";
-                    }
-                  ];
+                    args = [
+                      {
+                        id = "expr";
+                        value_name = "test-path";
+                        help = "dot.separated test path under `outputs.tests`";
+                        required = true;
+                      }
+                      {
+                        id = "interactive";
+                        long = "interactive";
+                        short = "i";
+                        default_value = "";
+                        help = "Enable interaction via stdout/stdin.";
+                      }
+                    ];
+                  };
                 };
               };
             })

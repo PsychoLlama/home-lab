@@ -6,11 +6,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1712493106,
-        "narHash": "sha256-9/RhRnCHrlCp1hyI7OBjEMSgGNakgGHk0Htu6YELWuE=",
+        "lastModified": 1712745680,
+        "narHash": "sha256-Mde7TG+T4ktxMWIzkAXMWsyOmKwyrzVoOWFZhS8nH9I=",
         "owner": "PsychoLlama",
         "repo": "clapfile",
-        "rev": "ff3e1eefa6aa0aab3b7a0b15af93f4ee26d69057",
+        "rev": "fa9e085b41ea1fa9c7cde75819ccefd9c1dd6973",
         "type": "github"
       },
       "original": {
