@@ -13,19 +13,6 @@ let
     (map (mount: mount.name))
   ];
 
-  makeTaskRunner = command: justfile:
-    pkgs.stdenvNoCC.mkDerivation {
-      name = command;
-      buildInputs = [ pkgs.makeWrapper ];
-      phases = [ "installPhase" ];
-      installPhase = ''
-        makeWrapper ${pkgs.just}/bin/just $out/bin/${command} \
-          --prefix PATH : ${placeholder "out"}/bin \
-          --add-flags --justfile \
-          --add-flags ${pkgs.writeText "justfile" justfile}
-      '';
-    };
-
 in {
   options.lab.services.file-storage = {
     enable = mkEnableOption ''
@@ -182,37 +169,44 @@ in {
       after = [ "local-fs.target" ];
     };
 
-    environment.systemPackages = [
-      (makeTaskRunner "file-storage" ''
-        default:
-          file-storage --list
+    lab.system.file-storage = {
+      about = "ZFS management tools";
+      subcommands = {
+        attach = {
+          about = "Decrypt and mount ZFS datasets";
+          run = pkgs.writers.writeBash "attach-storage" ''
+            set -euxo pipefail
 
-        # Decrypt and mount ZFS datasets.
-        attach:
-          zfs load-key -a
+            zfs load-key -a
 
-          ${
-            concatMapStringsSep "\n  " (mountpoint: "mount ${mountpoint}")
-            topoSortedMounts
-          }
+            ${concatMapStringsSep "\n  " (mountpoint: "mount ${mountpoint}")
+            topoSortedMounts}
 
-          systemctl start ${cfg.decryption.target}
+            systemctl start ${cfg.decryption.target}
+          '';
+        };
 
-        # Unmount ZFS datasets.
-        detach:
-          systemctl stop ${cfg.decryption.target}
+        detach = {
+          about = "Unmount ZFS datasets";
+          run = pkgs.writers.writeBash "detach-storage" ''
+            set -euxo pipefail
 
-          ${
-            concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}")
-            (reverseList topoSortedMounts)
-          }
+            systemctl stop ${cfg.decryption.target}
 
-          zfs unload-key -a
+            ${concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}")
+            (reverseList topoSortedMounts)}
 
-        init:
-          # Create ZFS pools.
-          ${
-            pipe cfg.pools [
+            zfs unload-key -a
+          '';
+        };
+
+        init = {
+          about = "Create ZFS pools";
+          run = pkgs.writers.writeBash "init-storage" ''
+            set -euxo pipefail
+
+            # Create ZFS pools.
+            ${pipe cfg.pools [
               (attrValues)
               (map (pool:
                 "zpool create ${escapeShellArg pool.name} ${
@@ -223,12 +217,10 @@ in {
                 }"))
 
               (concatStringsSep "\n  ")
-            ]
-          }
+            ]}
 
-          # Apply pool settings.
-          ${
-            pipe cfg.pools [
+            # Apply pool settings.
+            ${pipe cfg.pools [
               (attrValues)
               (filter (pool: pool.settings != { }))
               (map (pool:
@@ -242,12 +234,10 @@ in {
                 ]))
 
               (concatStringsSep "\n  ")
-            ]
-          }
+            ]}
 
-          # Apply filesystem properties.
-          ${
-            pipe cfg.pools [
+            # Apply filesystem properties.
+            ${pipe cfg.pools [
               (attrValues)
               (filter (pool: pool.properties != { }))
               (map (pool:
@@ -261,12 +251,10 @@ in {
                 ]))
 
               (concatStringsSep "\n  ")
-            ]
-          }
+            ]}
 
-          # Create datasets.
-          ${
-            concatMapStringsSep "\n  " (pool:
+            # Create datasets.
+            ${concatMapStringsSep "\n  " (pool:
               pipe pool.datasets [
                 (attrValues)
                 (map (dataset:
@@ -274,12 +262,10 @@ in {
                     escapeShellArg "${pool.name}/${dataset.name}"
                   }"))
                 (concatStringsSep "\n  ")
-              ]) (attrValues cfg.pools)
-          }
+              ]) (attrValues cfg.pools)}
 
-          # Apply dataset properties.
-          ${
-            concatMapStringsSep "\n  " (pool:
+            # Apply dataset properties.
+            ${concatMapStringsSep "\n  " (pool:
               pipe pool.datasets [
                 (attrValues)
                 (filter (dataset: dataset.properties != { }))
@@ -293,10 +279,11 @@ in {
                     (concatStringsSep "\n  ")
                   ]))
                 (concatStringsSep "\n  ")
-              ]) (attrValues cfg.pools)
-          }
-      '')
-    ];
+              ]) (attrValues cfg.pools)}
+          '';
+        };
+      };
+    };
 
     fileSystems = mapAttrs (mountpoint: dataset: {
       device = dataset;

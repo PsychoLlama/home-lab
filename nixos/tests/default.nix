@@ -1,4 +1,4 @@
-{ pkgs, callPackage, colmena, runTest }:
+{ pkgs, callPackage, colmena, clapfile, runTest }:
 
 let
   baseModule = {
@@ -6,7 +6,11 @@ let
     defaults.imports = [
       colmena.nixosModules.deploymentOptions
       colmena.nixosModules.assertionModule
+      clapfile.nixosModules.nixos
       ../modules
+
+      # The VM package set does not include overlays from the host.
+      { nixpkgs.overlays = pkgs.overlays; }
     ];
   };
 
