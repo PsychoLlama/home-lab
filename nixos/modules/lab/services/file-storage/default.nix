@@ -200,6 +200,17 @@ in {
           '';
         };
 
+        apply-properties = {
+          about = "Synchronize ZFS properties";
+          run = pkgs.writers.writePython3 "sync-zfs-props" { } ./zfs_attrs.py;
+          args = [{
+            id = "EXPECTED_STATE";
+            value_name = "FILE_PATH";
+            about = "Path to a JSON file containing the expected properties";
+            # TODO: Assign default value to computed state file.
+          }];
+        };
+
         init = {
           about = "Create ZFS pools";
           run = pkgs.writers.writeBash "init-storage" ''
