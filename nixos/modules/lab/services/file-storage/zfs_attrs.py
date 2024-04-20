@@ -109,14 +109,19 @@ def compare_zfs_properties(desired_state, actual_state):
     diffs = []
 
     # Detect new or changed properties.
-    for dataset, properties in desired_state["datasets"].items():
-        for property, expected_value in properties["properties"].items():
-            actual_value = actual_state.get(dataset, {}).get(property)
+    for dataset_name, dataset in desired_state["datasets"].items():
+        ignored = set(dataset["ignored_properties"])
+
+        for property, expected_value in dataset["properties"].items():
+            if property in ignored:
+                continue
+
+            actual_value = actual_state.get(dataset_name, {}).get(property)
 
             if actual_value != expected_value:
                 diffs.append(
                     {
-                        "dataset": dataset,
+                        "dataset": dataset_name,
                         "property": property,
                         "expected": expected_value,
                         "actual": actual_value,
@@ -124,17 +129,23 @@ def compare_zfs_properties(desired_state, actual_state):
                 )
 
     # Detect removed properties.
-    for dataset, properties in actual_state.items():
-        for property, _ in properties.items():
-            if property not in desired_state["datasets"].get(dataset, {}).get(
+    for dataset_name, actual_dataset in actual_state.items():
+        desired_dataset = desired_state["datasets"].get(dataset_name, {})
+        ignored = set(desired_dataset.get("ignored_properties", []))
+
+        for property, actual_value in actual_dataset.items():
+            if property in ignored:
+                continue
+
+            if property not in desired_state["datasets"].get(dataset_name, {}).get(
                 "properties", {}
             ):
                 diffs.append(
                     {
-                        "dataset": dataset,
+                        "dataset": dataset_name,
                         "property": property,
                         "expected": None,
-                        "actual": actual_state[dataset][property],
+                        "actual": actual_value,
                     }
                 )
 
@@ -302,6 +313,23 @@ class TestPropertyDiffing(unittest.TestCase):
 
         self.assertEqual(compare_zfs_properties(desired, actual), [])
 
-    @unittest.skip("Not implemented")
     def test_ignored_properties(self):
-        pass
+        desired = self.mocks.expected_state(
+            self.mocks.dataset(
+                "locker",
+                ignored_properties=["relatime"],
+                compression="on",
+                relatime="on",
+            ),
+            self.mocks.dataset(
+                "locker/var/log",
+                ignored_properties=["mountpoint"],
+            )
+        )
+
+        actual = {
+            "locker": {"compression": "on", "relatime": "off"},
+            "locker/var/log": {"mountpoint": "/var/log"},
+        }
+
+        self.assertEqual(compare_zfs_properties(desired, actual), [])
