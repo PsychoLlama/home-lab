@@ -4,6 +4,8 @@ import unittest
 from textwrap import dedent
 import logging
 from os import environ
+from functools import reduce
+from itertools import groupby
 
 #
 # Diffs system ZFS attributes against a desired state, optionally applying
@@ -30,7 +32,11 @@ def main():
 
     desired_state = get_expected_properties()
     actual_state = get_dataset_properties()
-    compare_zfs_properties(desired_state, actual_state)
+    print(compare_zfs_properties(desired_state, actual_state))
+
+    # TODO:
+    # - Print the diff
+    # - Apply changes
 
 
 # Fetch a list of every ZFS property on the system. This does not include
@@ -43,11 +49,6 @@ def get_dataset_properties():
     )
 
     properties = parse_dataset_properties(proc.stdout)
-    logger.info(
-        "Found %d properties across %d datasets",
-        len(properties),
-        len({entry["dataset"] for entry in properties}),
-    )
 
     return properties
 
@@ -63,7 +64,7 @@ def get_dataset_properties():
 def parse_dataset_properties(output):
     rows = [line.split("\t") for line in output.splitlines()]
 
-    return [
+    all_properties = [
         {
             "dataset": entry[0],
             "property": entry[1],
@@ -72,17 +73,30 @@ def parse_dataset_properties(output):
         for entry in rows
     ]
 
+    properties_by_dataset = groupby(
+        all_properties, key=lambda x: x["dataset"]
+    )
+
+    return {
+        dataset: {entry["property"]: entry["value"] for entry in entries}
+        for dataset, entries in properties_by_dataset
+    }
+
 
 # Expected structure:
 #
 #   type ExpectedProperties = {
-#     pools: PropAssignments;
-#     datasets: PropAssignments;
+#     pools: {
+#       [pool_name: string]: ResourceDescription
+#     }
+#     datasets: {
+#       [dataset_name: string]: ResourceDescription
+#     }
 #   }
 #
-#   type PropAssignments = {
-#     ignored_properties: string[];
-#     properties: { [resource_name: string]: Map<string, string> }
+#   type ResourceDescription = {
+#     ignored_properties: string[]
+#     properties: { [property_name: string]: string }
 #   }
 #
 def get_expected_properties():
@@ -91,44 +105,203 @@ def get_expected_properties():
         return json.load(f)
 
 
-def compare_zfs_properties(desired_state, actual):
-    # TODO: Derive a diff.
-    print(
-        json.dumps(
-            {"desired_state": desired_state, "actual": actual}, indent=2
-        )
-    )
+def compare_zfs_properties(desired_state, actual_state):
+    diffs = []
+
+    # Detect new or changed properties.
+    for dataset, properties in desired_state["datasets"].items():
+        for property, expected_value in properties["properties"].items():
+            actual_value = actual_state.get(dataset, {}).get(property)
+
+            if actual_value != expected_value:
+                diffs.append(
+                    {
+                        "dataset": dataset,
+                        "property": property,
+                        "expected": expected_value,
+                        "actual": actual_value,
+                    }
+                )
+
+    # Detect removed properties.
+    for dataset, properties in actual_state.items():
+        for property, _ in properties.items():
+            if property not in desired_state["datasets"].get(dataset, {}).get(
+                "properties", {}
+            ):
+                diffs.append(
+                    {
+                        "dataset": dataset,
+                        "property": property,
+                        "expected": None,
+                        "actual": actual_state[dataset][property],
+                    }
+                )
+
+    return diffs
 
 
 if __name__ == "__main__":
     main()
 
 
-class TestZfsProperties(unittest.TestCase):
+########################################################################
+#                                 TESTS                                #
+########################################################################
+
+class MockStateFactory:
+    "Utilities for creating mock data in tests"
+
+    def expected_state(self, *datasets):
+        return {
+            "datasets": reduce(
+                lambda acc, dataset: acc | dataset, datasets, {}
+            ),
+        }
+
+    def dataset(self, name, ignored_properties=None, **props):
+        return {
+            name: {
+                "ignored_properties": ignored_properties or [],
+                "properties": props,
+            }
+        }
+
+
+class TestPropertyParsing(unittest.TestCase):
     def test_parse_zfs_properties(self):
         output = dedent(
             """
             locker	compression	on	local
+            locker	relatime	on	local
             locker/nixos/var/log	com.sun:auto-snapshot	true	local
             locker/data	mountpoint	/	local
         """
         ).strip()
 
-        expected = [
-            {"dataset": "locker", "property": "compression", "value": "on"},
-            {
-                "dataset": "locker/nixos/var/log",
-                "property": "com.sun:auto-snapshot",
-                "value": "true",
-            },
-            {
-                "dataset": "locker/data",
-                "property": "mountpoint",
-                "value": "/",
-            },
-        ]
+        expected = {
+            "locker": {"compression": "on", "relatime": "on"},
+            "locker/nixos/var/log": {"com.sun:auto-snapshot": "true"},
+            "locker/data": {"mountpoint": "/"},
+        }
 
         self.assertEqual(parse_dataset_properties(output), expected)
 
-    def test_new_property_diff(self):
+class TestPropertyDiffing(unittest.TestCase):
+    mocks = MockStateFactory()
+
+    def test_changed_property_diff(self):
+        desired = self.mocks.expected_state(
+            self.mocks.dataset("locker", compression="on")
+        )
+
+        actual = {
+            "locker": {"compression": "off"},
+        }
+
+        self.assertEqual(
+            compare_zfs_properties(desired, actual),
+            [
+                {
+                    "dataset": "locker",
+                    "property": "compression",
+                    "expected": "on",
+                    "actual": "off",
+                },
+            ],
+        )
+
+    def test_missing_property_diff(self):
+        desired = self.mocks.expected_state(
+            self.mocks.dataset("locker", compression="on")
+        )
+
+        actual = {
+            "locker": {},
+        }
+
+        self.assertEqual(
+            compare_zfs_properties(desired, actual),
+            [
+                {
+                    "dataset": "locker",
+                    "property": "compression",
+                    "expected": "on",
+                    "actual": None,
+                },
+            ],
+        )
+
+    def test_removed_property_diff(self):
+        desired = self.mocks.expected_state(self.mocks.dataset("locker"))
+
+        actual = {
+            "locker": {"compression": "on"},
+        }
+
+        self.assertEqual(
+            compare_zfs_properties(desired, actual),
+            [
+                {
+                    "dataset": "locker",
+                    "property": "compression",
+                    "expected": None,
+                    "actual": "on",
+                },
+            ],
+        )
+
+    def test_all_properties_removed(self):
+        # Locker not specified. Assume all properties are to be removed.
+        desired = self.mocks.expected_state()
+
+        actual = {
+            "locker": {"compression": "on"},
+        }
+
+        self.assertEqual(
+            compare_zfs_properties(desired, actual),
+            [
+                {
+                    "dataset": "locker",
+                    "property": "compression",
+                    "expected": None,
+                    "actual": "on",
+                },
+            ],
+        )
+
+    def test_all_properties_are_new(self):
+        desired = self.mocks.expected_state(
+            self.mocks.dataset("locker", relatime="on")
+        )
+
+        # "locker" will not be in the parsed output if it has no properties.
+        actual = {}
+
+        self.assertEqual(
+            compare_zfs_properties(desired, actual),
+            [
+                {
+                    "dataset": "locker",
+                    "property": "relatime",
+                    "expected": "on",
+                    "actual": None,
+                },
+            ],
+        )
+
+    def test_no_properties_changed(self):
+        desired = self.mocks.expected_state(
+            self.mocks.dataset("locker", compression="on")
+        )
+
+        actual = {
+            "locker": {"compression": "on"},
+        }
+
+        self.assertEqual(compare_zfs_properties(desired, actual), [])
+
+    @unittest.skip("Not implemented")
+    def test_ignored_properties(self):
         pass
