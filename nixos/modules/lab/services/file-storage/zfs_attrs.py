@@ -32,36 +32,40 @@ def main():
 
     desired_state = get_expected_properties()
     actual_state = get_dataset_properties()
-    print(compare_zfs_properties(desired_state, actual_state))
+    diff = compare_zfs_properties(desired_state, actual_state)
+
+    print(render_to_string(diff))
 
     # TODO:
     # - Print the diff
     # - Apply changes
 
 
-# Fetch a list of every ZFS property on the system. This does not include
-# inherited properties or defaults.
 def get_dataset_properties():
+    """
+    Fetch a list of every ZFS property on the system. This does not include
+    inherited properties or defaults.
+    """
     proc = subprocess.run(
         ["zfs", "get", "-Hpt", "filesystem", "-s", "local", "all"],
         capture_output=True,
         text=True,
     )
 
-    properties = parse_dataset_properties(proc.stdout)
-
-    return properties
+    return parse_dataset_properties(proc.stdout)
 
 
-# Parse the stdout string representing ZFS properties.
-#
-# Example:
-#
-#   {dataset}\t{property}\t{value}\t{scope}
-#   {dataset}\t{property}\t{value}\t{scope}
-#   ...
-#
 def parse_dataset_properties(output):
+    """
+    Parse the stdout string representing ZFS properties.
+
+    Example:
+
+      {dataset}\t{property}\t{value}\t{scope}
+      {dataset}\t{property}\t{value}\t{scope}
+      ...
+
+    """
     rows = [line.split("\t") for line in output.splitlines()]
 
     all_properties = [
@@ -83,23 +87,24 @@ def parse_dataset_properties(output):
     }
 
 
-# Expected structure:
-#
-#   type ExpectedProperties = {
-#     pools: {
-#       [pool_name: string]: ResourceDescription
-#     }
-#     datasets: {
-#       [dataset_name: string]: ResourceDescription
-#     }
-#   }
-#
-#   type ResourceDescription = {
-#     ignored_properties: string[]
-#     properties: { [property_name: string]: string }
-#   }
-#
 def get_expected_properties():
+    """
+    Expected structure:
+
+    type ExpectedProperties = {
+        pools: {
+        [pool_name: string]: ResourceDescription
+        }
+        datasets: {
+        [dataset_name: string]: ResourceDescription
+        }
+    }
+
+    type ResourceDescription = {
+        ignored_properties: string[]
+        properties: { [property_name: string]: string }
+    }
+    """
     logger.info("Reading desired state from %s", STATE_FILE)
     with open(STATE_FILE) as f:
         return json.load(f)
@@ -112,6 +117,7 @@ def compare_zfs_properties(desired_state, actual_state):
     for dataset_name, dataset in desired_state["datasets"].items():
         ignored = set(dataset["ignored_properties"])
 
+        # Check for added or changed properties.
         for property, expected_value in dataset["properties"].items():
             if property in ignored:
                 continue
@@ -128,18 +134,14 @@ def compare_zfs_properties(desired_state, actual_state):
                     }
                 )
 
-    # Detect removed properties.
-    for dataset_name, actual_dataset in actual_state.items():
-        desired_dataset = desired_state["datasets"].get(dataset_name, {})
-        ignored = set(desired_dataset.get("ignored_properties", []))
-
-        for property, actual_value in actual_dataset.items():
+        # Check for removed properties.
+        for property, actual_value in actual_state.get(
+            dataset_name, {}
+        ).items():
             if property in ignored:
                 continue
 
-            if property not in desired_state["datasets"].get(dataset_name, {}).get(
-                "properties", {}
-            ):
+            if property not in dataset["properties"]:
                 diffs.append(
                     {
                         "dataset": dataset_name,
@@ -159,6 +161,7 @@ if __name__ == "__main__":
 ########################################################################
 #                                 TESTS                                #
 ########################################################################
+
 
 class MockStateFactory:
     "Utilities for creating mock data in tests"
@@ -197,6 +200,7 @@ class TestPropertyParsing(unittest.TestCase):
         }
 
         self.assertEqual(parse_dataset_properties(output), expected)
+
 
 class TestPropertyDiffing(unittest.TestCase):
     mocks = MockStateFactory()
@@ -262,8 +266,8 @@ class TestPropertyDiffing(unittest.TestCase):
             ],
         )
 
-    def test_all_properties_removed(self):
-        # Locker not specified. Assume all properties are to be removed.
+    def test_unmanaged_dataset_is_ignored(self):
+        # Locker not specified. Assume its properties are unmanaged.
         desired = self.mocks.expected_state()
 
         actual = {
@@ -272,14 +276,7 @@ class TestPropertyDiffing(unittest.TestCase):
 
         self.assertEqual(
             compare_zfs_properties(desired, actual),
-            [
-                {
-                    "dataset": "locker",
-                    "property": "compression",
-                    "expected": None,
-                    "actual": "on",
-                },
-            ],
+            [],
         )
 
     def test_all_properties_are_new(self):
@@ -324,7 +321,7 @@ class TestPropertyDiffing(unittest.TestCase):
             self.mocks.dataset(
                 "locker/var/log",
                 ignored_properties=["mountpoint"],
-            )
+            ),
         )
 
         actual = {
