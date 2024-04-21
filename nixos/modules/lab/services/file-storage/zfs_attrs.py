@@ -6,6 +6,7 @@ import logging
 from os import environ
 from functools import reduce
 from itertools import groupby
+from termcolor import colored
 
 #
 # Diffs system ZFS attributes against a desired state, optionally applying
@@ -34,10 +35,10 @@ def main():
     actual_state = get_dataset_properties()
     diff = compare_zfs_properties(desired_state, actual_state)
 
-    print(render_to_string(diff))
+    print(render_diff_to_string(diff))
 
     # TODO:
-    # - Print the diff
+    # - Read confirmation
     # - Apply changes
 
 
@@ -92,12 +93,8 @@ def get_expected_properties():
     Expected structure:
 
     type ExpectedProperties = {
-        pools: {
-        [pool_name: string]: ResourceDescription
-        }
-        datasets: {
-        [dataset_name: string]: ResourceDescription
-        }
+        pools: { [pool_name: string]: ResourceDescription }
+        datasets: { [dataset_name: string]: ResourceDescription }
     }
 
     type ResourceDescription = {
@@ -152,6 +149,36 @@ def compare_zfs_properties(desired_state, actual_state):
                 )
 
     return diffs
+
+
+def render_diff_to_string(diff):
+    rendered = ""
+
+    def render_changed_properties(changes):
+        for change in sorted(changes, key=lambda x: x["property"]):
+            match (change["expected"], change["actual"]):
+                case (None, None):
+                    raise ValueError("Invalid diff")
+                case (None, _):
+                    yield colored(" - ", "red")
+                    yield change["property"] + ": " + change["actual"]
+                    yield "\n"
+                case (_, None):
+                    yield colored(" + ", "green")
+                    yield change["property"] + ": " + change["expected"]
+                    yield "\n"
+                case (_, _):
+                    yield colored(" ~ ", "yellow")
+                    yield change["property"] + ": "
+                    yield change["actual"] + " -> " + change["expected"]
+                    yield "\n"
+
+    for name, changes in groupby(diff, key=lambda x: x["dataset"]):
+        rendered += colored(name + ":", "blue") + "\n"
+        rendered += "".join(list(render_changed_properties(changes)))
+        rendered += "\n"
+
+    return rendered.strip()
 
 
 if __name__ == "__main__":
@@ -330,3 +357,86 @@ class TestPropertyDiffing(unittest.TestCase):
         }
 
         self.assertEqual(compare_zfs_properties(desired, actual), [])
+
+
+class TestDiffViewer(unittest.TestCase):
+    def test_props_added(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": "on",
+                "actual": None,
+            },
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": "on",
+                "actual": None,
+            },
+        ]
+
+        self.assertEqual(
+            render_diff_to_string(diff),
+            dedent(
+                """
+                locker:
+                 + compression: on
+                 + relatime: on
+                """
+            ).strip(),
+        )
+
+    def test_props_removed(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": None,
+                "actual": "on",
+            },
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": None,
+                "actual": "on",
+            },
+        ]
+
+        self.assertEqual(
+            render_diff_to_string(diff),
+            dedent(
+                """
+                locker:
+                 - compression: on
+                 - relatime: on
+                """
+            ).strip(),
+        )
+
+    def test_props_updated(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": "on",
+                "actual": "off",
+            },
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": "off",
+                "actual": "on",
+            },
+        ]
+
+        self.assertEqual(
+            render_diff_to_string(diff),
+            dedent(
+                """
+                locker:
+                 ~ compression: on -> off
+                 ~ relatime: off -> on
+                """
+            ).strip(),
+        )
