@@ -36,10 +36,14 @@ def main():
     diff = compare_zfs_properties(desired_state, actual_state)
 
     print(render_diff_to_string(diff))
+    confirm = input("\nApply changes? [y/n] ")
 
-    # TODO:
-    # - Read confirmation
-    # - Apply changes
+    if confirm.lower() != "y":
+        logger.info("Aborting")
+        return
+
+    logger.info("Applying changes")
+    apply_changes(get_execution_plan(diff))
 
 
 def get_dataset_properties():
@@ -179,6 +183,54 @@ def render_diff_to_string(diff):
         rendered += "\n"
 
     return rendered.strip()
+
+
+def get_execution_plan(diff):
+    execution_plan = []
+
+    for dataset, changes in groupby(diff, key=lambda x: x["dataset"]):
+        change_list = list(changes)  # Side effect: consume the iterable.
+
+        additions_or_modifications = [
+            change for change in change_list if change["expected"] is not None
+        ]
+
+        removals = [
+            change for change in change_list if change["expected"] is None
+        ]
+
+        if len(additions_or_modifications) > 0:
+            execution_plan.append(
+                [
+                    "zfs",
+                    "set",
+                    "-u",
+                    *[
+                        f"{change['property']}={change['expected']}"
+                        for change in additions_or_modifications
+                    ],
+                    dataset,
+                ]
+            )
+
+        for removal in removals:
+            execution_plan.append(
+                [
+                    "zfs",
+                    "inherit",
+                    removal["property"],
+                    dataset,
+                ]
+            )
+
+    return execution_plan
+
+
+# TODO: Execute the plan.
+def apply_changes(execution_plan):
+    logger.info("Execution plan:")
+    for step in execution_plan:
+        logger.info(" ".join(step))
 
 
 if __name__ == "__main__":
@@ -439,4 +491,133 @@ class TestDiffViewer(unittest.TestCase):
                  ~ relatime: off -> on
                 """
             ).strip(),
+        )
+
+
+class TestExecutionPlan(unittest.TestCase):
+    def test_no_changes(self):
+        diff = []
+
+        self.assertEqual(get_execution_plan(diff), [])
+
+    def test_property_added(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": "on",
+                "actual": None,
+            },
+        ]
+
+        self.assertEqual(
+            get_execution_plan(diff),
+            [["zfs", "set", "-u", "compression=on", "locker"]],
+        )
+
+    def test_changes_applied_atomically(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": "on",
+                "actual": "off",
+            },
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": "on",
+                "actual": None,
+            },
+        ]
+
+        self.assertEqual(
+            get_execution_plan(diff),
+            [
+                [
+                    "zfs",
+                    "set",
+                    "-u",
+                    "compression=on",
+                    "relatime=on",
+                    "locker",
+                ],
+            ],
+        )
+
+    def test_changes_grouped_by_dataset(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": "on",
+                "actual": "off",
+            },
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": "on",
+                "actual": None,
+            },
+            {
+                "dataset": "locker/var/log",
+                "property": "mountpoint",
+                "expected": "/var/log",
+                "actual": None,
+            },
+        ]
+
+        self.assertEqual(
+            get_execution_plan(diff),
+            [
+                [
+                    "zfs",
+                    "set",
+                    "-u",
+                    "compression=on",
+                    "relatime=on",
+                    "locker",
+                ],
+                [
+                    "zfs",
+                    "set",
+                    "-u",
+                    "mountpoint=/var/log",
+                    "locker/var/log",
+                ],
+            ],
+        )
+
+    def test_removed_properties(self):
+        diff = [
+            {
+                "dataset": "locker",
+                "property": "compression",
+                "expected": None,
+                "actual": "on",
+            },
+            {
+                "dataset": "locker",
+                "property": "relatime",
+                "expected": None,
+                "actual": "on",
+            },
+        ]
+
+        self.assertEqual(
+            get_execution_plan(diff),
+            [
+                [
+                    "zfs",
+                    "inherit",
+                    "compression",
+                    "locker",
+                ],
+                [
+                    "zfs",
+                    "inherit",
+                    "relatime",
+                    "locker",
+                ],
+            ],
         )
