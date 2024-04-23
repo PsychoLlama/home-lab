@@ -21,6 +21,8 @@ from termcolor import colored
 #
 
 STATE_FILE = environ.get("EXPECTED_STATE")
+AUTO_CONFIRM = environ.get("AUTO_CONFIRM") == "true"
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,9 +42,8 @@ def main():
         return
 
     print(render_diff_to_string(diff))
-    confirm = input("\nApply changes? [y/n] ")
 
-    if confirm.lower() != "y":
+    if not AUTO_CONFIRM and input("\nApply changes? [y/n] ").lower() != "y":
         logger.info("Aborting")
         return
 
