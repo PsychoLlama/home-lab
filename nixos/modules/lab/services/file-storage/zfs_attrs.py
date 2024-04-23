@@ -35,6 +35,10 @@ def main():
     actual_state = get_dataset_properties()
     diff = compare_zfs_properties(desired_state, actual_state)
 
+    if len(diff) == 0:
+        logger.info("No changes required")
+        return
+
     print(render_diff_to_string(diff))
     confirm = input("\nApply changes? [y/n] ")
 
