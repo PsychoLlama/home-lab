@@ -59,7 +59,7 @@ def get_dataset_properties():
     logger.info("Reading current state of all ZFS properties")
 
     proc = subprocess.run(
-        ["zfs", "get", "-Hpt", "filesystem", "-s", "local", "all"],
+        ["zfs", "get", "-Ht", "filesystem", "-s", "local", "all"],
         capture_output=True,
         text=True,
     )
