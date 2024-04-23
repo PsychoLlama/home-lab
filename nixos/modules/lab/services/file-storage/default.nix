@@ -5,6 +5,9 @@ with lib;
 let
   cfg = config.lab.services.file-storage;
 
+  # TODO: Replace this with the upstream version when nixpkgs is updated.
+  mergeAttrsList = lib.fold lib.mergeAttrs { };
+
   # Example: "/mnt/tank" must be mounted before "/mnt/tank/library".
   # FS dependency order can be inferred by string length.
   topoSortedMounts = pipe cfg.mounts [
@@ -202,13 +205,43 @@ in {
 
         apply-properties = {
           about = "Synchronize ZFS properties";
-          run = pkgs.writers.writePython3 "sync-zfs-props" { } ./zfs_attrs.py;
-          args = [{
-            id = "EXPECTED_STATE";
-            value_name = "FILE_PATH";
-            about = "Path to a JSON file containing the expected properties";
-            # TODO: Assign default value to computed state file.
-          }];
+
+          run = pkgs.writers.writePython3 "apply-zfs-properties.py" {
+            libraries = [ pkgs.python3Packages.termcolor ];
+          } ./zfs_attrs.py;
+
+          args = [
+            {
+              id = "EXPECTED_STATE";
+              value_name = "FILE_PATH";
+              about = "Path to a JSON file containing the expected properties";
+              default_value =
+                pkgs.writers.writeJSON "expected-properties.json" {
+                  pools = { }; # TODO: Add support for managed pool properties.
+
+                  datasets = pipe cfg.pools [
+                    (attrValues)
+
+                    (map (pool:
+                      (mapAttrs' (_: dataset: {
+                        name = "${pool.name}/${dataset.name}";
+                        value = {
+                          ignored_properties = [ "nixos:shutdown-time" ];
+                          inherit (dataset) properties;
+                        };
+                      }) pool.datasets)))
+
+                    (mergeAttrsList)
+                  ];
+                };
+            }
+            {
+              id = "AUTO_CONFIRM";
+              about = "Automatically confirm changes";
+              short = "y";
+              long = "yes";
+            }
+          ];
         };
 
         init = {
@@ -276,21 +309,7 @@ in {
               ]) (attrValues cfg.pools)}
 
             # Apply dataset properties.
-            ${concatMapStringsSep "\n  " (pool:
-              pipe pool.datasets [
-                (attrValues)
-                (filter (dataset: dataset.properties != { }))
-                (map (dataset:
-                  pipe dataset.properties [
-                    (attrsToList)
-                    (map (prop:
-                      "zfs set ${escapeShellArg prop.name}=${
-                        escapeShellArg (toString prop.value)
-                      } ${escapeShellArg "${pool.name}/${dataset.name}"}"))
-                    (concatStringsSep "\n  ")
-                  ]))
-                (concatStringsSep "\n  ")
-              ]) (attrValues cfg.pools)}
+            system file-storage apply-properties --yes=true
           '';
         };
       };
