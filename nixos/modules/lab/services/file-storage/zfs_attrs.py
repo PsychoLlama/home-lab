@@ -33,8 +33,8 @@ def main():
         logger.error("EXPECTED_STATE environment variable is required")
         return
 
-    desired_state = get_expected_properties()
     actual_state = get_dataset_properties()
+    desired_state = get_expected_properties()
     diff = compare_zfs_properties(desired_state, actual_state)
 
     if len(diff) == 0:
@@ -56,6 +56,8 @@ def get_dataset_properties():
     Fetch a list of every ZFS property on the system. This does not include
     inherited properties or defaults.
     """
+    logger.info("Reading current state of all ZFS properties")
+
     proc = subprocess.run(
         ["zfs", "get", "-Hpt", "filesystem", "-s", "local", "all"],
         capture_output=True,
