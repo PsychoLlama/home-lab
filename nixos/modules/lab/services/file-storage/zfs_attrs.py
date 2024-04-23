@@ -230,11 +230,14 @@ def get_execution_plan(diff):
     return execution_plan
 
 
-# TODO: Execute the plan.
 def apply_changes(execution_plan):
     logger.info("Execution plan:")
     for step in execution_plan:
         logger.info(" ".join(step))
+        result = subprocess.run(step)
+        if result.returncode != 0:
+            logger.error("Failed to execute plan")
+            return
 
 
 if __name__ == "__main__":
