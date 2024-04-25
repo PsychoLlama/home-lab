@@ -202,8 +202,7 @@
 
                       # This is the only way to use `.shell_interact()`.
                       if [[ -n "$interactive" ]]; then
-                        nix build ".#tests.$expr.driver"
-                        ./result/bin/nixos-test-driver
+                        nix run ".#tests.$expr.driver"
                       else
                         nix build ".#tests.$expr"
                       fi
