@@ -7,6 +7,18 @@ pkgs.mkShell {
     (pkgs.python3.withPackages (p: [ p.termcolor ]))
     pkgs.python3Packages.black
     pkgs.viddy
+
+    (pkgs.writers.writeNuBin "unit-test" ''
+      use ${pkgs.nushell.src}/crates/nu-std/testing.nu run-tests
+      run-tests
+    '')
+
+    (pkgs.writers.writeNuBin "unit-test-watch" ''
+      watch . --glob=**/*.nu {
+        clear
+        unit-test
+      }
+    '')
   ];
 
   shellHook = ''
