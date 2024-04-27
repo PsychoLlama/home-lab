@@ -40,9 +40,9 @@ export def 'get actual' []: nothing -> table {
 
 # Returns the expected state of all dataset properties and pool attributes as
 # specified in the state file. The output schema matches the actual state.
-export def 'get expected' []: nothing -> table {
-  let expected = open-state-file
-
+export def 'format expected' [
+  state_file: record<pools: record, datasets: record>
+]: nothing -> table {
   def enumerate_resources [resource_type: string, expected: record] {
     $expected
     | transpose name settings
@@ -67,8 +67,8 @@ export def 'get expected' []: nothing -> table {
     }
   }
 
-  | enumerate_resources "pool" $expected.pools
-  | append (enumerate_resources "dataset" $expected.datasets)
+  | enumerate_resources "pool" $state_file.pools
+  | append (enumerate_resources "dataset" $state_file.datasets)
 }
 
 # Return the path to the JSON file specifying the expected system state.
@@ -85,7 +85,6 @@ export def open-state-file []: nothing -> record {
 }
 
 ## TODO:
-# - Add this script to `lab.system`
-# - Write tests for converting the expected data to a flat table
 # - Derive a system diff
 # - Derive an execution plan
+# - Add this script to `lab.system`
