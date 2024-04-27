@@ -71,6 +71,89 @@ export def 'format expected' [
   | append (enumerate_resources "dataset" $state_file.datasets)
 }
 
+export def diff [
+  actual: table,
+  expected: table,
+] {
+  # Make comparison of expected <-> actual easier by indexing records by
+  # composite key.
+  def key_by_composite_id []: table -> record {
+    let entries = $in
+
+    # Transpose returns an empty table if the input is empty. Make sure we
+    # always return a record.
+    if ($entries | is-empty) {
+      return {}
+    }
+
+    $entries
+    | each {|entry|
+      {
+        key: (get_composite_id $entry)
+        value: $entry
+      }
+    }
+    | transpose -rd
+  }
+
+  def get_composite_id [entry: record]: nothing -> string {
+    $"($entry.type):($entry.name):($entry.prop)"
+  }
+
+  let keyed_actual = $actual | key_by_composite_id
+  let keyed_expected = $expected | key_by_composite_id
+
+  # Find values in "expected" that do not exist in "actual", or values that
+  # differ between the two.
+  let additions_or_modifications = $expected | each {|entry|
+    let actual = $keyed_actual
+    | get -si (get_composite_id $entry)
+    | get value?
+
+    # Values are identical. No change needed.
+    if ($entry.value == $actual) {
+      return null
+    }
+
+    {
+      type: $entry.type
+      change: (match $actual {
+        null => "add"
+        _ => "modify"
+      })
+      name: $entry.name
+      prop: $entry.prop
+      actual: $actual
+      expected: $entry.value
+    }
+  }
+
+  # Find values in "actual" that do not exist in "expected".
+  let deletions = $actual | each {|entry|
+    let expected = $keyed_expected | get -si (get_composite_id $entry)
+
+    if $expected != null {
+      return null
+    }
+
+    {
+      type: $entry.type
+      change: "remove"
+      name: $entry.name
+      prop: $entry.prop
+      actual: $entry.value
+      expected: null
+    }
+  }
+
+  $additions_or_modifications
+  | append $deletions
+  | filter {|change| $change != null }
+  | each { merge { sort_key: (get_composite_id $in) } }
+  | sort-by sort_key
+  | reject sort_key
+}
+
 # Return the path to the JSON file specifying the expected system state.
 export def open-state-file []: nothing -> record {
   let config_file = if $env.EXPECTED_STATE? == null {
@@ -85,6 +168,6 @@ export def open-state-file []: nothing -> record {
 }
 
 ## TODO:
-# - Derive a system diff
+# - Support ignored properties and unmanaged pools/datasets
 # - Derive an execution plan
 # - Add this script to `lab.system`

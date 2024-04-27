@@ -66,3 +66,89 @@ def test_flatten_expected_state_with_pool_properties [] {
     [pool, locker, autoexpand, on, local]
   ]
 }
+
+#[test]
+def test_diff_added_properties [] {
+  let expected = [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, on,    local]
+    [dataset, locker, relatime,    on,    local]
+  ]
+
+  let actual = []
+
+  let diff = zprops diff $actual $expected
+
+  assert equal $diff [
+    [type,    change, name,   prop,        actual, expected];
+    [dataset, add,    locker, compression, null,   on]
+    [dataset, add,    locker, relatime,    null,   on]
+  ]
+}
+
+#[test]
+def test_diff_changed_properties [] {
+  let expected = [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, on,    local]
+    [dataset, locker, relatime,    on,    local]
+  ]
+
+  let actual = [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, off,   local]
+    [dataset, locker, relatime,    on,    local]
+  ]
+
+  let diff = zprops diff $actual $expected
+
+  assert equal $diff [
+    [type,    change, name,   prop,        actual, expected];
+    [dataset, modify, locker, compression, off,    on]
+  ]
+}
+
+#[test]
+def test_removed_properties [] {
+  let expected = [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, on,    local]
+  ]
+
+  let actual = [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, on,    local]
+    [dataset, locker, relatime,    on,    local]
+  ]
+
+  let diff = zprops diff $actual $expected
+
+  assert equal $diff [
+    [type,    change, name,   prop,     actual, expected];
+    [dataset, remove, locker, relatime, on,     null]
+  ]
+}
+
+#[test]
+def test_diff_added_and_removed_properties [] {
+  let expected = [
+    [type,    name,    prop,        value, source];
+    [dataset, locker,  compression, on,    local]
+    [pool,    example, autoexpand,  off,   local]
+  ]
+
+  let actual = [
+    [type,    name,    prop,       value, source];
+    [dataset, locker,  relatime,   on,    local]
+    [pool,    example, autoexpand, on,    local]
+  ]
+
+  let diff = zprops diff $actual $expected
+
+  assert equal $diff [
+    [type,    change, name,    prop,        actual, expected];
+    [dataset, add,    locker,  compression, null,   on]
+    [dataset, remove, locker,  relatime,    on,     null]
+    [pool,    modify, example, autoexpand,  on,     off]
+  ]
+}
