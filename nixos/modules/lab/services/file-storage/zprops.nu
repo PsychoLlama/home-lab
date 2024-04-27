@@ -16,7 +16,23 @@
 use std log
 
 # Check dataset and pool properties for drift and apply the expected state.
-export def main []: nothing -> nothing {
+export def main []: nothing -> table {
+  let state_file = open-state-file
+  let actual = get actual
+  let managed_state = filter-unmanaged $state_file $actual
+  let expected_state = format expected $state_file
+  let diff = diff $managed_state $expected_state
+
+  print ($diff | table --theme psql) "Apply changes?"
+
+  if ([confirm cancel] | input list) != "confirm" {
+    log warning "Aborted."
+    return
+  }
+
+  ## TODO:
+  # - Derive an execution plan
+  # - Add this script to `lab.system`
   log error "Not implemented"
 }
 
@@ -29,11 +45,14 @@ export def "get actual" []: nothing -> table {
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
   | each { merge { type: pool } }
+  | where source == local
+  | where prop !~ 'feature@' # Not supported yet.
 
   let datasets = zfs get -Ht filesystem all
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
   | each { merge { type: dataset } }
+  | where source == local
 
   $pools | append $datasets
 }
@@ -95,7 +114,7 @@ export def filter-unmanaged [
 export def diff [
   actual: table,
   expected: table,
-] {
+]: nothing -> table {
   # Make comparison of expected <-> actual easier by indexing records by
   # composite key.
   def key_by_composite_id []: table -> record {
@@ -187,7 +206,3 @@ export def open-state-file []: nothing -> record {
 
   open $config_file
 }
-
-## TODO:
-# - Derive an execution plan
-# - Add this script to `lab.system`
