@@ -15,13 +15,23 @@
 
 use std log
 
-# Check dataset and pool properties for drift and apply the expected state.
-export def main []: nothing -> table {
+# Diff system state against expected state.
+export def plan []: nothing -> table {
   let state_file = open-state-file
   let actual = get actual
   let managed_state = filter-unmanaged $state_file $actual
   let expected_state = format expected $state_file
-  let diff = diff $managed_state $expected_state
+  diff $managed_state $expected_state
+}
+
+# Apply a diff to the system, bringing it into alignment with the state file.
+export def apply []: nothing -> nothing {
+  let diff = plan
+
+  if ($diff | is-empty) {
+    log info "No changes to apply."
+    return
+  }
 
   print ($diff | table --theme psql) "Apply changes?"
 
@@ -30,10 +40,12 @@ export def main []: nothing -> table {
     return
   }
 
-  ## TODO:
-  # - Derive an execution plan
-  # - Add this script to `lab.system`
-  log error "Not implemented"
+  for action in (execution plan $diff) {
+    log info $"Executing: ($action.cmd) ($action.args | str join ' ')"
+    run-external $action.cmd ...$action.args
+  }
+
+  log info "Changes applied."
 }
 
 # Returns the actual state of all dataset properties and pool attributes on
@@ -192,6 +204,43 @@ export def diff [
   | each { merge { sort_key: (get_composite_id $in) } }
   | sort-by sort_key
   | reject sort_key
+}
+
+export def "execution plan" [diff]: nothing -> list {
+  let dataset_prop_changes = $diff
+  | where type == dataset and change in [add, modify]
+  | group-by name
+  | items {|dataset, changes|
+      let properties = $changes
+      | each { [$in.prop $in.expected] | str join "=" }
+
+      {
+        cmd: "zfs"
+        args: ["set" "-u" ...$properties $dataset]
+      }
+    }
+
+  let dataset_prop_removals = $diff
+  | where type == dataset and change == remove
+  | each {|change|
+      {
+        cmd: "zfs"
+        args: ["inherit" $change.prop $change.name]
+      }
+    }
+
+  let pool_attr_changes = $diff
+  | where type == pool and change in [add, modify]
+  | each {|change|
+      {
+        cmd: "zpool"
+        args: ["set" $"($change.prop)=($change.expected)" $change.name]
+      }
+    }
+
+  | $dataset_prop_changes
+  | append $dataset_prop_removals
+  | append $pool_attr_changes
 }
 
 # Return the path to the JSON file specifying the expected system state.

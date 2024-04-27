@@ -217,3 +217,50 @@ def test_diff_added_and_removed_properties [] {
     [pool,    modify, example, autoexpand,  on,     off]
   ]
 }
+
+#[test]
+def test_modified_dataset_execution_plan [] {
+  let diff = [
+    [type,    change, name,    prop,        actual, expected];
+    [dataset, add,    locker,  compression, null,   on]
+    [dataset, modify, locker,  relatime,    on,     off]
+  ]
+
+  let commands = zprops execution plan $diff
+
+  assert equal $commands [
+    { cmd: zfs, args: [set -u compression=on relatime=off locker] }
+  ]
+}
+
+#[test]
+def test_removed_dataset_props_execution_plan [] {
+  let diff = [
+    [type,    change, name,    prop,     actual, expected];
+    [dataset, remove, locker,  relatime, on,     null]
+    [dataset, remove, locker,  xattr,    on,     null]
+  ]
+
+  let commands = zprops execution plan $diff
+
+  assert equal $commands [
+    { cmd: zfs, args: [inherit relatime locker] }
+    { cmd: zfs, args: [inherit xattr locker] }
+  ]
+}
+
+#[test]
+def test_modified_pool_execution_plan [] {
+  let diff = [
+    [type, change, name, prop,       actual, expected];
+    [pool, modify, tank, autoexpand, off,    on]
+    [pool, add,    tank, autotrim,   null,   on]
+  ]
+
+  let commands = zprops execution plan $diff
+
+  assert equal $commands [
+    { cmd: zpool, args: [set autoexpand=on tank] }
+    { cmd: zpool, args: [set autotrim=on tank] }
+  ]
+}
