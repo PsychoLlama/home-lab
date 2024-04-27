@@ -24,7 +24,7 @@ export def main []: nothing -> nothing {
 # the system.
 #
 # SEE: zprops(7), zpoolprops(7)
-export def 'get actual' []: nothing -> table {
+export def "get actual" []: nothing -> table {
   let pools = zpool get all -H
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
@@ -40,7 +40,7 @@ export def 'get actual' []: nothing -> table {
 
 # Returns the expected state of all dataset properties and pool attributes as
 # specified in the state file. The output schema matches the actual state.
-export def 'format expected' [
+export def "format expected" [
   state_file: record<pools: record, datasets: record>
 ]: nothing -> table {
   def enumerate_resources [resource_type: string, expected: record] {
@@ -57,18 +57,39 @@ export def 'format expected' [
     $resource.settings.properties
     | transpose name value
     | each {|prop|
-      {
-        type: $resource.type
-        name: $resource.name
-        prop: $prop.name
-        value: $prop.value
-        source: "local"
+        {
+          type: $resource.type
+          name: $resource.name
+          prop: $prop.name
+          value: $prop.value
+          source: "local"
+        }
       }
-    }
   }
 
   | enumerate_resources "pool" $state_file.pools
   | append (enumerate_resources "dataset" $state_file.datasets)
+}
+
+# Remove any pools, datasets, or properties from actual state that aren't
+# managed by the state file.
+export def filter-unmanaged [
+  state_file: record
+  actual_state: table
+] {
+  $actual_state | filter {|entry|
+    let expected = $state_file
+    | get -is (match $entry.type {
+        pool => "pools"
+        dataset => "datasets"
+      })
+    | get -is $entry.name
+
+    match $expected {
+      null => false
+      _ => (not ($entry.prop in $expected.ignored_properties))
+    }
+  }
 }
 
 export def diff [
@@ -88,11 +109,11 @@ export def diff [
 
     $entries
     | each {|entry|
-      {
-        key: (get_composite_id $entry)
-        value: $entry
+        {
+          key: (get_composite_id $entry)
+          value: $entry
+        }
       }
-    }
     | transpose -rd
   }
 
@@ -168,6 +189,5 @@ export def open-state-file []: nothing -> record {
 }
 
 ## TODO:
-# - Support ignored properties and unmanaged pools/datasets
 # - Derive an execution plan
 # - Add this script to `lab.system`

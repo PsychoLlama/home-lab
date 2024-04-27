@@ -68,6 +68,71 @@ def test_flatten_expected_state_with_pool_properties [] {
 }
 
 #[test]
+def test_unmanaged_pools_and_datasets [] {
+  let state = fill_partial_state {
+    datasets: {
+      locker: {
+        properties: {
+          compression: on
+        }
+      }
+    }
+  }
+
+  let actual = [
+    [type,    name,      prop,        value, source];
+    [dataset, locker,    compression, on,    local]
+    [dataset, unmanaged, compression, on,    local]
+    [pool,    unknown,   autoexpand,  on,    local]
+  ]
+
+  let filtered = zprops filter-unmanaged $state $actual
+
+  assert equal $filtered [
+    [type,    name,   prop,        value, source];
+    [dataset, locker, compression, on,    local]
+  ]
+}
+
+#[test]
+def test_unmanaged_properties [] {
+  let state = fill_partial_state {
+    pools: {
+      tank: {
+        ignored_properties: [autotrim]
+        properties: {
+          autoexpand: on
+        }
+      }
+    }
+    datasets: {
+      locker: {
+        ignored_properties: [mountpoint]
+        properties: {
+          relatime: on
+        }
+      }
+    }
+  }
+
+  let actual = [
+    [type,    name,      prop,       value, source];
+    [dataset, locker,    relatime,   off,   local]
+    [dataset, locker,    mountpoint, none,  local]
+    [pool,    tank,      autoexpand, off,   local]
+    [pool,    tank,      autotrim,   off,   local]
+  ]
+
+  let filtered = zprops filter-unmanaged $state $actual
+
+  assert equal $filtered [
+    [type,    name,   prop,       value, source];
+    [dataset, locker, relatime,   off,   local]
+    [pool,    tank,   autoexpand, off,   local]
+  ]
+}
+
+#[test]
 def test_diff_added_properties [] {
   let expected = [
     [type,    name,   prop,        value, source];
