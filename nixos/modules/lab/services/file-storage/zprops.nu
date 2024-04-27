@@ -26,6 +26,15 @@ export def plan []: nothing -> table {
 
 # Apply a diff to the system, bringing it into alignment with the state file.
 export def apply []: nothing -> nothing {
+  def ask_permission [] {
+    if $env.AUTO_CONFIRM? == "true" {
+      return true
+    }
+
+    print "Apply changes?"
+    ([confirm cancel] | input list) == "confirm" 
+  }
+
   let diff = plan
 
   if ($diff | is-empty) {
@@ -33,9 +42,9 @@ export def apply []: nothing -> nothing {
     return
   }
 
-  print ($diff | table --theme psql) "Apply changes?"
+  print ($diff | table --theme psql)
 
-  if ([confirm cancel] | input list) != "confirm" {
+  if not (ask_permission) {
     log warning "Aborted."
     return
   }
