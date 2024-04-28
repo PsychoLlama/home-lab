@@ -25,7 +25,7 @@ let
   # `./propctl.nu`.
   zfsStateFile = {
     pools = mapAttrs (_: pool: {
-      ignored_properties = [ ]; # TODO: Support ignored settings.
+      ignored_properties = pool.unmanaged.settings;
       properties = pool.settings;
     }) cfg.pools;
 
@@ -36,7 +36,7 @@ let
         # Declare pool properties
         {
           ${pool.name} = {
-            ignored_properties = [ ];
+            ignored_properties = pool.unmanaged.properties;
             inherit (pool) properties;
           };
         }
@@ -45,7 +45,7 @@ let
         (mapAttrs' (_: dataset: {
           name = "${pool.name}/${dataset.name}";
           value = {
-            ignored_properties = [ "nixos:shutdown-time" ];
+            ignored_properties = dataset.unmanaged.properties;
             inherit (dataset) properties;
           };
         }) pool.datasets)
@@ -127,6 +127,18 @@ in {
           '';
         };
 
+        options.unmanaged.settings = mkOption {
+          type = types.listOf types.str;
+          description = "Unmanaged zpool settings to ignore.";
+          default = [ ];
+        };
+
+        options.unmanaged.properties = mkOption {
+          type = types.listOf types.str;
+          description = "Unmanaged dataset properties to ignore.";
+          default = [ "nixos:shutdown-time" ];
+        };
+
         options.properties = mkOption {
           type = types.attrs;
           default = { };
@@ -187,6 +199,12 @@ in {
                 Mapping of ZFS dataset settings. See `zfsprops(7)` for a list
                 of available options.
               '';
+            };
+
+            options.unmanaged.properties = mkOption {
+              type = types.listOf types.str;
+              description = "Unmanaged dataset properties to ignore.";
+              default = [ ];
             };
           }));
         };
