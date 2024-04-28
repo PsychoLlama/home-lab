@@ -1,0 +1,26 @@
+{
+  "nodes": {
+    "call-flake": {
+      "locked": {
+        "lastModified": 1714267385,
+        "narHash": "sha256-B9uOqvhDhHnK+kwW/mfI/rAtlXuYlipdOss/L7gBOjs=",
+        "owner": "divnix",
+        "repo": "call-flake",
+        "rev": "856920bd78ac60a53fa008479fc9f3751a5a7e42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "divnix",
+        "repo": "call-flake",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "call-flake": "call-flake"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

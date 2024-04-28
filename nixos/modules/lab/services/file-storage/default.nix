@@ -5,6 +5,9 @@ with lib;
 let
   cfg = config.lab.services.file-storage;
 
+  # TODO: Replace this with the upstream version when nixpkgs is updated.
+  mergeAttrsList = lib.fold lib.mergeAttrs { };
+
   # Example: "/mnt/tank" must be mounted before "/mnt/tank/library".
   # FS dependency order can be inferred by string length.
   topoSortedMounts = pipe cfg.mounts [
@@ -12,6 +15,46 @@ let
     (sortOn (mount: stringLength mount.name))
     (map (mount: mount.name))
   ];
+
+  nulib = fileset.toSource {
+    root = ./.;
+    fileset = fileset.fileFilter (f: f.hasExt "nu") ./.;
+  };
+
+  # Expected property/settings for zpools and datasets. Managed by
+  # `./propctl.nu`.
+  zfsStateFile = {
+    pools = mapAttrs (_: pool: {
+      ignored_properties = pool.unmanaged.settings;
+      properties = pool.settings;
+    }) cfg.pools;
+
+    datasets = pipe cfg.pools [
+      (attrValues)
+
+      (map (pool: [
+        # Declare pool properties
+        {
+          ${pool.name} = {
+            ignored_properties = pool.unmanaged.properties;
+            inherit (pool) properties;
+          };
+        }
+
+        # Declare dataset properties
+        (mapAttrs' (_: dataset: {
+          name = "${pool.name}/${dataset.name}";
+          value = {
+            ignored_properties = dataset.unmanaged.properties;
+            inherit (dataset) properties;
+          };
+        }) pool.datasets)
+      ]))
+
+      (flatten)
+      (mergeAttrsList)
+    ];
+  };
 
 in {
   options.lab.services.file-storage = {
@@ -84,6 +127,18 @@ in {
           '';
         };
 
+        options.unmanaged.settings = mkOption {
+          type = types.listOf types.str;
+          description = "Unmanaged zpool settings to ignore.";
+          default = [ ];
+        };
+
+        options.unmanaged.properties = mkOption {
+          type = types.listOf types.str;
+          description = "Unmanaged dataset properties to ignore.";
+          default = [ "nixos:shutdown-time" ];
+        };
+
         options.properties = mkOption {
           type = types.attrs;
           default = { };
@@ -145,6 +200,12 @@ in {
                 of available options.
               '';
             };
+
+            options.unmanaged.properties = mkOption {
+              type = types.listOf types.str;
+              description = "Unmanaged dataset properties to ignore.";
+              default = [ ];
+            };
           }));
         };
       }));
@@ -200,6 +261,39 @@ in {
           '';
         };
 
+        export-properties = {
+          about = "Export known pool/dataset properties to a state file format";
+          run = pkgs.unstable.writers.writeNu "export-zfs-properties.nu" ''
+            use ${nulib}/propctl.nu
+            propctl export-system-state | to json
+          '';
+        };
+
+        apply-properties = {
+          about = "Manage ZFS dataset properties and pool attributes";
+
+          run = pkgs.unstable.writers.writeNu "manage-zfs-properties.nu" ''
+            use ${nulib}/propctl.nu
+            propctl plan | propctl apply
+          '';
+
+          args = [
+            {
+              id = "EXPECTED_STATE";
+              value_name = "FILE_PATH";
+              about = "Path to a JSON file containing the expected properties";
+              default_value =
+                pkgs.writers.writeJSON "expected-state.json" zfsStateFile;
+            }
+            {
+              id = "AUTO_CONFIRM";
+              about = "Automatically confirm changes";
+              short = "y";
+              long = "yes";
+            }
+          ];
+        };
+
         init = {
           about = "Create ZFS pools";
           run = pkgs.writers.writeBash "init-storage" ''
@@ -219,40 +313,6 @@ in {
               (concatStringsSep "\n  ")
             ]}
 
-            # Apply pool settings.
-            ${pipe cfg.pools [
-              (attrValues)
-              (filter (pool: pool.settings != { }))
-              (map (pool:
-                pipe pool.settings [
-                  (attrsToList)
-                  (map (setting:
-                    "zpool set ${escapeShellArg setting.name}=${
-                      escapeShellArg (toString setting.value)
-                    } ${escapeShellArg pool.name}"))
-                  (concatStringsSep "\n  ")
-                ]))
-
-              (concatStringsSep "\n  ")
-            ]}
-
-            # Apply filesystem properties.
-            ${pipe cfg.pools [
-              (attrValues)
-              (filter (pool: pool.properties != { }))
-              (map (pool:
-                pipe pool.properties [
-                  (attrsToList)
-                  (map (prop:
-                    "zfs set ${escapeShellArg prop.name}=${
-                      escapeShellArg (toString prop.value)
-                    } ${escapeShellArg pool.name}"))
-                  (concatStringsSep "\n  ")
-                ]))
-
-              (concatStringsSep "\n  ")
-            ]}
-
             # Create datasets.
             ${concatMapStringsSep "\n  " (pool:
               pipe pool.datasets [
@@ -264,22 +324,8 @@ in {
                 (concatStringsSep "\n  ")
               ]) (attrValues cfg.pools)}
 
-            # Apply dataset properties.
-            ${concatMapStringsSep "\n  " (pool:
-              pipe pool.datasets [
-                (attrValues)
-                (filter (dataset: dataset.properties != { }))
-                (map (dataset:
-                  pipe dataset.properties [
-                    (attrsToList)
-                    (map (prop:
-                      "zfs set ${escapeShellArg prop.name}=${
-                        escapeShellArg (toString prop.value)
-                      } ${escapeShellArg "${pool.name}/${dataset.name}"}"))
-                    (concatStringsSep "\n  ")
-                  ]))
-                (concatStringsSep "\n  ")
-              ]) (attrValues cfg.pools)}
+            # Apply pool/dataset properties.
+            system file-storage apply-properties --yes=true
           '';
         };
       };
