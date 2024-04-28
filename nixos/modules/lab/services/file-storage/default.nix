@@ -16,6 +16,11 @@ let
     (map (mount: mount.name))
   ];
 
+  nulib = fileset.toSource {
+    root = ./.;
+    fileset = fileset.fileFilter (f: f.hasExt "nu") ./.;
+  };
+
 in {
   options.lab.services.file-storage = {
     enable = mkEnableOption ''
@@ -204,11 +209,13 @@ in {
         };
 
         apply-properties = {
-          about = "Synchronize ZFS properties";
+          about = "Manage ZFS dataset properties and pool attributes";
 
-          run = pkgs.writers.writePython3 "apply-zfs-properties.py" {
-            libraries = [ pkgs.python3Packages.termcolor ];
-          } ./zfs_attrs.py;
+          run = pkgs.unstable.writers.writeNu "manage-zfs-properties.nu" ''
+            use ${nulib}/propctl.nu
+
+            propctl plan | propctl apply
+          '';
 
           args = [
             {
