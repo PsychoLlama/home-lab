@@ -26,7 +26,7 @@ export def plan []: nothing -> table {
 
 # Apply a diff to the system, bringing it into alignment with the state file.
 # Expects output from `plan`.
-export def apply []: table -> nothing {
+export def apply [--sudo]: table -> nothing {
   let diff = $in
 
   def ask_permission [] {
@@ -50,7 +50,12 @@ export def apply []: table -> nothing {
     return
   }
 
-  for action in (to-execution-plan $diff) {
+  for plan in (to-execution-plan $diff) {
+    let action = match $sudo {
+      true => { cmd: sudo, args: [$plan.cmd ...$plan.args] }
+      _ => $plan
+    }
+
     log info $"Executing: ($action.cmd) ($action.args | str join ' ')"
     run-external $action.cmd ...$action.args
   }
