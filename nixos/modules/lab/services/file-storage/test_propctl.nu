@@ -1,7 +1,8 @@
 use std assert
-use zprops.nu
+use propctl.nu
 
-def fill_partial_state [partial_state: record] {
+# Generate a state file matching a strict schema given only partial data.
+def fill_partial_state [partial_state: record]: nothing -> record {
   def fill_missing_resource_fields [] {
     $in
     | default {}
@@ -22,7 +23,7 @@ def fill_partial_state [partial_state: record] {
 #[test]
 def test_flatten_empty_expected_state [] {
   let state = fill_partial_state {}
-  let expected = zprops format expected $state
+  let expected = propctl flatten-state-file $state
 
   assert equal $expected []
 }
@@ -40,7 +41,7 @@ def test_flatten_expected_state_with_dataset_properties [] {
     }
   }
 
-  let expected = zprops format expected $state
+  let expected = propctl flatten-state-file $state
 
   assert equal $expected [
     [type, name, prop, value, source];
@@ -59,7 +60,7 @@ def test_flatten_expected_state_with_pool_properties [] {
     }
   }
 
-  let expected = zprops format expected $state
+  let expected = propctl flatten-state-file $state
 
   assert equal $expected [
     [type, name, prop, value, source];
@@ -86,7 +87,7 @@ def test_unmanaged_pools_and_datasets [] {
     [pool,    unknown,   autoexpand,  on,    local]
   ]
 
-  let filtered = zprops filter-unmanaged $state $actual
+  let filtered = propctl filter-unmanaged-state $state $actual
 
   assert equal $filtered [
     [type,    name,   prop,        value, source];
@@ -123,7 +124,7 @@ def test_unmanaged_properties [] {
     [pool,    tank,      autotrim,   off,   local]
   ]
 
-  let filtered = zprops filter-unmanaged $state $actual
+  let filtered = propctl filter-unmanaged-state $state $actual
 
   assert equal $filtered [
     [type,    name,   prop,       value, source];
@@ -142,7 +143,7 @@ def test_diff_added_properties [] {
 
   let actual = []
 
-  let diff = zprops diff $actual $expected
+  let diff = propctl generate-diff $actual $expected
 
   assert equal $diff [
     [type,    change, name,   prop,        actual, expected];
@@ -165,7 +166,7 @@ def test_diff_changed_properties [] {
     [dataset, locker, relatime,    on,    local]
   ]
 
-  let diff = zprops diff $actual $expected
+  let diff = propctl generate-diff $actual $expected
 
   assert equal $diff [
     [type,    change, name,   prop,        actual, expected];
@@ -186,7 +187,7 @@ def test_removed_properties [] {
     [dataset, locker, relatime,    on,    local]
   ]
 
-  let diff = zprops diff $actual $expected
+  let diff = propctl generate-diff $actual $expected
 
   assert equal $diff [
     [type,    change, name,   prop,     actual, expected];
@@ -208,7 +209,7 @@ def test_diff_added_and_removed_properties [] {
     [pool,    example, autoexpand, on,    local]
   ]
 
-  let diff = zprops diff $actual $expected
+  let diff = propctl generate-diff $actual $expected
 
   assert equal $diff [
     [type,    change, name,    prop,        actual, expected];
@@ -226,7 +227,7 @@ def test_modified_dataset_execution_plan [] {
     [dataset, modify, locker,  relatime,    on,     off]
   ]
 
-  let commands = zprops execution plan $diff
+  let commands = propctl to-execution-plan $diff
 
   assert equal $commands [
     { cmd: zfs, args: [set -u compression=on relatime=off locker] }
@@ -241,7 +242,7 @@ def test_removed_dataset_props_execution_plan [] {
     [dataset, remove, locker,  xattr,    on,     null]
   ]
 
-  let commands = zprops execution plan $diff
+  let commands = propctl to-execution-plan $diff
 
   assert equal $commands [
     { cmd: zfs, args: [inherit relatime locker] }
@@ -257,7 +258,7 @@ def test_modified_pool_execution_plan [] {
     [pool, add,    tank, autotrim,   null,   on]
   ]
 
-  let commands = zprops execution plan $diff
+  let commands = propctl to-execution-plan $diff
 
   assert equal $commands [
     { cmd: zpool, args: [set autoexpand=on tank] }

@@ -18,14 +18,17 @@ use std log
 # Diff system state against expected state.
 export def plan []: nothing -> table {
   let state_file = open-state-file
-  let actual = get actual
-  let managed_state = filter-unmanaged $state_file $actual
-  let expected_state = format expected $state_file
-  diff $managed_state $expected_state
+  let actual = read-system-state
+  let managed_state = filter-unmanaged-state $state_file $actual
+  let expected_state = flatten-state-file $state_file
+  generate-diff $managed_state $expected_state
 }
 
 # Apply a diff to the system, bringing it into alignment with the state file.
-export def apply []: nothing -> nothing {
+# Expects output from `plan`.
+export def apply []: table -> nothing {
+  let diff = $in
+
   def ask_permission [] {
     if $env.AUTO_CONFIRM? == "true" {
       return true
@@ -34,8 +37,6 @@ export def apply []: nothing -> nothing {
     print "Apply changes?"
     ([confirm cancel] | input list) == "confirm" 
   }
-
-  let diff = plan
 
   if ($diff | is-empty) {
     log info "No changes to apply."
@@ -49,7 +50,7 @@ export def apply []: nothing -> nothing {
     return
   }
 
-  for action in (execution plan $diff) {
+  for action in (to-execution-plan $diff) {
     log info $"Executing: ($action.cmd) ($action.args | str join ' ')"
     run-external $action.cmd ...$action.args
   }
@@ -61,7 +62,7 @@ export def apply []: nothing -> nothing {
 # the system.
 #
 # SEE: zprops(7), zpoolprops(7)
-export def "get actual" []: nothing -> table {
+export def read-system-state []: nothing -> table {
   let pools = zpool get all -H
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
@@ -79,8 +80,9 @@ export def "get actual" []: nothing -> table {
 }
 
 # Returns the expected state of all dataset properties and pool attributes as
-# specified in the state file. The output schema matches the actual state.
-export def "format expected" [
+# specified in the state file, but flattened to a table matching the schema of
+# `read-system-state`.
+export def flatten-state-file [
   state_file: record<pools: record, datasets: record>
 ]: nothing -> table {
   def enumerate_resources [resource_type: string, expected: record] {
@@ -113,7 +115,7 @@ export def "format expected" [
 
 # Remove any pools, datasets, or properties from actual state that aren't
 # managed by the state file.
-export def filter-unmanaged [
+export def filter-unmanaged-state [
   state_file: record
   actual_state: table
 ] {
@@ -125,14 +127,18 @@ export def filter-unmanaged [
       })
     | get -is $entry.name
 
-    match $expected {
-      null => false
-      _ => (not ($entry.prop in $expected.ignored_properties))
+    # If the state file doesn't specify the pool/dataset, then ignore it.
+    if $expected == null {
+      false
+    } else {
+      not ($entry.prop in $expected.ignored_properties)
     }
   }
 }
 
-export def diff [
+# Compare system state against expected state to find added, modified, or
+# removed properties. Works for both pools and datasets.
+export def generate-diff [
   actual: table,
   expected: table,
 ]: nothing -> table {
@@ -215,7 +221,8 @@ export def diff [
   | reject sort_key
 }
 
-export def "execution plan" [diff]: nothing -> list {
+# Generate commands from the state diff to bring the system into alignment.
+export def to-execution-plan [diff]: nothing -> list {
   let dataset_prop_changes = $diff
   | where type == dataset and change in [add, modify]
   | group-by name
