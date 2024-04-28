@@ -15,6 +15,8 @@
     in {
       devShell = lib.eachSystem (system: pkgs:
         pkgs.mkShell {
+          EXPECTED_STATE = "./state-file.json";
+
           packages = [
             (pkgs.unstable.writers.writeNuBin "unit-test" ''
               use ${pkgs.unstable.nushell.src}/crates/nu-std/testing.nu run-tests

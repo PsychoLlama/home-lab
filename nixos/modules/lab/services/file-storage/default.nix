@@ -261,12 +261,19 @@ in {
           '';
         };
 
+        export-properties = {
+          about = "Export known pool/dataset properties to a state file format";
+          run = pkgs.unstable.writers.writeNu "export-zfs-properties.nu" ''
+            use ${nulib}/propctl.nu
+            propctl export-system-state | to json
+          '';
+        };
+
         apply-properties = {
           about = "Manage ZFS dataset properties and pool attributes";
 
           run = pkgs.unstable.writers.writeNu "manage-zfs-properties.nu" ''
             use ${nulib}/propctl.nu
-
             propctl plan | propctl apply
           '';
 

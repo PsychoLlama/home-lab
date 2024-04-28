@@ -271,3 +271,40 @@ export def open-state-file []: nothing -> record {
 
   open $config_file
 }
+
+# Generate a state file snapshot from current system state.
+export def export-system-state []: nothing -> record {
+  let system_state = read-system-state
+
+  def to_state_format []: table -> record {
+    let resource_state = $in
+
+    if ($resource_state | is-empty) {
+      return {}
+    }
+
+    $resource_state
+    | sort-by name
+    | group-by name
+    | items {|name, entries|
+      {
+        name: $name
+        state: {
+          ignored_properties: []
+          properties: (
+            $entries
+            | sort-by prop
+            | select prop value
+            | transpose -rd
+          )
+        }
+      }
+    }
+    | transpose -rd
+  }
+
+  {
+    pools: ($system_state | where type == pool | to_state_format),
+    datasets: ($system_state | where type == dataset | to_state_format),
+  }
+}
