@@ -86,6 +86,8 @@
       hive = colmena.lib.makeHive self.colmena;
 
     in {
+      lib = nixpkgs-unstable.lib.extend (_: _: { inherit eachSystem; });
+
       overlays = {
         # Add `pkgs.unstable` to the package set.
         unstable-packages = final: prev: {
