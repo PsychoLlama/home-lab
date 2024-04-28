@@ -21,6 +21,41 @@ let
     fileset = fileset.fileFilter (f: f.hasExt "nu") ./.;
   };
 
+  # Expected property/settings for zpools and datasets. Managed by
+  # `./propctl.nu`.
+  zfsStateFile = {
+    pools = mapAttrs (_: pool: {
+      ignored_properties = [ ]; # TODO: Support ignored settings.
+      properties = pool.settings;
+    }) cfg.pools;
+
+    datasets = pipe cfg.pools [
+      (attrValues)
+
+      (map (pool: [
+        # Declare pool properties
+        {
+          ${pool.name} = {
+            ignored_properties = [ ];
+            inherit (pool) properties;
+          };
+        }
+
+        # Declare dataset properties
+        (mapAttrs' (_: dataset: {
+          name = "${pool.name}/${dataset.name}";
+          value = {
+            ignored_properties = [ "nixos:shutdown-time" ];
+            inherit (dataset) properties;
+          };
+        }) pool.datasets)
+      ]))
+
+      (flatten)
+      (mergeAttrsList)
+    ];
+  };
+
 in {
   options.lab.services.file-storage = {
     enable = mkEnableOption ''
@@ -223,24 +258,7 @@ in {
               value_name = "FILE_PATH";
               about = "Path to a JSON file containing the expected properties";
               default_value =
-                pkgs.writers.writeJSON "expected-properties.json" {
-                  pools = { }; # TODO: Add support for managed pool properties.
-
-                  datasets = pipe cfg.pools [
-                    (attrValues)
-
-                    (map (pool:
-                      (mapAttrs' (_: dataset: {
-                        name = "${pool.name}/${dataset.name}";
-                        value = {
-                          ignored_properties = [ "nixos:shutdown-time" ];
-                          inherit (dataset) properties;
-                        };
-                      }) pool.datasets)))
-
-                    (mergeAttrsList)
-                  ];
-                };
+                pkgs.writers.writeJSON "expected-state.json" zfsStateFile;
             }
             {
               id = "AUTO_CONFIRM";
@@ -270,40 +288,6 @@ in {
               (concatStringsSep "\n  ")
             ]}
 
-            # Apply pool settings.
-            ${pipe cfg.pools [
-              (attrValues)
-              (filter (pool: pool.settings != { }))
-              (map (pool:
-                pipe pool.settings [
-                  (attrsToList)
-                  (map (setting:
-                    "zpool set ${escapeShellArg setting.name}=${
-                      escapeShellArg (toString setting.value)
-                    } ${escapeShellArg pool.name}"))
-                  (concatStringsSep "\n  ")
-                ]))
-
-              (concatStringsSep "\n  ")
-            ]}
-
-            # Apply filesystem properties.
-            ${pipe cfg.pools [
-              (attrValues)
-              (filter (pool: pool.properties != { }))
-              (map (pool:
-                pipe pool.properties [
-                  (attrsToList)
-                  (map (prop:
-                    "zfs set ${escapeShellArg prop.name}=${
-                      escapeShellArg (toString prop.value)
-                    } ${escapeShellArg pool.name}"))
-                  (concatStringsSep "\n  ")
-                ]))
-
-              (concatStringsSep "\n  ")
-            ]}
-
             # Create datasets.
             ${concatMapStringsSep "\n  " (pool:
               pipe pool.datasets [
@@ -315,7 +299,7 @@ in {
                 (concatStringsSep "\n  ")
               ]) (attrValues cfg.pools)}
 
-            # Apply dataset properties.
+            # Apply pool/dataset properties.
             system file-storage apply-properties --yes=true
           '';
         };
