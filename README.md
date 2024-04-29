@@ -18,9 +18,19 @@ The router module configures a router (nat, dhcp, dns, ...) and manages the netw
 
 The file storage module manages ZFS pools and datasets. A host profile attaches Syncthing and adds snapshotting.
 
-### Tests
+## Project Structure
 
-Tests live in [nixos/tests](https://github.com/PsychoLlama/home-lab/tree/main/nixos/tests) and can be executed with `project test <path>`.
+- `nixos/modules/lab`: Unopinionated "library" modules for building a home lab.
+- `nixos/tests`: Virtual machine tests for services in `modules/lab`.
+- `nixos/modules/lab/profiles`: Opinionated configurations.
+- `hosts`: Per-host configurations. They are thin wrappers around profiles.
+
+Tests can be executed by entering a dev shell and running `project test <drv_path>`:
+
+```bash
+# Example:
+project test dhcp.assignment
+```
 
 ## Inspiration
 
