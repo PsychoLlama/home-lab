@@ -94,12 +94,11 @@ in {
       description = "Mapping of mount points to ZFS datasets";
     };
 
-    # TODO: Move pool management out of Nix. This domain is not well suited to
-    # bash scripts and the risk of damage is too high.
-    #
     # Since storage admin is potentially dangerous and occasionally requires
-    # manual intervention (e.g. encryption keys) this module serves more as
-    # executable documentation and a way to quickly recreate or port a setup.
+    # manual intervention (e.g. encryption keys), managing pools, datasets,
+    # and properties in code is just as much an exercise in documentation as
+    # execution. Things may fail. That's okay. At least you'll know how the
+    # system should look.
     pools = mkOption {
       default = { };
       description = ''
@@ -119,33 +118,40 @@ in {
         };
 
         options.settings = mkOption {
-          type = types.attrs;
+          type = types.attrsOf types.str;
           default = { };
           description = ''
             Mapping of ZFS pool settings. See `zpoolprops(7)` for a list of
             available options.
           '';
-        };
 
-        options.unmanaged.settings = mkOption {
-          type = types.listOf types.str;
-          description = "Unmanaged zpool settings to ignore.";
-          default = [ ];
-        };
-
-        options.unmanaged.properties = mkOption {
-          type = types.listOf types.str;
-          description = "Unmanaged dataset properties to ignore.";
-          default = [ "nixos:shutdown-time" ];
+          example = {
+            autoexpand = "on";
+            autotrim = "off";
+          };
         };
 
         options.properties = mkOption {
-          type = types.attrs;
+          type = types.attrsOf types.str;
           default = { };
           description = ''
             Mapping of ZFS filesystem props to apply. See `zfsprops(7)` for
             a list of available options.
           '';
+        };
+
+        options.unmanaged = {
+          settings = mkOption {
+            type = types.listOf types.str;
+            description = "Unmanaged zpool settings to ignore.";
+            default = [ ];
+          };
+
+          properties = mkOption {
+            type = types.listOf types.str;
+            description = "Unmanaged dataset properties to ignore.";
+            default = [ "nixos:shutdown-time" ];
+          };
         };
 
         options.vdevs = mkOption {
@@ -193,7 +199,7 @@ in {
             };
 
             options.properties = mkOption {
-              type = types.attrs;
+              type = types.attrsOf types.str;
               default = { };
               description = ''
                 Mapping of ZFS dataset settings. See `zfsprops(7)` for a list

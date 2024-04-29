@@ -36,7 +36,7 @@ in {
           mountpoint = "none";
         };
 
-        datasets.syncthing.properties."com.sun:auto-snapshot" = true;
+        datasets.syncthing.properties."com.sun:auto-snapshot" = "true";
       };
     };
 
