@@ -3,7 +3,7 @@
 with lib;
 
 let
-  cfg = config.lab.services.file-storage;
+  cfg = config.lab.filesystems.zfs;
 
   # TODO: Replace this with the upstream version when nixpkgs is updated.
   mergeAttrsList = lib.fold lib.mergeAttrs { };
@@ -57,17 +57,17 @@ let
   };
 
 in {
-  options.lab.services.file-storage = {
+  options.lab.filesystems.zfs = {
     enable = mkEnableOption ''
       Mount and manage encrypted ZFS pools. This option changes the kernel and
       boot process. Reboot the machine after changing this option.
 
       ZFS requires some manual management (setup, decryption) so this module
-      exposes a `file-storage` command for administration tasks.
+      exposes a `system fs` command for administration tasks.
 
       Be aware that any services depending on ZFS datasets will fail to start
       until the datasets are decrypted and mounted. Defer services with
-      `file-storage.services.decryption.target`.
+      `zfs.decryption.target`.
     '';
 
     decryption = {
@@ -236,7 +236,7 @@ in {
       after = [ "local-fs.target" ];
     };
 
-    lab.system.file-storage = {
+    lab.system.fs = {
       about = "ZFS management tools";
       subcommands = {
         attach = {
@@ -331,7 +331,7 @@ in {
               ]) (attrValues cfg.pools)}
 
             # Apply pool/dataset properties.
-            system file-storage apply-properties --yes=true
+            system fs apply-properties --yes=true
           '';
         };
       };
@@ -342,7 +342,7 @@ in {
       fsType = "zfs";
 
       # Using `noauto` to prevent systemd from trying to mount the device at
-      # boot, which fails because it is encrypted. The `file-storage` command
+      # boot, which fails because it is encrypted. The `system fs` command
       # will mount the device later.
       options = [ "zfsutil" "noauto" ];
     }) cfg.mounts;

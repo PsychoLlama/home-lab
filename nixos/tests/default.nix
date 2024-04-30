@@ -21,5 +21,5 @@ let
 
 in {
   dhcp = importTests ./dhcp.nix { };
-  file-storage = importTests ./file-storage.nix { };
+  filesystems = importTests ./filesystems { };
 }

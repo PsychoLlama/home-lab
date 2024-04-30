@@ -5,13 +5,13 @@ let disk-size = 2 * 1024;
 
 in {
   management = makeTest {
-    name = "file-storage-management";
+    name = "zfs-management";
 
     nodes.machine = { pkgs, lib, ... }: {
       virtualisation.emptyDiskImages = lib.replicate 4 disk-size;
       environment.systemPackages = [ pkgs.parted ];
       networking.hostId = "00000000";
-      lab.services.file-storage = {
+      lab.filesystems.zfs = {
         enable = true;
         mounts = {
           "/mnt/pool" = "test-pool";
@@ -61,7 +61,7 @@ in {
       start_all()
 
       with subtest("pool creation"):
-        machine.succeed("system file-storage init")
+        machine.succeed("system fs init")
 
         # ZFS has no export format. The convention is parsing with awk.
         pool_details = machine.succeed(
