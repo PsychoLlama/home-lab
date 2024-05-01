@@ -8,6 +8,7 @@ let inherit (config.lab) domain;
 
 in {
   imports = [
+    inputs.home-manager.nixosModules.home-manager
     inputs.clapfile.nixosModules.nixos
     ../nixos/modules
     host.profile
@@ -39,6 +40,19 @@ in {
     settings.PasswordAuthentication = false;
   };
 
-  users.users.root.openssh.authorizedKeys.keyFiles =
-    [ ./keys/deploy.pub ./keys/admin.pub ];
+  home-manager = {
+    useGlobalPkgs = lib.mkDefault true;
+    useUserPackages = lib.mkDefault true;
+
+    users.root = {
+      imports = [ ../home-manager/modules ];
+      lab.shell.enable = lib.mkDefault true;
+    };
+  };
+
+  users = {
+    defaultUserShell = pkgs.unstable.nushell;
+    users.root.openssh.authorizedKeys.keyFiles =
+      [ ./keys/deploy.pub ./keys/admin.pub ];
+  };
 }

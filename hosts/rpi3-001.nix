@@ -1,1 +1,4 @@
-{ system.stateVersion = "23.05"; }
+{
+  home-manager.users.root.home.stateVersion = "23.11";
+  system.stateVersion = "23.05";
+}

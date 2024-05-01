@@ -6,6 +6,12 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     clapfile.url = "github:PsychoLlama/clapfile";
+
+    home-manager = {
+      url = "github:nix-community/home-manager/release-23.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     colmena = {
       url = "github:zhaofengli/colmena/release-0.4.x";
       inputs = {
@@ -16,7 +22,8 @@
   };
 
   outputs = { self, nixpkgs-unstable, nixpkgs, nixos-hardware, colmena, clapfile
-    }@flake-inputs:
+    , ... }@flake-inputs:
+
     let
       inherit (nixpkgs) lib;
       inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;

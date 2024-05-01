@@ -15,5 +15,6 @@ in {
     SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="60:a4:b7:59:07:f2", NAME="${wan.interface}"
   '';
 
+  home-manager.users.root.home.stateVersion = "23.11";
   system.stateVersion = "21.05";
 }
