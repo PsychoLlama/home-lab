@@ -4,7 +4,7 @@ inputs: hostName: host:
 
 { config, lib, pkgs, ... }:
 
-let inherit (config.lab) domain;
+let inherit (config.lab) domain datacenter;
 
 in {
   imports = [
@@ -16,6 +16,7 @@ in {
   ];
 
   deployment.targetHost = config.networking.fqdn;
+  environment.sessionVariables.DATACENTER = datacenter;
 
   networking = {
     hostName = lib.mkDefault hostName;

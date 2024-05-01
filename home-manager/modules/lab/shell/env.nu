@@ -1,1 +1,2 @@
-# Empty file. Must exist, otherwise Nushell prompts to create it.
+$env.PROMPT_INDICATOR_VI_INSERT = { || "" }
+$env.PROMPT_INDICATOR_VI_NORMAL = { || "" }
