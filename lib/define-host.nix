@@ -44,11 +44,14 @@ in {
   home-manager = {
     useGlobalPkgs = lib.mkDefault true;
     useUserPackages = lib.mkDefault true;
+    sharedModules = [
+      ../home-manager/modules
 
-    users.root = {
-      imports = [ ../home-manager/modules ];
-      lab.shell.enable = lib.mkDefault true;
-    };
+      {
+        # Manage the system shell by default.
+        lab.shell.enable = lib.mkDefault true;
+      }
+    ];
   };
 
   users = {

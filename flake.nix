@@ -288,7 +288,7 @@
             # nix build .#tests.<module>.<test-name>
             # ```
             passthru = pkgs.callPackage ./nixos/tests {
-              inherit (flake-inputs) colmena clapfile;
+              inherit (flake-inputs) colmena clapfile home-manager;
             };
           };
         });
