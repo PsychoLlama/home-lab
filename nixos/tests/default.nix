@@ -32,4 +32,19 @@ let
 in {
   dhcp = importTests ./dhcp.nix { };
   filesystems = importTests ./filesystems { };
+
+  # A place to experiment locally. This is much faster than waiting for
+  # a Colmena deploy.
+  sandbox = makeTest {
+    name = "sandbox-environment";
+
+    nodes.machine = { pkgs, ... }: {
+      environment.systemPackages = [ pkgs.hello ];
+    };
+
+    testScript = ''
+      start_all()
+      machine.shell_interact()
+    '';
+  };
 }
