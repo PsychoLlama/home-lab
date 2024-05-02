@@ -204,6 +204,14 @@
                     ];
                   };
 
+                  sandbox = {
+                    about = "Enter a VM sandbox for experimentation.";
+                    run = pkgs.writers.writeBash "sandbox" ''
+                      set -eux
+                      nix run ".#tests.sandbox.driver"
+                    '';
+                  };
+
                   test = {
                     about = "Run one of the tests under `nixos/tests`.";
                     run = pkgs.writers.writeBash "test" ''
