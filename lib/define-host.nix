@@ -2,11 +2,17 @@
 # This is responsible for setting the baseline configuration.
 inputs: hostName: host:
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
-let inherit (config.lab) domain datacenter;
-
-in {
+let
+  inherit (config.lab) domain datacenter;
+in
+{
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.clapfile.nixosModules.nixos
@@ -33,7 +39,10 @@ in {
     optimise.automatic = true;
 
     # Enable Flake support.
-    settings.experimental-features = [ "nix-command" "flakes" ];
+    settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
   };
 
   services.openssh = {
@@ -56,7 +65,9 @@ in {
 
   users = {
     defaultUserShell = pkgs.unstable.nushell;
-    users.root.openssh.authorizedKeys.keyFiles =
-      [ ./keys/deploy.pub ./keys/admin.pub ];
+    users.root.openssh.authorizedKeys.keyFiles = [
+      ./keys/deploy.pub
+      ./keys/admin.pub
+    ];
   };
 }

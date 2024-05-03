@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -55,8 +60,8 @@ let
       (mergeAttrsList)
     ];
   };
-
-in {
+in
+{
   options.lab.filesystems.zfs = {
     enable = mkEnableOption ''
       Mount and manage encrypted ZFS pools. This option changes the kernel and
@@ -90,7 +95,9 @@ in {
     mounts = mkOption {
       type = types.attrsOf types.str;
       default = { };
-      example = { "/mnt/tank" = "tank"; };
+      example = {
+        "/mnt/tank" = "tank";
+      };
       description = "Mapping of mount points to ZFS datasets";
     };
 
@@ -109,112 +116,124 @@ in {
         when run manually.
       '';
 
-      type = types.attrsOf (types.submodule ({ name, ... }: {
-        options.name = mkOption {
-          type = types.str;
-          example = "tank";
-          description = "Name of the ZFS pool";
-          default = name;
-        };
-
-        options.settings = mkOption {
-          type = types.attrsOf types.str;
-          default = { };
-          description = ''
-            Mapping of ZFS pool settings. See `zpoolprops(7)` for a list of
-            available options.
-          '';
-
-          example = {
-            autoexpand = "on";
-            autotrim = "off";
-          };
-        };
-
-        options.properties = mkOption {
-          type = types.attrsOf types.str;
-          default = { };
-          description = ''
-            Mapping of ZFS filesystem props to apply. See `zfsprops(7)` for
-            a list of available options.
-          '';
-        };
-
-        options.unmanaged = {
-          settings = mkOption {
-            type = types.listOf types.str;
-            description = "Unmanaged zpool settings to ignore.";
-            default = [ ];
-          };
-
-          properties = mkOption {
-            type = types.listOf types.str;
-            description = "Unmanaged dataset properties to ignore.";
-            default = [ "nixos:shutdown-time" ];
-          };
-        };
-
-        options.vdevs = mkOption {
-          default = [ ];
-          type = types.listOf (types.submodule {
-            options.type = mkOption {
-              type = types.nullOr types.str;
-              example = "mirror";
-              default = null;
-              description = ''
-                Type of virtual device. See `zpoolconcepts(7)` for a list of
-                valid types.
-
-                If set to `null`, the type is assumed to be a disk or file.
-              '';
-            };
-
-            options.sources = mkOption {
-              type = types.listOf types.str;
-              example = [ "/dev/disk/by-label/wd-red-001" ];
-              description = ''
-                List of block devices to use for the virtual device. The
-                number of devices must match the type.
-
-                It's recommended to specify block devices by their UUID or
-                label to avoid overwriting to the wrong device.
-              '';
-            };
-          });
-        };
-
-        options.datasets = mkOption {
-          default = { };
-          description = "Defines ZFS datasets to manage within a pool";
-
-          type = types.attrsOf (types.submodule ({ name, ... }: {
+      type = types.attrsOf (
+        types.submodule (
+          { name, ... }:
+          {
             options.name = mkOption {
               type = types.str;
-              example = "tank/library";
+              example = "tank";
+              description = "Name of the ZFS pool";
               default = name;
+            };
+
+            options.settings = mkOption {
+              type = types.attrsOf types.str;
+              default = { };
               description = ''
-                Name of the ZFS dataset. The name must be unique within the
-                pool.
+                Mapping of ZFS pool settings. See `zpoolprops(7)` for a list of
+                available options.
               '';
+
+              example = {
+                autoexpand = "on";
+                autotrim = "off";
+              };
             };
 
             options.properties = mkOption {
               type = types.attrsOf types.str;
               default = { };
               description = ''
-                Mapping of ZFS dataset settings. See `zfsprops(7)` for a list
-                of available options.
+                Mapping of ZFS filesystem props to apply. See `zfsprops(7)` for
+                a list of available options.
               '';
             };
 
-            options.unmanaged.properties = mkOption {
-              type = types.listOf types.str;
-              description = "Unmanaged dataset properties to ignore.";
-              default = [ ];
+            options.unmanaged = {
+              settings = mkOption {
+                type = types.listOf types.str;
+                description = "Unmanaged zpool settings to ignore.";
+                default = [ ];
+              };
+
+              properties = mkOption {
+                type = types.listOf types.str;
+                description = "Unmanaged dataset properties to ignore.";
+                default = [ "nixos:shutdown-time" ];
+              };
             };
-          }));
-        };
-      }));
+
+            options.vdevs = mkOption {
+              default = [ ];
+              type = types.listOf (
+                types.submodule {
+                  options.type = mkOption {
+                    type = types.nullOr types.str;
+                    example = "mirror";
+                    default = null;
+                    description = ''
+                      Type of virtual device. See `zpoolconcepts(7)` for a list of
+                      valid types.
+
+                      If set to `null`, the type is assumed to be a disk or file.
+                    '';
+                  };
+
+                  options.sources = mkOption {
+                    type = types.listOf types.str;
+                    example = [ "/dev/disk/by-label/wd-red-001" ];
+                    description = ''
+                      List of block devices to use for the virtual device. The
+                      number of devices must match the type.
+
+                      It's recommended to specify block devices by their UUID or
+                      label to avoid overwriting to the wrong device.
+                    '';
+                  };
+                }
+              );
+            };
+
+            options.datasets = mkOption {
+              default = { };
+              description = "Defines ZFS datasets to manage within a pool";
+
+              type = types.attrsOf (
+                types.submodule (
+                  { name, ... }:
+                  {
+                    options.name = mkOption {
+                      type = types.str;
+                      example = "tank/library";
+                      default = name;
+                      description = ''
+                        Name of the ZFS dataset. The name must be unique within the
+                        pool.
+                      '';
+                    };
+
+                    options.properties = mkOption {
+                      type = types.attrsOf types.str;
+                      default = { };
+                      description = ''
+                        Mapping of ZFS dataset settings. See `zfsprops(7)` for a list
+                        of available options.
+                      '';
+                    };
+
+                    options.unmanaged.properties = mkOption {
+                      type = types.listOf types.str;
+                      description = "Unmanaged dataset properties to ignore.";
+                      default = [ ];
+                    };
+                  }
+                )
+              );
+            };
+          }
+        )
+      );
     };
   };
 
@@ -246,8 +265,7 @@ in {
 
             zfs load-key -a
 
-            ${concatMapStringsSep "\n  " (mountpoint: "mount ${mountpoint}")
-            topoSortedMounts}
+            ${concatMapStringsSep "\n  " (mountpoint: "mount ${mountpoint}") topoSortedMounts}
 
             systemctl start ${cfg.decryption.target}
           '';
@@ -260,8 +278,7 @@ in {
 
             systemctl stop ${cfg.decryption.target}
 
-            ${concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}")
-            (reverseList topoSortedMounts)}
+            ${concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}") (reverseList topoSortedMounts)}
 
             zfs unload-key -a
           '';
@@ -288,8 +305,7 @@ in {
               id = "EXPECTED_STATE";
               value_name = "FILE_PATH";
               about = "Path to a JSON file containing the expected properties";
-              default_value =
-                pkgs.writers.writeJSON "expected-state.json" zfsStateFile;
+              default_value = pkgs.writers.writeJSON "expected-state.json" zfsStateFile;
             }
             {
               id = "AUTO_CONFIRM";
@@ -308,27 +324,27 @@ in {
             # Create ZFS pools.
             ${pipe cfg.pools [
               (attrValues)
-              (map (pool:
+              (map (
+                pool:
                 "zpool create ${escapeShellArg pool.name} ${
-                  concatMapStringsSep " " (vdev:
-                    concatStringsSep " "
-                    ((if vdev.type != null then [ vdev.type ] else [ ])
-                      ++ vdev.sources)) pool.vdevs
-                }"))
+                  concatMapStringsSep " " (
+                    vdev: concatStringsSep " " ((if vdev.type != null then [ vdev.type ] else [ ]) ++ vdev.sources)
+                  ) pool.vdevs
+                }"
+              ))
 
               (concatStringsSep "\n  ")
             ]}
 
             # Create datasets.
-            ${concatMapStringsSep "\n  " (pool:
+            ${concatMapStringsSep "\n  " (
+              pool:
               pipe pool.datasets [
                 (attrValues)
-                (map (dataset:
-                  "zfs create ${
-                    escapeShellArg "${pool.name}/${dataset.name}"
-                  }"))
+                (map (dataset: "zfs create ${escapeShellArg "${pool.name}/${dataset.name}"}"))
                 (concatStringsSep "\n  ")
-              ]) (attrValues cfg.pools)}
+              ]
+            ) (attrValues cfg.pools)}
 
             # Apply pool/dataset properties.
             system fs apply-properties --yes=true
@@ -344,7 +360,10 @@ in {
       # Using `noauto` to prevent systemd from trying to mount the device at
       # boot, which fails because it is encrypted. The `system fs` command
       # will mount the device later.
-      options = [ "zfsutil" "noauto" ];
+      options = [
+        "zfsutil"
+        "noauto"
+      ];
     }) cfg.mounts;
   };
 }

@@ -1,11 +1,16 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   inherit (config.lab) domain;
   inherit (config.lab.filesystems.zfs) decryption pools;
   cfg = config.lab.profiles.file-server;
-
-in {
+in
+{
   options.lab.profiles.file-server = {
     enable = lib.mkEnableOption "Run a file server";
   };
@@ -21,10 +26,16 @@ in {
       };
 
       pools.pool0 = {
-        vdevs = [{
-          type = "raidz1";
-          sources = [ "sda" "sdb" "sdc" ];
-        }];
+        vdevs = [
+          {
+            type = "raidz1";
+            sources = [
+              "sda"
+              "sdb"
+              "sdc"
+            ];
+          }
+        ];
 
         properties = {
           xattr = "sa";
@@ -61,21 +72,22 @@ in {
 
           folders."/mnt/pool0/syncthing/attic" = {
             id = "attic";
-            devices = [ "laptop" "phone" ];
+            devices = [
+              "laptop"
+              "phone"
+            ];
             label = "Attic";
           };
 
           devices = {
             laptop = {
               addresses = [ "tcp://ava.host.${domain}" ];
-              id =
-                "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
+              id = "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
             };
 
             phone = {
               addresses = [ "dynamic" ];
-              id =
-                "S2U7KKV-SXJGOI3-6MSJWIT-U2JP32Y-HH7WZU5-ZDS6KAT-6CNYRAM-ZQTWZAQ";
+              id = "S2U7KKV-SXJGOI3-6MSJWIT-U2JP32Y-HH7WZU5-ZDS6KAT-6CNYRAM-ZQTWZAQ";
             };
           };
         };
@@ -96,7 +108,10 @@ in {
 
     networking.firewall = {
       allowedTCPPorts = [ 22000 ]; # TCP Sync
-      allowedUDPPorts = [ 22000 21027 ]; # QUIC + LAN Discovery
+      allowedUDPPorts = [
+        22000
+        21027
+      ]; # QUIC + LAN Discovery
     };
   };
 }

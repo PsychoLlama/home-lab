@@ -22,10 +22,12 @@
     };
 
     # The Pi 3 has severely limited RAM.
-    swapDevices = [{
-      device = "/var/swapfile";
-      size = 1024;
-    }];
+    swapDevices = [
+      {
+        device = "/var/swapfile";
+        size = 1024;
+      }
+    ];
   };
 
   raspberry-pi-4 = {
@@ -49,7 +51,11 @@
     hardware.pulseaudio.enable = true;
 
     # Necessary for building boot images and running NixOS tests.
-    lab.host.builder.supportedFeatures =
-      [ "benchmark" "big-parallel" "kvm" "nixos-test" ];
+    lab.host.builder.supportedFeatures = [
+      "benchmark"
+      "big-parallel"
+      "kvm"
+      "nixos-test"
+    ];
   };
 }

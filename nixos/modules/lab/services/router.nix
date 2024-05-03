@@ -1,12 +1,18 @@
-{ config, lib, pkgs, options, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  options,
+  ...
+}:
 
 with lib;
 
 let
   inherit (config.lab) domain networks;
   cfg = config.lab.services.router;
-
-in {
+in
+{
   options.lab.services.router = {
     enable = mkEnableOption "Turn the device into a simple router";
 
@@ -39,9 +45,9 @@ in {
                   3600)     ; Negative response TTL
 
           ; Custom records
-          ${concatMapStringsSep "\n" (record:
-            "${record.name}  ${record.ttl} IN ${record.type} ${record.value}")
-          cfg.dns.records}
+          ${concatMapStringsSep "\n" (
+            record: "${record.name}  ${record.ttl} IN ${record.type} ${record.value}"
+          ) cfg.dns.records}
         '';
 
         description = ''
@@ -61,34 +67,36 @@ in {
       };
 
       records = mkOption {
-        type = types.listOf (types.submodule {
-          options.value = mkOption {
-            type = types.str;
-            description = "IP addresses pointing to the service";
-          };
+        type = types.listOf (
+          types.submodule {
+            options.value = mkOption {
+              type = types.str;
+              description = "IP addresses pointing to the service";
+            };
 
-          options.name = mkOption {
-            type = types.str;
-            description = ''
-              Any BIND zone record identifier, usually a subdomain name.
-              Use <literal>@</literal> for apex records.
+            options.name = mkOption {
+              type = types.str;
+              description = ''
+                Any BIND zone record identifier, usually a subdomain name.
+                Use <literal>@</literal> for apex records.
 
-              Note: Only domains within the lab's zone are recognized.
-            '';
-          };
+                Note: Only domains within the lab's zone are recognized.
+              '';
+            };
 
-          options.type = mkOption {
-            type = types.str;
-            description = "The type of DNS record to create";
-            default = "CNAME";
-          };
+            options.type = mkOption {
+              type = types.str;
+              description = "The type of DNS record to create";
+              default = "CNAME";
+            };
 
-          options.ttl = mkOption {
-            type = types.str;
-            description = "Length of time in seconds to cache the record";
-            default = "60";
-          };
-        });
+            options.ttl = mkOption {
+              type = types.str;
+              description = "Length of time in seconds to cache the record";
+              default = "60";
+            };
+          }
+        );
 
         description = "Insert custom DNS records";
         default = [ ];
@@ -98,26 +106,31 @@ in {
     networks = mkOption {
       description = "Map of networks to create from `lab.networks`";
       default = { };
-      type = types.attrsOf (types.submodule ({ name, config, ... }: {
-        options = {
-          name = mkOption {
-            description = "One of `lab.networks`";
-            type = types.enum (attrNames networks);
-            default = name;
-          };
+      type = types.attrsOf (
+        types.submodule (
+          { name, config, ... }:
+          {
+            options = {
+              name = mkOption {
+                description = "One of `lab.networks`";
+                type = types.enum (attrNames networks);
+                default = name;
+              };
 
-          interface = mkOption {
-            description = "Name of the network interface to use";
-            type = types.str;
-          };
+              interface = mkOption {
+                description = "Name of the network interface to use";
+                type = types.str;
+              };
 
-          # Aliases into `lab.networks` for convenience.
-          ipv4 = mkOption {
-            type = types.anything;
-            default = networks.${config.name}.ipv4;
-          };
-        };
-      }));
+              # Aliases into `lab.networks` for convenience.
+              ipv4 = mkOption {
+                type = types.anything;
+                default = networks.${config.name}.ipv4;
+              };
+            };
+          }
+        )
+      );
     };
 
     wan.interface = mkOption {
@@ -144,10 +157,12 @@ in {
           name = network.interface;
           value = {
             useDHCP = false;
-            ipv4.addresses = [{
-              address = network.ipv4.gateway;
-              prefixLength = network.ipv4.prefixLength;
-            }];
+            ipv4.addresses = [
+              {
+                address = network.ipv4.gateway;
+                prefixLength = network.ipv4.prefixLength;
+              }
+            ];
           };
         }) cfg.networks)
       ];
@@ -155,12 +170,11 @@ in {
       nat = {
         enable = true;
         externalInterface = cfg.wan.interface;
-        internalInterfaces =
-          mapAttrsToList (_: network: network.interface) cfg.networks;
+        internalInterfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
 
-        internalIPs = mapAttrsToList (_: network:
-          "${network.ipv4.gateway}/${toString network.ipv4.prefixLength}")
-          cfg.networks;
+        internalIPs = mapAttrsToList (
+          _: network: "${network.ipv4.gateway}/${toString network.ipv4.prefixLength}"
+        ) cfg.networks;
       };
 
       # Expose SSH and DNS to all LAN interfaces.
@@ -185,10 +199,7 @@ in {
       package = pkgs.unstable.coredns;
       config = ''
         (common) {
-          bind lo ${
-            toString
-            (mapAttrsToList (_: network: network.interface) cfg.networks)
-          }
+          bind lo ${toString (mapAttrsToList (_: network: network.interface) cfg.networks)}
 
           log
           errors

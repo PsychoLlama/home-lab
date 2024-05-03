@@ -3,17 +3,20 @@
 {
   inputs.call-flake.url = "github:divnix/call-flake";
 
-  outputs = { self, call-flake }:
+  outputs =
+    { self, call-flake }:
     # The `call-flake` pattern allows us to extend the parent flake without
     # pinning it to a specific revision. It's all in the same git repo, after
     # all.
     #
     # For more details:
     # https://figsoda.github.io/posts/2023/developing-nix-libraries-with-subflakes/
-    let inherit (call-flake ../../../../..) lib;
-
-    in {
-      devShell = lib.eachSystem (system: pkgs:
+    let
+      inherit (call-flake ../../../../..) lib;
+    in
+    {
+      devShell = lib.eachSystem (
+        system: pkgs:
         pkgs.mkShell {
           EXPECTED_STATE = "./state-file.json";
 
@@ -31,6 +34,7 @@
               }
             '')
           ];
-        });
+        }
+      );
     };
 }

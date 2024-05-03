@@ -1,59 +1,65 @@
 { makeTest, ... }:
 
 # Measured in MiB.
-let disk-size = 2 * 1024;
-
-in {
+let
+  disk-size = 2 * 1024;
+in
+{
   management = makeTest {
     name = "zfs-management";
 
-    nodes.machine = { pkgs, lib, ... }: {
-      virtualisation.emptyDiskImages = lib.replicate 4 disk-size;
-      environment.systemPackages = [ pkgs.parted ];
-      networking.hostId = "00000000";
-      lab.filesystems.zfs = {
-        enable = true;
-        mounts = {
-          "/mnt/pool" = "test-pool";
-          "/mnt/pool/dataset" = "test-pool/dataset";
-        };
-
-        pools = {
-          plain = {
-            vdevs = [{ sources = [ "vdb" ]; }];
-
-            settings = {
-              comment = "Test pool";
-              autotrim = "on";
-            };
-
-            properties.mountpoint = "none";
-
-            datasets = {
-              test-1.properties.mountpoint = "none";
-              test-2.properties = {
-                mountpoint = "none";
-                compression = "on";
-              };
-            };
+    nodes.machine =
+      { pkgs, lib, ... }:
+      {
+        virtualisation.emptyDiskImages = lib.replicate 4 disk-size;
+        environment.systemPackages = [ pkgs.parted ];
+        networking.hostId = "00000000";
+        lab.filesystems.zfs = {
+          enable = true;
+          mounts = {
+            "/mnt/pool" = "test-pool";
+            "/mnt/pool/dataset" = "test-pool/dataset";
           };
 
-          fancy = {
-            datasets.test.properties.mountpoint = "none";
-            vdevs = [
-              {
-                type = "mirror";
-                sources = [ "vdc" "vdd" ];
-              }
-              {
-                type = "log";
-                sources = [ "vde" ];
-              }
-            ];
+          pools = {
+            plain = {
+              vdevs = [ { sources = [ "vdb" ]; } ];
+
+              settings = {
+                comment = "Test pool";
+                autotrim = "on";
+              };
+
+              properties.mountpoint = "none";
+
+              datasets = {
+                test-1.properties.mountpoint = "none";
+                test-2.properties = {
+                  mountpoint = "none";
+                  compression = "on";
+                };
+              };
+            };
+
+            fancy = {
+              datasets.test.properties.mountpoint = "none";
+              vdevs = [
+                {
+                  type = "mirror";
+                  sources = [
+                    "vdc"
+                    "vdd"
+                  ];
+                }
+                {
+                  type = "log";
+                  sources = [ "vde" ];
+                }
+              ];
+            };
           };
         };
       };
-    };
 
     testScript = ''
       import textwrap

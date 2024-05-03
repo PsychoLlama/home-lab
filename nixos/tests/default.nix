@@ -1,4 +1,11 @@
-{ pkgs, callPackage, colmena, clapfile, home-manager, runTest }:
+{
+  pkgs,
+  callPackage,
+  colmena,
+  clapfile,
+  home-manager,
+  runTest,
+}:
 
 let
   baseModule = {
@@ -24,12 +31,18 @@ let
     };
   };
 
-  makeTest = testModule: runTest { imports = [ baseModule testModule ]; };
+  makeTest =
+    testModule:
+    runTest {
+      imports = [
+        baseModule
+        testModule
+      ];
+    };
 
-  importTests = path: args:
-    callPackage path (args // { inherit importTests makeTest; });
-
-in {
+  importTests = path: args: callPackage path (args // { inherit importTests makeTest; });
+in
+{
   dhcp = importTests ./dhcp.nix { };
   filesystems = importTests ./filesystems { };
 
@@ -38,9 +51,11 @@ in {
   sandbox = makeTest {
     name = "sandbox-environment";
 
-    nodes.machine = { pkgs, ... }: {
-      environment.systemPackages = [ pkgs.hello ];
-    };
+    nodes.machine =
+      { pkgs, ... }:
+      {
+        environment.systemPackages = [ pkgs.hello ];
+      };
 
     testScript = ''
       start_all()

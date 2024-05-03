@@ -24,16 +24,22 @@ let
 
   # Run the python script passing the CIDR address. Read the file back as
   # JSON, providing the data as a Nix value.
-  parseCidrNotation = cidr_address:
-    builtins.fromJSON (builtins.readFile
-      (pkgs.runCommand "cidr-info" { inherit cidr_address; } ''
-        ${buildCidrInfo} $cidr_address > $out
-      ''));
+  parseCidrNotation =
+    cidr_address:
+    builtins.fromJSON (
+      builtins.readFile (
+        pkgs.runCommand "cidr-info" { inherit cidr_address; } ''
+          ${buildCidrInfo} $cidr_address > $out
+        ''
+      )
+    );
 
-  networkOption = { config, ... }:
-    let ipv4 = parseCidrNotation config.ipv4.cidr;
-
-    in {
+  networkOption =
+    { config, ... }:
+    let
+      ipv4 = parseCidrNotation config.ipv4.cidr;
+    in
+    {
       options.ipv4 = {
         cidr = mkOption {
           description = ''
@@ -94,7 +100,10 @@ let
         nameservers = mkOption {
           description = "DNS servers to use for this network";
           type = types.listOf types.str;
-          example = [ "1.1.1.1" "9.9.9.9" ];
+          example = [
+            "1.1.1.1"
+            "9.9.9.9"
+          ];
 
           # TODO: Remove assumption that all gateways run DNS.
           default = [ config.ipv4.gateway ];
@@ -103,24 +112,26 @@ let
         dhcp.pools = mkOption {
           description = "Assignable address ranges used by DHCP";
           default = [ ];
-          type = types.listOf (types.submodule {
-            options.start = mkOption {
-              type = types.str;
-              description = "Starting range for DHCP";
-              example = "192.168.1.10";
-            };
+          type = types.listOf (
+            types.submodule {
+              options.start = mkOption {
+                type = types.str;
+                description = "Starting range for DHCP";
+                example = "192.168.1.10";
+              };
 
-            options.end = mkOption {
-              type = types.str;
-              description = "Ending range for DHCP";
-              example = "192.168.1.254";
-            };
-          });
+              options.end = mkOption {
+                type = types.str;
+                description = "Ending range for DHCP";
+                example = "192.168.1.254";
+              };
+            }
+          );
         };
       };
     };
-
-in {
+in
+{
   options.lab.networks = mkOption {
     description = ''
       A description of every network in the lab. This is used to generate

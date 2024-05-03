@@ -6,45 +6,52 @@
 
     defaults.lab.networks.test.ipv4 = {
       cidr = "10.0.5.3/24";
-      dhcp.pools = [{
-        start = "10.0.5.22";
-        end = "10.0.5.22";
-      }];
+      dhcp.pools = [
+        {
+          start = "10.0.5.22";
+          end = "10.0.5.22";
+        }
+      ];
     };
 
     nodes = {
-      server = { config, ... }: {
-        virtualisation.vlans = [ 1 ];
-        networking.useDHCP = false;
+      server =
+        { config, ... }:
+        {
+          virtualisation.vlans = [ 1 ];
+          networking.useDHCP = false;
 
-        lab.services.dhcp = {
-          enable = true;
-          networks.test.interface = "eth1";
-          reservations = [{
-            hw-address = "52:54:00:12:01:02";
-            ip-address = "10.0.5.68";
-          }];
-        };
+          lab.services.dhcp = {
+            enable = true;
+            networks.test.interface = "eth1";
+            reservations = [
+              {
+                hw-address = "52:54:00:12:01:02";
+                ip-address = "10.0.5.68";
+              }
+            ];
+          };
 
-        assertions = [{
-          assertion = lib.any (port: port == 67)
-            config.networking.firewall.interfaces.eth1.allowedUDPPorts;
+          assertions = [
+            {
+              assertion = lib.any (port: port == 67) config.networking.firewall.interfaces.eth1.allowedUDPPorts;
 
-          message = ''
-            DHCP server did not open firewall.
-          '';
-        }];
+              message = ''
+                DHCP server did not open firewall.
+              '';
+            }
+          ];
 
-        systemd.network = {
-          enable = true;
-          networks = {
-            "01-eth1" = {
-              name = "eth1";
-              networkConfig.Address = "10.0.5.11/24";
+          systemd.network = {
+            enable = true;
+            networks = {
+              "01-eth1" = {
+                name = "eth1";
+                networkConfig.Address = "10.0.5.11/24";
+              };
             };
           };
         };
-      };
 
       client = {
         virtualisation.vlans = [ 1 ];

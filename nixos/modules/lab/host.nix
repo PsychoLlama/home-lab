@@ -5,9 +5,10 @@
 
 with lib;
 
-let cfg = config.lab.host;
-
-in {
+let
+  cfg = config.lab.host;
+in
+{
   options.lab.host = {
     # TODO: Use DHCP client IDs instead of MAC addresses.
     ethernet = mkOption {

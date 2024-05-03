@@ -1,10 +1,16 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 with lib;
 
-let cfg = config.lab.shell;
-
-in {
+let
+  cfg = config.lab.shell;
+in
+{
   options.lab.shell = {
     enable = mkEnableOption "Manage the system shell with Nushell";
   };

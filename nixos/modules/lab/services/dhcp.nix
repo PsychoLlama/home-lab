@@ -1,25 +1,33 @@
-{ config, lib, options, ... }:
+{
+  config,
+  lib,
+  options,
+  ...
+}:
 
 with lib;
 
-let cfg = config.lab.services.dhcp;
-
-in {
+let
+  cfg = config.lab.services.dhcp;
+in
+{
   options.lab.services.dhcp = {
     enable = mkEnableOption "Run a DHCP server";
     networks = options.lab.services.router.networks;
     reservations = mkOption {
-      type = types.listOf (types.submodule {
-        options.hw-address = mkOption {
-          type = types.str;
-          description = "MAC address of the host";
-        };
+      type = types.listOf (
+        types.submodule {
+          options.hw-address = mkOption {
+            type = types.str;
+            description = "MAC address of the host";
+          };
 
-        options.ip-address = mkOption {
-          type = types.str;
-          description = "IP address to assign to the host";
-        };
-      });
+          options.ip-address = mkOption {
+            type = types.str;
+            description = "IP address to assign to the host";
+          };
+        }
+      );
 
       description = "Static DHCP reservations";
       default = [ ];
@@ -49,14 +57,14 @@ in {
 
           interfaces-config = {
             dhcp-socket-type = "raw";
-            interfaces =
-              mapAttrsToList (_: network: network.interface) cfg.networks;
+            interfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
           };
 
           subnet4 = mapAttrsToList (_: network: {
             subnet = network.ipv4.subnet;
-            pools = forEach network.ipv4.dhcp.pools
-              (lease: { pool = "${lease.start} - ${lease.end}"; });
+            pools = forEach network.ipv4.dhcp.pools (lease: {
+              pool = "${lease.start} - ${lease.end}";
+            });
 
             option-data = [
               {
@@ -74,7 +82,10 @@ in {
             ];
           }) cfg.networks;
 
-          host-reservation-identifiers = [ "hw-address" "client-id" ];
+          host-reservation-identifiers = [
+            "hw-address"
+            "client-id"
+          ];
           reservations-global = true;
           reservations-in-subnet = true;
           reservations-out-of-pool = false;

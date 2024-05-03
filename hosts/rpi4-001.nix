@@ -3,8 +3,8 @@
 let
   inherit (config.lab.services.router.networks) datacenter home;
   inherit (config.lab.services.router) wan;
-
-in {
+in
+{
   lab.profiles.router.enable = true;
 
   # Assign sensible names to the network interfaces. Anything with vlans needs

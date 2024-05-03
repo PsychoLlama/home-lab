@@ -1,1 +1,6 @@
-{ imports = [ ./dhcp.nix ./router.nix ]; }
+{
+  imports = [
+    ./dhcp.nix
+    ./router.nix
+  ];
+}
