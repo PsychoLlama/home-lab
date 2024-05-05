@@ -10,7 +10,7 @@ with lib;
 
 let
   inherit (config.lab.services.router.networks) home iot guest;
-  inherit (config.lab.services.router) wan;
+  inherit (config.lab.services.router) wan networks;
   cfg = config.lab.profiles.router;
 
   # Reserve IP addresses for all hosts.
@@ -60,6 +60,13 @@ in
   config = mkIf cfg.enable {
     deployment.tags = [ "router" ];
 
+    environment.systemPackages = [
+      pkgs.unstable.bottom # System load observer
+      pkgs.unstable.conntrack-tools # Inspect active connection states
+      pkgs.unstable.doggo # DNS testing
+      pkgs.unstable.tcpdump # Inspect traffic (used with Wireshark)
+    ];
+
     # VLANs are sent by the WAP (a UniFi U6 Lite).
     networking.vlans = {
       vlan-iot = {
@@ -91,30 +98,21 @@ in
       ];
     };
 
-    lab.services.router = {
-      enable = true;
+    lab.services = {
+      router = {
+        enable = true;
 
-      wan = {
-        interface = "wan"; # Dongle to WAN
-      };
+        wan = {
+          interface = "wan"; # Dongle to WAN
+        };
 
-      networks = {
-        datacenter.interface = "lan"; # Dongle to ethernet switch
-        home.interface = "wap"; # Dongle to WAP (no VLAN)
-        iot.interface = "vlan-iot";
-        work.interface = "vlan-work";
-        guest.interface = "vlan-guest";
-      };
-
-      dns = {
-        blocklist = "${pkgs.unstable.stevenblack-blocklist}/hosts";
-        records = hostRecords ++ [
-          {
-            name = "${laptop.hostName}.host";
-            value = laptop.ip4;
-            type = "A";
-          }
-        ];
+        networks = {
+          datacenter.interface = "lan"; # Dongle to ethernet switch
+          home.interface = "wap"; # Dongle to WAP (no VLAN)
+          iot.interface = "vlan-iot";
+          work.interface = "vlan-work";
+          guest.interface = "vlan-guest";
+        };
       };
 
       dhcp.reservations = hostReservations ++ [
@@ -127,6 +125,34 @@ in
           ip-address = xbox.ip4;
         }
       ];
+
+      dns = {
+        enable = true;
+        interfaces = mapAttrsToList (_: net: net.interface) networks;
+        server.id = config.networking.fqdn;
+        hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
+
+        zone = {
+          name = config.lab.domain;
+          records = hostRecords ++ [
+            {
+              name = "${laptop.hostName}.host";
+              value = laptop.ip4;
+              type = "A";
+            }
+          ];
+        };
+
+        forward = [
+          {
+            zone = ".";
+            tls = {
+              ip = "1.1.1.1";
+              servername = "cloudflare-dns.com";
+            };
+          }
+        ];
+      };
     };
 
     # Although not technically part of the home lab, this is still my home

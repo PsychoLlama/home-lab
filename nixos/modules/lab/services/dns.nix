@@ -51,7 +51,7 @@ in
 
     server.id = mkOption {
       type = types.nullOr types.str;
-      default = config.networking.hostName;
+      default = null;
       description = ''
         Name Server Identifier. This is sent with `OPT` records. It is
         especially useful in HA setups to disambiguate the server.
@@ -61,7 +61,7 @@ in
     };
 
     forward = mkOption {
-      default = { };
+      default = [ ];
       description = ''
         Forward DNS queries to other DNS servers. This is useful for resolving
         external domains or for using a DNS-over-TLS service.
@@ -117,7 +117,6 @@ in
     zone = {
       name = mkOption {
         type = types.str;
-        default = config.lab.domain;
         example = "dc1.example.com";
         description = ''
           The DNS zone to serve. This is the domain name for which the server
