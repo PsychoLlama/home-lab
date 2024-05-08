@@ -42,11 +42,19 @@
         "aarch64-linux"
       ];
 
+      # Necessary evils with non-free licenses.
+      # To be replaced the instant there is a viable alternative.
+      evilPackages = [ "vault-bin" ];
+
       # Load nixpkgs with home-lab overrides.
       loadPkgs =
         { system }:
         import nixpkgs {
           inherit system;
+
+          config = {
+            allowUnfreePredicate = pkg: lib.elem (lib.getName pkg) evilPackages;
+          };
 
           overlays = [
             self.overlays.unstable-packages
@@ -108,7 +116,9 @@
 
       overlays = {
         # Add `pkgs.unstable` to the package set.
-        unstable-packages = final: prev: { unstable = import nixpkgs-unstable { inherit (prev) system; }; };
+        unstable-packages = final: prev: {
+          unstable = import nixpkgs-unstable { inherit (prev) system config; };
+        };
 
         # `runTest` is a souped up version of `nixosTest`.
         testing = final: prev: { inherit (import (final.path + "/nixos/lib") { }) runTest; };
