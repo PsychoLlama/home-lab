@@ -33,7 +33,7 @@
     }@flake-inputs:
 
     let
-      inherit (nixpkgs) lib;
+      inherit (nixpkgs-unstable) lib;
       inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;
 
       # A subset of Hydra's standard architectures.
@@ -112,8 +112,6 @@
       hive = colmena.lib.makeHive self.colmena;
     in
     {
-      lib = nixpkgs-unstable.lib.extend (_: _: { inherit eachSystem; });
-
       overlays = {
         # Add `pkgs.unstable` to the package set.
         unstable-packages = final: prev: {
@@ -197,98 +195,130 @@
         };
       };
 
-      devShell = eachSystem (
+      devShells = eachSystem (
         system: pkgs:
-        pkgs.mkShell {
-          packages = [
-            pkgs.nixUnstable
-            pkgs.colmena
+        let
+          baseShellEnvironment = pkgs.mkShell {
+            packages = [
+              pkgs.nixUnstable
+              pkgs.colmena
 
-            (pkgs.clapfile.command {
-              command = {
-                name = "project";
-                about = "Project task runner";
-                subcommands = {
-                  bootstrap = {
-                    about = "Build a bootable image for a specific host.";
-                    run = pkgs.writers.writeBash "bootstrap" ''
-                      set -eux
-                      nix build ".#packages.$arch.$host-image"
-                      readlink -f result
-                    '';
+              (pkgs.clapfile.command {
+                command = {
+                  name = "project";
+                  about = "Project task runner";
+                  subcommands = {
+                    bootstrap = {
+                      about = "Build a bootable image for a specific host.";
+                      run = pkgs.writers.writeBash "bootstrap" ''
+                        set -eux
+                        nix build ".#packages.$arch.$host-image"
+                        readlink -f result
+                      '';
 
-                    args = [
-                      {
-                        id = "host";
-                        required = true;
-                      }
-                      {
-                        id = "arch";
-                        long = "arch";
-                        value_name = "system";
-                        default_value = "aarch64-linux";
-                      }
-                    ];
-                  };
+                      args = [
+                        {
+                          id = "host";
+                          required = true;
+                        }
+                        {
+                          id = "arch";
+                          long = "arch";
+                          value_name = "system";
+                          default_value = "aarch64-linux";
+                        }
+                      ];
+                    };
 
-                  sandbox = {
-                    about = "Enter a VM sandbox for experimentation.";
-                    run = pkgs.writers.writeBash "sandbox" ''
-                      set -eux
-                      nix run ".#tests.sandbox.driver"
-                    '';
-                  };
+                    sandbox = {
+                      about = "Enter a VM sandbox for experimentation.";
+                      run = pkgs.writers.writeBash "sandbox" ''
+                        set -eux
+                        nix run ".#tests.sandbox.driver"
+                      '';
+                    };
 
-                  test = {
-                    about = "Run one of the tests under `nixos/tests`.";
-                    run = pkgs.writers.writeBash "test" ''
-                      set -eux
+                    test = {
+                      about = "Run one of the tests under `nixos/tests`.";
+                      run = pkgs.writers.writeBash "test" ''
+                        set -eux
 
-                      # This is the only way to use `.shell_interact()`.
-                      if [[ -n "$interactive" ]]; then
-                        nix run ".#tests.$expr.driver"
-                      else
-                        nix build ".#tests.$expr"
-                      fi
-                    '';
+                        # This is the only way to use `.shell_interact()`.
+                        if [[ -n "$interactive" ]]; then
+                          nix run ".#tests.$expr.driver"
+                        else
+                          nix build ".#tests.$expr"
+                        fi
+                      '';
 
-                    args = [
-                      {
-                        id = "expr";
-                        value_name = "test-path";
-                        help = "dot.separated test path under `outputs.tests`";
-                        required = true;
-                      }
-                      {
-                        id = "interactive";
-                        long = "interactive";
-                        short = "i";
-                        default_value = "";
-                        help = "Enable interaction via stdout/stdin.";
-                      }
-                    ];
+                      args = [
+                        {
+                          id = "expr";
+                          value_name = "test-path";
+                          help = "dot.separated test path under `outputs.tests`";
+                          required = true;
+                        }
+                        {
+                          id = "interactive";
+                          long = "interactive";
+                          short = "i";
+                          default_value = "";
+                          help = "Enable interaction via stdout/stdin.";
+                        }
+                      ];
+                    };
                   };
                 };
-              };
-            })
-          ];
+              })
+            ];
 
-          # NOTE: Configuring remote builds through the client assumes you
-          # are a trusted Nix user. Without permission, you'll see errors
-          # where it refuses to compile a foreign architecture.
-          NIX_CONFIG = ''
-            experimental-features = nix-command flakes
-            builders-use-substitutes = true
-            builders = @${pkgs.writeText "nix-remote-builders" ''
-              ${lib.pipe hive.nodes [
-                (lib.mapAttrs (_: node: node.config.lab.host))
-                (lib.filterAttrs (_: host: host.builder.enable))
-                (lib.mapAttrsToList (_: host: host.builder.conf))
-                (lib.concatStringsSep "\n")
-              ]}
-            ''}
-          '';
-        }
+            # NOTE: Configuring remote builds through the client assumes you
+            # are a trusted Nix user. Without permission, you'll see errors
+            # where it refuses to compile a foreign architecture.
+            NIX_CONFIG = ''
+              experimental-features = nix-command flakes
+              builders-use-substitutes = true
+              builders = @${pkgs.writeText "nix-remote-builders" ''
+                ${lib.pipe hive.nodes [
+                  (lib.mapAttrs (_: node: node.config.lab.host))
+                  (lib.filterAttrs (_: host: host.builder.enable))
+                  (lib.mapAttrsToList (_: host: host.builder.conf))
+                  (lib.concatStringsSep "\n")
+                ]}
+              ''}
+            '';
+          };
+
+          # Some modules require special tools or languages for development.
+          # The pattern is to take the base development shell and extend it.
+          devShellSpecializations = lib.mergeAttrsList (
+            map (
+              relativePath:
+
+              let
+                absolutePath = ./. + "/${relativePath}";
+                customizeShell = import absolutePath { inherit pkgs; };
+                shell = baseShellEnvironment.overrideAttrs customizeShell;
+                dirname = lib.pipe relativePath [
+                  (lib.splitString "/")
+                  (lib.reverseList)
+                  (lib.drop 1)
+                  (lib.reverseList)
+                  (lib.concatStringsSep "/")
+                  (dir: dir + "/")
+                ];
+              in
+
+              {
+                ${dirname} = shell;
+              }
+            ) [ "nixos/modules/lab/filesystems/zfs/develop.nix" ]
+          );
+        in
+
+        # Each shell is indexed by its relative project path. This avoids
+        # conflicts and can be derived using `git rev-parse --show-prefix`.
+        devShellSpecializations // { default = baseShellEnvironment; }
       );
 
       formatter = eachSystem (system: pkgs: pkgs.nixfmt);
