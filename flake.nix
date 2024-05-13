@@ -341,6 +341,11 @@
           # of `flake.packages` while remaining easily scriptable.
           testScripts = eachSystem (
             system: pkgs: {
+              docs = pkgs.callPackage ./nixos/doc {
+                inherit (flake-inputs) colmena home-manager clapfile;
+                revision = self.rev or "latest";
+              };
+
               tests = pkgs.stdenvNoCC.mkDerivation {
                 name = "tests";
                 phases = [ "installPhase" ];

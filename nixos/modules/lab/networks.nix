@@ -37,6 +37,8 @@ let
   networkOption =
     { config, ... }:
     let
+      # WARN: `cidr` isn't set when evaluating documentation. Mark any derived
+      # properties as `visible = false`.
       ipv4 = parseCidrNotation config.ipv4.cidr;
     in
     {
@@ -60,6 +62,7 @@ let
           type = types.str;
           default = ipv4.gatewayAddress;
           example = "192.168.1.1";
+          visible = false;
         };
 
         network = mkOption {
@@ -67,6 +70,7 @@ let
           type = types.str;
           default = ipv4.networkAddress;
           example = "192.168.1.0";
+          visible = false;
         };
 
         broadcast = mkOption {
@@ -74,6 +78,7 @@ let
           type = types.str;
           default = ipv4.broadcastAddress;
           example = "192.168.1.255";
+          visible = false;
         };
 
         prefixLength = mkOption {
@@ -81,6 +86,7 @@ let
           type = types.int;
           default = ipv4.prefixLength;
           example = 24;
+          visible = false;
         };
 
         netmask = mkOption {
@@ -88,6 +94,7 @@ let
           type = types.str;
           default = ipv4.subnetMask;
           example = "255.255.255.0";
+          visible = false;
         };
 
         subnet = mkOption {
@@ -95,6 +102,7 @@ let
           type = types.str;
           default = ipv4.subnet;
           example = "192.168.1.0/24";
+          visible = false;
         };
 
         nameservers = mkOption {
@@ -107,6 +115,7 @@ let
 
           # TODO: Remove assumption that all gateways run DNS.
           default = [ config.ipv4.gateway ];
+          visible = false;
         };
 
         dhcp.pools = mkOption {
