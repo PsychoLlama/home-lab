@@ -9,8 +9,8 @@
 with lib;
 
 let
-  inherit (config.lab.services.router.networks) home iot guest;
-  inherit (config.lab.services.router) wan networks;
+  inherit (config.lab.services.gateway.networks) home iot guest;
+  inherit (config.lab.services.gateway) wan;
   cfg = config.lab.profiles.router;
 
   # Reserve IP addresses for all hosts.
@@ -44,6 +44,14 @@ let
         4500
       ];
     };
+  };
+
+  networks = {
+    datacenter.interface = "lan"; # Dongle to ethernet switch
+    home.interface = "wap"; # Dongle to WAP (no VLAN)
+    iot.interface = "vlan-iot";
+    work.interface = "vlan-work";
+    guest.interface = "vlan-guest";
   };
 in
 {
@@ -99,32 +107,26 @@ in
     };
 
     lab.services = {
-      router = {
+      gateway = {
         enable = true;
-
-        wan = {
-          interface = "wan"; # Dongle to WAN
-        };
-
-        networks = {
-          datacenter.interface = "lan"; # Dongle to ethernet switch
-          home.interface = "wap"; # Dongle to WAP (no VLAN)
-          iot.interface = "vlan-iot";
-          work.interface = "vlan-work";
-          guest.interface = "vlan-guest";
-        };
+        wan.interface = "wan"; # Dongle to WAN
+        networks = networks;
       };
 
-      dhcp.reservations = hostReservations ++ [
-        {
-          hw-address = "b0:60:88:19:d2:55";
-          ip-address = laptop.ip4;
-        }
-        {
-          hw-address = "20:16:42:06:2c:e3";
-          ip-address = xbox.ip4;
-        }
-      ];
+      dhcp = {
+        enable = true;
+        networks = networks;
+        reservations = hostReservations ++ [
+          {
+            hw-address = "b0:60:88:19:d2:55";
+            ip-address = laptop.ip4;
+          }
+          {
+            hw-address = "20:16:42:06:2c:e3";
+            ip-address = xbox.ip4;
+          }
+        ];
+      };
 
       dns = {
         enable = true;

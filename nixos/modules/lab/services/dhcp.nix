@@ -13,7 +13,7 @@ in
 {
   options.lab.services.dhcp = {
     enable = mkEnableOption "Run a DHCP server";
-    networks = options.lab.services.router.networks;
+    networks = options.lab.services.gateway.networks;
     reservations = mkOption {
       type = types.listOf (
         types.submodule {

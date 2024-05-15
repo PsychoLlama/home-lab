@@ -4,12 +4,12 @@ with lib;
 
 let
   inherit (config.lab) networks;
-  cfg = config.lab.services.router;
+  cfg = config.lab.services.gateway;
 in
 
 {
-  options.lab.services.router = {
-    enable = mkEnableOption "Turn the device into a simple router";
+  options.lab.services.gateway = {
+    enable = mkEnableOption "Run a NAT gateway and firewall";
 
     networks = mkOption {
       description = "Map of networks to create from `lab.networks`";
@@ -31,6 +31,7 @@ in
               };
 
               # Aliases into `lab.networks` for convenience.
+              # TODO: Remove this. It was a bad idea.
               ipv4 = mkOption {
                 type = types.anything;
                 default = networks.${config.name}.ipv4;
@@ -98,11 +99,6 @@ in
         name = network.interface;
         value.allowedTCPPorts = [ 22 ];
       }) cfg.networks;
-    };
-
-    lab.services.dhcp = {
-      enable = true;
-      networks = cfg.networks;
     };
 
     # SSH should not be accessible from the open internet.
