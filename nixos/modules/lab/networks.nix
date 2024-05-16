@@ -63,6 +63,7 @@ let
           default = ipv4.gatewayAddress;
           example = "192.168.1.1";
           visible = false;
+          readOnly = true;
         };
 
         network = mkOption {
@@ -71,6 +72,7 @@ let
           default = ipv4.networkAddress;
           example = "192.168.1.0";
           visible = false;
+          readOnly = true;
         };
 
         broadcast = mkOption {
@@ -79,6 +81,7 @@ let
           default = ipv4.broadcastAddress;
           example = "192.168.1.255";
           visible = false;
+          readOnly = true;
         };
 
         prefixLength = mkOption {
@@ -87,6 +90,7 @@ let
           default = ipv4.prefixLength;
           example = 24;
           visible = false;
+          readOnly = true;
         };
 
         netmask = mkOption {
@@ -95,6 +99,7 @@ let
           default = ipv4.subnetMask;
           example = "255.255.255.0";
           visible = false;
+          readOnly = true;
         };
 
         subnet = mkOption {
@@ -103,6 +108,7 @@ let
           default = ipv4.subnet;
           example = "192.168.1.0/24";
           visible = false;
+          readOnly = true;
         };
 
         nameservers = mkOption {

@@ -3,8 +3,12 @@
 with lib;
 
 let
-  inherit (config.lab) networks;
   cfg = config.lab.services.gateway;
+
+  # Enrich `cfg.networks` with data from `lab.networks`.
+  networks = mapAttrs (
+    _: network: network // { inherit (config.lab.networks.${network.id}) ipv4; }
+  ) cfg.networks;
 in
 
 {
@@ -16,25 +20,18 @@ in
       default = { };
       type = types.attrsOf (
         types.submodule (
-          { name, config, ... }:
+          { name, ... }:
           {
             options = {
-              name = mkOption {
+              id = mkOption {
                 description = "One of `lab.networks`";
-                type = types.enum (attrNames networks);
+                type = types.enum (attrNames config.lab.networks);
                 default = name;
               };
 
               interface = mkOption {
                 description = "Name of the network interface to use";
                 type = types.str;
-              };
-
-              # Aliases into `lab.networks` for convenience.
-              # TODO: Remove this. It was a bad idea.
-              ipv4 = mkOption {
-                type = types.anything;
-                default = networks.${config.name}.ipv4;
               };
             };
           }
@@ -81,24 +78,24 @@ in
               }
             ];
           };
-        }) cfg.networks)
+        }) networks)
       ];
 
       nat = {
         enable = true;
         externalInterface = cfg.wan.interface;
-        internalInterfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
+        internalInterfaces = mapAttrsToList (_: network: network.interface) networks;
 
         internalIPs = mapAttrsToList (
           _: network: "${network.ipv4.gateway}/${toString network.ipv4.prefixLength}"
-        ) cfg.networks;
+        ) networks;
       };
 
       # Expose SSH to all LAN interfaces.
       firewall.interfaces = mapAttrs' (_: network: {
         name = network.interface;
         value.allowedTCPPorts = [ 22 ];
-      }) cfg.networks;
+      }) networks;
     };
 
     # SSH should not be accessible from the open internet.
@@ -117,7 +114,7 @@ in
       (mapAttrs' (_: network: {
         name = "net.ipv4.conf.${network.interface}.rp_filter";
         value = mkDefault 1;
-      }) cfg.networks)
+      }) networks)
     ];
   };
 }
