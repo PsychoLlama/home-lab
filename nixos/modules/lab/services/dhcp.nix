@@ -1,19 +1,40 @@
-{
-  config,
-  lib,
-  options,
-  ...
-}:
+{ config, lib, ... }:
 
 with lib;
 
 let
   cfg = config.lab.services.dhcp;
+
+  # Enrich `cfg.networks` with data from `lab.networks`.
+  networks = mapAttrs (
+    _: network: network // { inherit (config.lab.networks.${network.id}) ipv4; }
+  ) cfg.networks;
 in
 {
   options.lab.services.dhcp = {
     enable = mkEnableOption "Run a DHCP server";
-    networks = options.lab.services.gateway.networks;
+    networks = mkOption {
+      description = "DHCP server configuration per interface";
+      default = { };
+      type = types.attrsOf (
+        types.submodule (
+          { name, ... }:
+          {
+            options.interface = mkOption {
+              type = types.str;
+              description = "Network interface to bind";
+            };
+
+            options.id = mkOption {
+              type = types.enum (attrNames config.lab.networks);
+              description = "One of `lab.networks`";
+              default = name;
+            };
+          }
+        )
+      );
+    };
+
     reservations = mkOption {
       type = types.listOf (
         types.submodule {
@@ -39,7 +60,7 @@ in
     networking.firewall.interfaces = mapAttrs' (_: network: {
       name = network.interface;
       value.allowedUDPPorts = [ 67 ];
-    }) cfg.networks;
+    }) networks;
 
     services.kea = {
       dhcp4 = {
@@ -57,7 +78,7 @@ in
 
           interfaces-config = {
             dhcp-socket-type = "raw";
-            interfaces = mapAttrsToList (_: network: network.interface) cfg.networks;
+            interfaces = mapAttrsToList (_: network: network.interface) networks;
           };
 
           subnet4 = mapAttrsToList (_: network: {
@@ -80,12 +101,13 @@ in
                 data = network.ipv4.broadcast;
               }
             ];
-          }) cfg.networks;
+          }) networks;
 
           host-reservation-identifiers = [
             "hw-address"
             "client-id"
           ];
+
           reservations-global = true;
           reservations-in-subnet = true;
           reservations-out-of-pool = false;
