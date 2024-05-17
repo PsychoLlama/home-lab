@@ -9,6 +9,7 @@ with lib;
     ./networks.nix
     ./profiles
     ./services
+    ./stratums.nix
     ./system.nix
   ];
 
