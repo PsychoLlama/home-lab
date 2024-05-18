@@ -35,6 +35,16 @@ in
       );
     };
 
+    nameservers = mkOption {
+      type = types.listOf types.str;
+      description = "DNS servers advertised to clients";
+      default = [ ];
+      example = [
+        "1.1.1.1"
+        "9.9.9.9"
+      ];
+    };
+
     reservations = mkOption {
       type = types.listOf (
         types.submodule {
@@ -88,10 +98,10 @@ in
             });
 
             option-data =
-              (optionals (network.ipv4.nameservers != [ ]) [
+              (optionals (cfg.nameservers != [ ]) [
                 {
                   name = "domain-name-servers";
-                  data = concatStringsSep ", " network.ipv4.nameservers;
+                  data = concatStringsSep ", " cfg.nameservers;
                 }
               ])
               ++ [

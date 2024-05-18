@@ -111,19 +111,6 @@ let
           readOnly = true;
         };
 
-        nameservers = mkOption {
-          description = "DNS servers to use for this network";
-          type = types.listOf types.str;
-          example = [
-            "1.1.1.1"
-            "9.9.9.9"
-          ];
-
-          # TODO: Remove assumption that all gateways run DNS.
-          default = [ config.ipv4.gateway ];
-          visible = false;
-        };
-
         dhcp.pools = mkOption {
           description = "Assignable address ranges used by DHCP";
           default = [ ];

@@ -18,7 +18,6 @@ makeTest {
     lan.ipv4.cidr = "${ip.g8w_lan}/24";
     wan.ipv4 = {
       cidr = "${ip.world}/24";
-      nameservers = [ ];
       dhcp.pools = [
         {
           start = ip.g8w_wan;

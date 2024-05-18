@@ -49,10 +49,6 @@ in
     networking = {
       useDHCP = false;
 
-      # TODO: Generate this from `nodes`. There is no guarantee this machine
-      # is the same one running a DNS server.
-      nameservers = [ "127.0.0.1" ];
-
       interfaces = mkMerge [
         {
           # Get a public IP from the WAN link, presumably an ISP.

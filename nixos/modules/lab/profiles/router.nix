@@ -106,6 +106,11 @@ in
       ];
     };
 
+    networking = {
+      # Don't use DNS servers advertised by the ISP.
+      inherit (config.lab.services.dhcp) nameservers;
+    };
+
     lab.services = {
       gateway = {
         enable = true;
@@ -116,6 +121,14 @@ in
       dhcp = {
         enable = true;
         networks = networks;
+
+        # NOTE: DNS IP address may be in a different subnet. This still
+        # depends on the gateway to forward traffic.
+        nameservers = pipe nodes [
+          (filterAttrs (_: node: node.config.lab.services.dns.enable))
+          (mapAttrsToList (_: node: node.config.lab.host.ip4))
+        ];
+
         reservations = hostReservations ++ [
           {
             hw-address = "b0:60:88:19:d2:55";
