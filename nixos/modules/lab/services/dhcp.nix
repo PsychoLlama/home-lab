@@ -87,20 +87,23 @@ in
               pool = "${lease.start} - ${lease.end}";
             });
 
-            option-data = [
-              {
-                name = "domain-name-servers";
-                data = concatStringsSep ", " network.ipv4.nameservers;
-              }
-              {
-                name = "routers";
-                data = network.ipv4.gateway;
-              }
-              {
-                name = "broadcast-address";
-                data = network.ipv4.broadcast;
-              }
-            ];
+            option-data =
+              (optionals (network.ipv4.nameservers != [ ]) [
+                {
+                  name = "domain-name-servers";
+                  data = concatStringsSep ", " network.ipv4.nameservers;
+                }
+              ])
+              ++ [
+                {
+                  name = "routers";
+                  data = network.ipv4.gateway;
+                }
+                {
+                  name = "broadcast-address";
+                  data = network.ipv4.broadcast;
+                }
+              ];
           }) networks;
 
           host-reservation-identifiers = [

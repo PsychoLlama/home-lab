@@ -116,8 +116,9 @@ in
 
     zone = {
       name = mkOption {
-        type = types.str;
+        type = types.nullOr types.str;
         example = "dc1.example.com";
+        default = null;
         description = ''
           The DNS zone to serve. This is the domain name for which the server
           is authoritative. It is used to generate the zone file.
@@ -224,8 +225,12 @@ in
           import common
           cache
 
-          file ${cfg.zone.file} ${cfg.zone.name} {
-            reload 0
+          ${
+            optionalString (cfg.zone.name != null) ''
+              file ${cfg.zone.file} ${cfg.zone.name} {
+                reload 0
+              }
+            ''
           }
 
           hosts ${cfg.hosts.file} {

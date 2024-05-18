@@ -46,13 +46,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = config.lab.services.dns.enable;
-        message = "To enable the router profile, DNS must also be enabled.";
-      }
-    ];
-
     networking = {
       useDHCP = false;
 
