@@ -3,12 +3,12 @@
 
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     clapfile.url = "github:PsychoLlama/clapfile";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.11";
+      url = "github:nix-community/home-manager/release-24.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -200,7 +200,7 @@
         let
           baseShellEnvironment = pkgs.mkShell {
             packages = [
-              pkgs.nixUnstable
+              pkgs.nixVersions.latest
               pkgs.colmena
 
               (pkgs.clapfile.command {

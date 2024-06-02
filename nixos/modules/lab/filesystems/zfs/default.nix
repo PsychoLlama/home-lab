@@ -10,9 +10,6 @@ with lib;
 let
   cfg = config.lab.filesystems.zfs;
 
-  # TODO: Replace this with the upstream version when nixpkgs is updated.
-  mergeAttrsList = lib.fold lib.mergeAttrs { };
-
   # Example: "/mnt/tank" must be mounted before "/mnt/tank/library".
   # FS dependency order can be inferred by string length.
   topoSortedMounts = pipe cfg.mounts [
