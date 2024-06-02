@@ -29,7 +29,7 @@ Tests can be executed by entering a dev shell and running `project test <drv_pat
 
 ```bash
 # Example:
-project test dhcp.assignment
+project test filesystems.zfs
 ```
 
 ## Inspiration

@@ -242,13 +242,7 @@
                       about = "Run one of the tests under `nixos/tests`.";
                       run = pkgs.writers.writeBash "test" ''
                         set -eux
-
-                        # This is the only way to use `.shell_interact()`.
-                        if [[ -n "$interactive" ]]; then
-                          nix run ".#tests.$expr.driver"
-                        else
-                          nix build ".#tests.$expr"
-                        fi
+                        nix run ".#tests.$expr.driver"
                       '';
 
                       args = [
@@ -257,13 +251,6 @@
                           value_name = "test-path";
                           help = "dot.separated test path under `outputs.tests`";
                           required = true;
-                        }
-                        {
-                          id = "interactive";
-                          long = "interactive";
-                          short = "i";
-                          default_value = "";
-                          help = "Enable interaction via stdout/stdin.";
                         }
                       ];
                     };
