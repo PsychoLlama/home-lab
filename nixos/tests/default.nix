@@ -4,13 +4,10 @@
   colmena,
   clapfile,
   home-manager,
-  runTest,
 }:
 
 let
   baseModule = {
-    hostPkgs = pkgs;
-
     defaults = {
       imports = [
         colmena.nixosModules.deploymentOptions
@@ -19,9 +16,6 @@ let
         clapfile.nixosModules.nixos
         ../modules
       ];
-
-      # The VM package set does not include overlays from the host.
-      nixpkgs.overlays = pkgs.overlays;
 
       home-manager = {
         sharedModules = [ ../../home-manager/modules ];
@@ -33,7 +27,7 @@ let
 
   makeTest =
     testModule:
-    runTest {
+    pkgs.testers.runNixOSTest {
       imports = [
         baseModule
         testModule

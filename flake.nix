@@ -58,7 +58,6 @@
 
           overlays = [
             self.overlays.unstable-packages
-            self.overlays.testing
             clapfile.overlays.programs
           ];
         };
@@ -117,9 +116,6 @@
         unstable-packages = final: prev: {
           unstable = import nixpkgs-unstable { inherit (prev) system config; };
         };
-
-        # `runTest` is a souped up version of `nixosTest`.
-        testing = final: prev: { inherit (import (final.path + "/nixos/lib") { }) runTest; };
       };
 
       colmena = (lib.mapAttrs defineHost hosts) // rec {
