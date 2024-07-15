@@ -98,7 +98,7 @@ in
       enable = true;
       reflector = true;
       openFirewall = false;
-      nssmdns = true;
+      nssmdns4 = true;
       allowInterfaces = [
         iot.interface
         home.interface
