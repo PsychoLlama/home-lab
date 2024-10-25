@@ -1,6 +1,5 @@
 $env.config = {
   edit_mode: vi
-  shell_integration: true
   show_banner: false
   footer_mode: 20
   history: {
@@ -8,7 +7,8 @@ $env.config = {
     isolation: true
   }
   table: {
-    mode: psql
+    mode: rounded
+    header_on_separator: true
   }
   cursor_shape: {
     vi_normal: block
@@ -21,5 +21,15 @@ $env.config = {
     external: {
       enable: true
     }
+  }
+
+  # Pulled from `config nu --default`
+  shell_integration: {
+    osc2: true
+    osc7: true
+    osc8: true
+    osc9_9: false
+    osc133: true
+    reset_application_mode: true
   }
 }
