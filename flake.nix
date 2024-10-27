@@ -329,17 +329,16 @@
                 revision = self.rev or "latest";
               };
 
-              tests = pkgs.stdenvNoCC.mkDerivation {
+              # Building this package will run all tests. This is probably not
+              # what you want. Instead, build individual tests by path.
+              tests = pkgs.stdenvNoCC.mkDerivation rec {
                 name = "tests";
                 phases = [ "installPhase" ];
-                installPhase =
-                  lib.warn
-                    ''
-                      This is not meant to be built. It only exists to hold other tests.
-                    ''
-                    ''
-                      touch $out
-                    '';
+
+                buildInputs = lib.collect (value: value ? __test) passthru;
+                installPhase = ''
+                  touch $out
+                '';
 
                 # All tests are exposed as attributes on this derivation. You can
                 # build them by path:

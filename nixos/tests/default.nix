@@ -27,11 +27,14 @@ let
 
   makeTest =
     testModule:
-    pkgs.testers.runNixOSTest {
+    (pkgs.testers.runNixOSTest {
       imports = [
         baseModule
         testModule
       ];
+    })
+    // {
+      __test = true;
     };
 
   importTests = path: args: callPackage path (args // { inherit importTests makeTest; });

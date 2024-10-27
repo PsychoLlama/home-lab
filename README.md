@@ -32,6 +32,12 @@ Tests can be executed by entering a dev shell and running `project test <drv_pat
 project test filesystems.zfs
 ```
 
+To cripple your machine by running all tests, do:
+
+```bash
+nix build --verbose '.#tests'
+```
+
 ## Inspiration
 
 The Nix Tradition is reading source code until you figure it out. Here are resources that helped me.
