@@ -10,7 +10,7 @@
 with lib;
 
 let
-  inherit (cfg) bedrock frame;
+  inherit (cfg) platform framework;
   cfg = config.lab.stratums;
 
   require =
@@ -29,7 +29,7 @@ in
 
 {
   options.lab.stratums = {
-    bedrock = {
+    platform = {
       initialized = mkOption {
         type = types.bool;
         default = false;
@@ -40,8 +40,8 @@ in
       };
     };
 
-    frame = {
-      assertion = require "bedrock" bedrock.initialized;
+    framework = {
+      assertion = require "platform" platform.initialized;
       initialized = mkOption {
         type = types.bool;
         default = false;
@@ -53,14 +53,14 @@ in
       };
     };
 
-    tenant = {
-      assertion = require "frame" (frame.initialized && bedrock.initialized);
+    application = {
+      assertion = require "framework" (framework.initialized && platform.initialized);
       initialized = mkOption {
         type = types.bool;
         default = false;
         description = ''
           Whether all tenant-level services have been initialized. This level
-          includes everything that is not crucial to bedrock or frame
+          includes everything that is not crucial to platform or framework
           stratums, such as applications, servers, and databases.
 
           There are no higher stratums. Nothing should depend on this level.
@@ -71,12 +71,12 @@ in
 
   config.assertions = [
     {
-      assertion = cfg.frame.initialized -> cfg.bedrock.initialized;
-      message = "Bedrock stratum must be initialized before frame.";
+      assertion = cfg.framework.initialized -> cfg.platform.initialized;
+      message = "Platform stratum must be initialized before framework.";
     }
     {
-      assertion = cfg.tenant.initialized -> cfg.frame.initialized;
-      message = "Frame stratum must be initialized before tenant.";
+      assertion = cfg.application.initialized -> cfg.framework.initialized;
+      message = "Framework stratum must be initialized before applications.";
     }
   ];
 }
