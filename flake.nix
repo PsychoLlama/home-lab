@@ -304,8 +304,6 @@
         devShellSpecializations // { default = baseShellEnvironment; }
       );
 
-      formatter = eachSystem (system: pkgs: pkgs.nixfmt);
-
       packages =
         let
           # Create a bootable disk image for each machine.
