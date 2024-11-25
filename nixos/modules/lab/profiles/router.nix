@@ -15,7 +15,8 @@ let
 
   # Reserve IP addresses for all hosts.
   hostReservations = mapAttrsToList (_: node: {
-    hw-address = node.config.lab.host.ethernet;
+    type = "hw-address";
+    id = node.config.lab.host.ethernet;
     ip-address = node.config.lab.host.ip4;
   }) nodes;
 
@@ -131,11 +132,13 @@ in
 
         reservations = hostReservations ++ [
           {
-            hw-address = "b0:60:88:19:d2:55";
+            type = "hw-address";
+            id = "b0:60:88:19:d2:55";
             ip-address = laptop.ip4;
           }
           {
-            hw-address = "C4:CB:76:8A:C3:D7";
+            type = "hw-address";
+            id = "C4:CB:76:8A:C3:D7";
             ip-address = xbox.ip4;
           }
         ];

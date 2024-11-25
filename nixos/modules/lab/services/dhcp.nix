@@ -48,9 +48,19 @@ in
     reservations = mkOption {
       type = types.listOf (
         types.submodule {
-          options.hw-address = mkOption {
+          options.type = mkOption {
+            type = types.enum [
+              "hw-address"
+              "client-id"
+            ];
+
+            description = "Reservation type";
+            default = "client-id";
+          };
+
+          options.id = mkOption {
             type = types.str;
-            description = "MAC address of the host";
+            description = "DHCP reservation identifier";
           };
 
           options.ip-address = mkOption {
@@ -62,6 +72,41 @@ in
 
       description = "Static DHCP reservations";
       default = [ ];
+    };
+
+    # On the fence whether `dhcp.lib` is genius or an anti-pattern.
+    lib.toClientId = mkOption {
+      type = types.functionTo types.str;
+      readOnly = true;
+      description = ''
+        Convert an IPv4 address to a DHCP client identifier. Useful when you
+        want to "hard-code" the IP but keep the router, DNS, and other fields
+        dynamic.
+
+        Outputs a hex string for compatibility with Kea.
+      '';
+
+      default =
+        ip4:
+        lib.pipe ip4 [
+          # ["127", "0", "0", "1"]
+          (lib.splitString ".")
+
+          # [127, 0, 0, 1]
+          (lib.map (str: lib.strings.toInt str))
+
+          # ["7F", "0", "0", "1"]
+          (lib.map (number: lib.trivial.toHexString number))
+
+          # ["7F", "00", "00", "01"]
+          (lib.map (hex: lib.strings.fixedWidthString 2 "0" hex))
+
+          # "7F:00:00:01"
+          (lib.concatStringsSep ":")
+
+          # "FE:01:7F:00:00:01"
+          (id: "FE:01:${id}")
+        ];
     };
   };
 
@@ -124,7 +169,10 @@ in
           reservations-global = true;
           reservations-in-subnet = true;
           reservations-out-of-pool = false;
-          reservations = cfg.reservations;
+          reservations = map (reservation: {
+            inherit (reservation) ip-address;
+            ${reservation.type} = reservation.id;
+          }) cfg.reservations;
         };
       };
     };

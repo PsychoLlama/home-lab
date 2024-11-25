@@ -25,9 +25,10 @@ makeTest {
           networks.test.interface = "eth1";
           nameservers = [ config.lab.networks.test.ipv4.gateway ];
           reservations = [
-            {
-              hw-address = "52:54:00:12:01:02";
+            rec {
+              type = "client-id";
               ip-address = "10.0.5.68";
+              id = config.lab.services.dhcp.lib.toClientId ip-address;
             }
           ];
         };
@@ -66,24 +67,27 @@ makeTest {
       };
     };
 
-    reserved = {
-      virtualisation.vlans = [ 1 ];
+    reserved =
+      { config, ... }:
+      {
+        virtualisation.vlans = [ 1 ];
 
-      networking = {
-        useNetworkd = true;
-        useDHCP = false;
-        interfaces.eth1 = {
-          useDHCP = true;
-          macAddress = "52:54:00:12:01:02";
+        networking = {
+          useDHCP = false;
+          interfaces.eth1.useDHCP = true;
+
+          dhcpcd.extraConfig = ''
+            clientid ${config.lab.services.dhcp.lib.toClientId "10.0.5.68"}
+          '';
         };
       };
-    };
   };
 
   testScript = ''
     import json
 
-    start_all()
+    server.start()
+    client.start()
 
     server.wait_for_unit("kea-dhcp4-server.service")
     client.wait_for_unit("systemd-networkd-wait-online.service")
@@ -108,7 +112,7 @@ makeTest {
       client.succeed("resolvectl dns eth1 | grep -q '10.0.5.3'")
 
     with subtest("reservations are given to recognized hosts"):
-      reserved.wait_for_unit("systemd-networkd-wait-online.service")
+      reserved.start()
       reserved.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.68/24'")
   '';
 }
