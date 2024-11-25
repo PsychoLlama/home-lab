@@ -135,7 +135,7 @@ in
             ip-address = laptop.ip4;
           }
           {
-            hw-address = "20:16:42:06:2c:e3";
+            hw-address = "C4:CB:76:8A:C3:D7";
             ip-address = xbox.ip4;
           }
         ];
