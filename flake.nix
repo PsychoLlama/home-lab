@@ -73,37 +73,37 @@
           module = ./hosts/rpi3-001.nix;
           profile = raspberry-pi-3;
           system = "aarch64-linux";
-          ethernet = "b8:27:eb:60:f5:88";
           ip4 = "10.0.0.203";
+          interface = "enu1u1";
         };
         rpi3-002 = {
           module = ./hosts/rpi3-002.nix;
           profile = raspberry-pi-3;
           system = "aarch64-linux";
-          ethernet = "b8:27:eb:0b:a2:ff";
           ip4 = "10.0.0.202";
+          interface = "enu1u1";
         };
         rpi4-001 = {
           module = ./hosts/rpi4-001.nix;
           profile = raspberry-pi-4;
           system = "aarch64-linux";
-          ethernet = "dc:a6:32:e1:42:81";
           ip4 = "10.0.0.1"; # Router
+          interface = null; # No "primary" interface.
         };
         rpi4-002 = {
           module = ./hosts/rpi4-002.nix;
           profile = raspberry-pi-4;
           system = "aarch64-linux";
-          ethernet = "e4:5f:01:0e:c7:66";
           ip4 = "10.0.0.208";
+          interface = "end0";
           builder.enable = true;
         };
         rpi4-003 = {
           module = ./hosts/rpi4-003.nix;
           profile = raspberry-pi-4;
           system = "aarch64-linux";
-          ethernet = "dc:a6:32:77:bb:82";
           ip4 = "10.0.0.204";
+          interface = "end0";
           builder.enable = true;
         };
       };

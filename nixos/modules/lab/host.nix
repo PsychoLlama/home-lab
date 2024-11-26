@@ -10,11 +10,11 @@ let
 in
 {
   options.lab.host = {
-    # TODO: Use DHCP client IDs instead of MAC addresses.
-    ethernet = mkOption {
-      type = types.str;
-      example = "11:22:33:aa:bb:cc";
-      description = "MAC address for the primary network interface";
+    interface = mkOption {
+      type = types.nullOr types.str;
+      example = "eth0";
+      description = "Name of the primary network interface";
+      default = null;
     };
 
     ip4 = mkOption {

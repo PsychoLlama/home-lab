@@ -11,6 +11,20 @@ inputs: hostName: host:
 
 let
   inherit (config.lab) domain datacenter;
+
+  # Proxy all network traffic through a macvlan interface. This allows the
+  # host to communicate with containers using macvlans and vice versa.
+  macvlan-proxy = {
+    config.networking = lib.mkIf (config.lab.host.interface != null) {
+      useDHCP = false;
+
+      interfaces.mv-primary.useDHCP = true;
+      macvlans.mv-primary = {
+        mode = "bridge";
+        interface = config.lab.host.interface;
+      };
+    };
+  };
 in
 {
   imports = [
@@ -19,6 +33,7 @@ in
     ../nixos/modules
     host.profile
     host.module
+    macvlan-proxy
   ];
 
   deployment.targetHost = config.networking.fqdn;

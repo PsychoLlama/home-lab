@@ -33,7 +33,6 @@ let
         networking.domain = "example.com";
         lab.host = {
           system = pkgs.system;
-          ethernet = "FF:FF:FF:FF:FF:FF";
           ip4 = "127.0.0.1";
         };
       }
