@@ -15,8 +15,8 @@ let
 
   # Reserve IP addresses for all hosts.
   hostReservations = mapAttrsToList (_: node: {
-    type = "hw-address";
-    id = node.config.lab.host.ethernet;
+    type = "client-id";
+    id = config.lab.services.dhcp.lib.toClientId node.config.lab.host.ip4;
     ip-address = node.config.lab.host.ip4;
   }) nodes;
 

@@ -27,6 +27,12 @@ in
   networking = {
     hostName = lib.mkDefault hostName;
     domain = "host.${domain}";
+
+    # Use a special client ID for DHCP. These index to a reserved database
+    # making sure it gets the IP it expects.
+    dhcpcd.extraConfig = ''
+      clientid ${config.lab.services.dhcp.lib.toClientId host.ip4}
+    '';
   };
 
   lab.host = host;
