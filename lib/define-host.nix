@@ -79,7 +79,7 @@ in
 
       {
         # Manage the system shell by default.
-        lab.shell.enable = lib.mkDefault true;
+        lab.profiles.fancy-shell.enable = lib.mkDefault true;
       }
     ];
   };

@@ -1,0 +1,3 @@
+{
+  imports = [ ./fancy-shell.nix ];
+}
