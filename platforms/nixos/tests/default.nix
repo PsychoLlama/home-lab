@@ -18,7 +18,7 @@ let
       ];
 
       home-manager = {
-        sharedModules = [ ../../home-manager/modules ];
+        sharedModules = [ ../../platforms/home-manager/modules ];
         useGlobalPkgs = true;
         useUserPackages = true;
       };

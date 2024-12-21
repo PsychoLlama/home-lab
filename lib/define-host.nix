@@ -30,7 +30,7 @@ in
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.clapfile.nixosModules.nixos
-    ../nixos/modules
+    ../platforms/nixos/modules
     host.profile
     host.module
     macvlan-proxy
@@ -75,7 +75,7 @@ in
     useGlobalPkgs = lib.mkDefault true;
     useUserPackages = lib.mkDefault true;
     sharedModules = [
-      ../home-manager/modules
+      ../platforms/home-manager/modules
 
       {
         # Manage the system shell by default.

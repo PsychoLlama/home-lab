@@ -327,7 +327,7 @@
           # of `flake.packages` while remaining easily scriptable.
           testScripts = eachSystem (
             system: pkgs: {
-              docs = pkgs.callPackage ./nixos/doc {
+              docs = pkgs.callPackage ./platforms/nixos/doc {
                 inherit (flake-inputs) colmena home-manager clapfile;
                 revision = self.rev or "latest";
               };
@@ -348,7 +348,9 @@
                 # ```
                 # nix build .#tests.<module>.<test-name>
                 # ```
-                passthru = pkgs.callPackage ./nixos/tests { inherit (flake-inputs) colmena clapfile home-manager; };
+                passthru = pkgs.callPackage ./platforms/nixos/tests {
+                  inherit (flake-inputs) colmena clapfile home-manager;
+                };
               };
             }
           );

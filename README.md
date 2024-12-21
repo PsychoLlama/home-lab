@@ -20,9 +20,9 @@ The file storage module manages ZFS pools and datasets. A host profile attaches 
 
 ## Project Structure
 
-- `nixos/modules/lab`: Unopinionated "library" modules for building a home lab.
-- `nixos/tests`: Virtual machine tests for services in `modules/lab`.
-- `nixos/modules/lab/profiles`: Opinionated configurations.
+- `platforms/nixos/modules/lab`: Unopinionated "library" modules for building a home lab.
+- `platforms/nixos/tests`: Virtual machine tests for services in `modules/lab`.
+- `platforms/nixos/modules/lab/profiles`: Opinionated configurations.
 - `hosts`: Per-host configurations. They are thin wrappers around profiles.
 
 Tests can be executed by entering a dev shell and running `project test <drv_path>`:
