@@ -13,7 +13,7 @@
     };
 
     colmena = {
-      url = "github:zhaofengli/colmena/release-0.4.x";
+      url = "github:zhaofengli/colmena";
       inputs = {
         nixpkgs.follows = "nixpkgs-unstable";
         stable.follows = "nixpkgs";
@@ -118,6 +118,11 @@
         };
       };
 
+      # Workaround for unlocked inputs in pure evaluations using newer
+      # versions of Nix. Supports Colmena's `--experimental-flake-eval` flag.
+      # See: https://github.com/zhaofengli/colmena/issues/202
+      colmenaHive = hive;
+
       colmena = (lib.mapAttrs defineHost hosts) // rec {
         defaults.lab = {
           domain = "selfhosted.city";
@@ -197,7 +202,7 @@
           baseShellEnvironment = pkgs.mkShell {
             packages = [
               pkgs.nixVersions.latest
-              pkgs.colmena
+              colmena.packages.${system}.colmena
 
               (pkgs.clapfile.command {
                 command = {
