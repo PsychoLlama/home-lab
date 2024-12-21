@@ -5,9 +5,8 @@
   ...
 }:
 
-with lib;
-
 let
+  inherit (lib) types mkOption;
   cfg = config.lab.services.dns;
   forward =
     upstream:
@@ -17,7 +16,7 @@ let
       inherit (upstream) tls udp;
     in
 
-    getAttr method ({
+    lib.getAttr method ({
       tls = ''
         forward ${zone} tls://${tls.ip} {
           tls_servername ${tls.servername}
@@ -39,7 +38,7 @@ in
 
 {
   options.lab.services.dns = {
-    enable = mkEnableOption "Run a DNS server";
+    enable = lib.mkEnableOption "Run a DNS server";
 
     interfaces = mkOption {
       type = types.listOf types.str;
@@ -137,7 +136,7 @@ in
                   3600)     ; Negative response TTL
 
           ; Custom records
-          ${concatMapStrings (record: ''
+          ${lib.concatMapStrings (record: ''
             ${record.name}  ${record.ttl} IN ${record.type} ${record.value}
           '') cfg.zone.records}
         '';
@@ -194,14 +193,14 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     networking = {
       # Ignore advertised DNS servers and resolve queries locally. In HA
       # setups, other nameservers may be unresponsive.
       nameservers = [ "127.0.0.1" ];
 
       # Expose DNS+UDP (no TCP support).
-      firewall.interfaces = genAttrs cfg.interfaces (_: {
+      firewall.interfaces = lib.genAttrs cfg.interfaces (_: {
         allowedUDPPorts = [ 53 ];
       });
     };
@@ -218,7 +217,7 @@ in
           errors
           local
 
-          ${optionalString (cfg.server.id != null) "nsid ${cfg.server.id}"}
+          ${lib.optionalString (cfg.server.id != null) "nsid ${cfg.server.id}"}
         }
 
         . {
@@ -226,7 +225,7 @@ in
           cache
 
           ${
-            optionalString (cfg.zone.name != null) ''
+            lib.optionalString (cfg.zone.name != null) ''
               file ${cfg.zone.file} ${cfg.zone.name} {
                 reload 0
               }
@@ -240,7 +239,7 @@ in
           }
 
           # Upstream DNS servers
-          ${concatMapStringsSep "\n" forward cfg.forward}
+          ${lib.concatMapStringsSep "\n" forward cfg.forward}
         }
       '';
     };

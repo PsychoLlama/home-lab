@@ -3,11 +3,11 @@
 # Exposes all the configuration options for the host. This is particularly
 # useful for the network address.
 
-with lib;
-
 let
+  inherit (lib) types mkOption;
   cfg = config.lab.host;
 in
+
 {
   options.lab.host = {
     interface = mkOption {
@@ -24,7 +24,7 @@ in
     };
 
     system = mkOption {
-      type = types.enum systems.doubles.all;
+      type = types.enum lib.systems.doubles.all;
       example = "aarch64-linux";
       description = "Architecture identifier of the host system";
     };
@@ -42,7 +42,7 @@ in
 
     # Option names mirror `config.nix.buildMachines`.
     builder = {
-      enable = mkEnableOption "Use this machine as a remote builder";
+      enable = lib.mkEnableOption "Use this machine as a remote builder";
 
       uri = mkOption {
         type = types.str;
@@ -57,7 +57,7 @@ in
       };
 
       systems = mkOption {
-        type = types.listOf (types.enum systems.doubles.all);
+        type = types.listOf (types.enum lib.systems.doubles.all);
         description = "Systems supported by the builder";
         default = [ cfg.system ];
       };
@@ -104,13 +104,13 @@ in
           https://nixos.org/manual/nix/stable/advanced-topics/distributed-builds.html
         '';
 
-        default = concatStringsSep " " [
+        default = lib.concatStringsSep " " [
           cfg.builder.uri
-          (concatStringsSep "," cfg.builder.systems)
+          (lib.concatStringsSep "," cfg.builder.systems)
           cfg.builder.sshKey
           (toString cfg.builder.maxJobs)
           (toString cfg.builder.speedFactor)
-          (concatStringsSep "," cfg.builder.supportedFeatures)
+          (lib.concatStringsSep "," cfg.builder.supportedFeatures)
         ];
       };
     };

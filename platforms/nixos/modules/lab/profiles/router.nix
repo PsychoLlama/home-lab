@@ -6,22 +6,20 @@
   ...
 }:
 
-with lib;
-
 let
   inherit (config.lab.services.gateway.networks) home iot guest;
   inherit (config.lab.services.gateway) wan;
   cfg = config.lab.profiles.router;
 
   # Reserve IP addresses for all hosts.
-  hostReservations = mapAttrsToList (_: node: {
+  hostReservations = lib.mapAttrsToList (_: node: {
     type = "client-id";
     id = config.lab.services.dhcp.lib.toClientId node.config.lab.host.ip4;
     ip-address = node.config.lab.host.ip4;
   }) nodes;
 
   # Generate DNS records for every host.
-  hostRecords = mapAttrsToList (_: node: {
+  hostRecords = lib.mapAttrsToList (_: node: {
     name = "${node.config.networking.hostName}.host";
     value = node.config.lab.host.ip4;
     type = "A";
@@ -57,7 +55,7 @@ let
 in
 {
   options.lab.profiles.router = {
-    enable = mkEnableOption ''
+    enable = lib.mkEnableOption ''
       Turn this device into a router.
 
       The network interface names MUST match the ones configured in
@@ -66,7 +64,7 @@ in
     '';
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     deployment.tags = [ "router" ];
 
     environment.systemPackages = [
@@ -125,9 +123,9 @@ in
 
         # NOTE: DNS IP address may be in a different subnet. This still
         # depends on the gateway to forward traffic.
-        nameservers = pipe nodes [
-          (filterAttrs (_: node: node.config.lab.services.dns.enable))
-          (mapAttrsToList (_: node: node.config.lab.host.ip4))
+        nameservers = lib.pipe nodes [
+          (lib.filterAttrs (_: node: node.config.lab.services.dns.enable))
+          (lib.mapAttrsToList (_: node: node.config.lab.host.ip4))
         ];
 
         reservations = hostReservations ++ [
@@ -146,7 +144,7 @@ in
 
       dns = {
         enable = true;
-        interfaces = mapAttrsToList (_: net: net.interface) networks;
+        interfaces = lib.mapAttrsToList (_: net: net.interface) networks;
         server.id = config.networking.fqdn;
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
 
@@ -177,10 +175,10 @@ in
     # router and some networking requirements are bound to bleed over.
     networking = {
       # Open ports for multiplayer gaming on Xbox Live.
-      nat.forwardPorts = flatten (
-        mapAttrsToList (
+      nat.forwardPorts = lib.flatten (
+        lib.mapAttrsToList (
           proto: ports:
-          forEach ports (port: {
+          lib.forEach ports (port: {
             inherit proto;
             sourcePort = port;
             destination = "${xbox.ip4}:${toString port}";

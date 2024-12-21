@@ -1,8 +1,8 @@
 { pkgs, lib, ... }:
 
-with lib;
-
 let
+  inherit (lib) types mkOption;
+
   buildCidrInfo = pkgs.writers.writePython3 "print_cidr_info" { } ''
     from ipaddress import ip_interface
     import sys

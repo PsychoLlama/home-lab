@@ -1,18 +1,18 @@
 { config, lib, ... }:
 
-with lib;
-
 let
+  inherit (lib) types mkOption;
+
   cfg = config.lab.services.dhcp;
 
   # Enrich `cfg.networks` with data from `lab.networks`.
-  networks = mapAttrs (
+  networks = lib.mapAttrs (
     _: network: network // { inherit (config.lab.networks.${network.id}) ipv4; }
   ) cfg.networks;
 in
 {
   options.lab.services.dhcp = {
-    enable = mkEnableOption "Run a DHCP server";
+    enable = lib.mkEnableOption "Run a DHCP server";
     networks = mkOption {
       description = "DHCP server configuration per interface";
       default = { };
@@ -26,7 +26,7 @@ in
             };
 
             options.id = mkOption {
-              type = types.enum (attrNames config.lab.networks);
+              type = types.enum (lib.attrNames config.lab.networks);
               description = "One of `lab.networks`";
               default = name;
             };
@@ -110,9 +110,9 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Open DHCP ports on participating LAN interfaces.
-    networking.firewall.interfaces = mapAttrs' (_: network: {
+    networking.firewall.interfaces = lib.mapAttrs' (_: network: {
       name = network.interface;
       value.allowedUDPPorts = [ 67 ];
     }) networks;
@@ -133,20 +133,20 @@ in
 
           interfaces-config = {
             dhcp-socket-type = "raw";
-            interfaces = mapAttrsToList (_: network: network.interface) networks;
+            interfaces = lib.mapAttrsToList (_: network: network.interface) networks;
           };
 
-          subnet4 = mapAttrsToList (_: network: {
+          subnet4 = lib.mapAttrsToList (_: network: {
             subnet = network.ipv4.subnet;
-            pools = forEach network.ipv4.dhcp.pools (lease: {
+            pools = lib.forEach network.ipv4.dhcp.pools (lease: {
               pool = "${lease.start} - ${lease.end}";
             });
 
             option-data =
-              (optionals (cfg.nameservers != [ ]) [
+              (lib.optionals (cfg.nameservers != [ ]) [
                 {
                   name = "domain-name-servers";
-                  data = concatStringsSep ", " cfg.nameservers;
+                  data = lib.concatStringsSep ", " cfg.nameservers;
                 }
               ])
               ++ [

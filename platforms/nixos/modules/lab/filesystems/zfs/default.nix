@@ -5,34 +5,34 @@
   ...
 }:
 
-with lib;
-
 let
+  inherit (lib) types mkOption concatMapStringsSep;
+
   cfg = config.lab.filesystems.zfs;
 
   # Example: "/mnt/tank" must be mounted before "/mnt/tank/library".
   # FS dependency order can be inferred by string length.
-  topoSortedMounts = pipe cfg.mounts [
-    attrsToList
-    (sortOn (mount: stringLength mount.name))
+  topoSortedMounts = lib.pipe cfg.mounts [
+    lib.attrsToList
+    (lib.sortOn (mount: lib.stringLength mount.name))
     (map (mount: mount.name))
   ];
 
-  nulib = fileset.toSource {
+  nulib = lib.fileset.toSource {
     root = ./.;
-    fileset = fileset.fileFilter (f: f.hasExt "nu") ./.;
+    fileset = lib.fileset.fileFilter (f: f.hasExt "nu") ./.;
   };
 
   # Expected property/settings for zpools and datasets. Managed by
   # `./propctl.nu`.
   zfsStateFile = {
-    pools = mapAttrs (_: pool: {
+    pools = lib.mapAttrs (_: pool: {
       ignored_properties = pool.unmanaged.settings;
       properties = pool.settings;
     }) cfg.pools;
 
-    datasets = pipe cfg.pools [
-      (attrValues)
+    datasets = lib.pipe cfg.pools [
+      (lib.attrValues)
 
       (map (pool: [
         # Declare pool properties
@@ -44,7 +44,7 @@ let
         }
 
         # Declare dataset properties
-        (mapAttrs' (_: dataset: {
+        (lib.mapAttrs' (_: dataset: {
           name = "${pool.name}/${dataset.name}";
           value = {
             ignored_properties = dataset.unmanaged.properties;
@@ -53,14 +53,14 @@ let
         }) pool.datasets)
       ]))
 
-      (flatten)
-      (mergeAttrsList)
+      (lib.flatten)
+      (lib.mergeAttrsList)
     ];
   };
 in
 {
   options.lab.filesystems.zfs = {
-    enable = mkEnableOption ''
+    enable = lib.mkEnableOption ''
       Mount and manage encrypted ZFS pools. This option changes the kernel and
       boot process. Reboot the machine after changing this option.
 
@@ -234,7 +234,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot = {
       kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
       supportedFilesystems = [ "zfs" ];
@@ -275,7 +275,9 @@ in
 
             systemctl stop ${cfg.decryption.target}
 
-            ${concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}") (reverseList topoSortedMounts)}
+            ${concatMapStringsSep "\n  " (mountpoint: "umount ${mountpoint}") (
+              lib.reverseList topoSortedMounts
+            )}
 
             zfs unload-key -a
           '';
@@ -319,29 +321,29 @@ in
             set -euxo pipefail
 
             # Create ZFS pools.
-            ${pipe cfg.pools [
-              (attrValues)
+            ${lib.pipe cfg.pools [
+              (lib.attrValues)
               (map (
                 pool:
-                "zpool create ${escapeShellArg pool.name} ${
+                "zpool create ${lib.escapeShellArg pool.name} ${
                   concatMapStringsSep " " (
-                    vdev: concatStringsSep " " ((if vdev.type != null then [ vdev.type ] else [ ]) ++ vdev.sources)
+                    vdev: lib.concatStringsSep " " ((if vdev.type != null then [ vdev.type ] else [ ]) ++ vdev.sources)
                   ) pool.vdevs
                 }"
               ))
 
-              (concatStringsSep "\n  ")
+              (lib.concatStringsSep "\n  ")
             ]}
 
             # Create datasets.
             ${concatMapStringsSep "\n  " (
               pool:
-              pipe pool.datasets [
-                (attrValues)
-                (map (dataset: "zfs create ${escapeShellArg "${pool.name}/${dataset.name}"}"))
-                (concatStringsSep "\n  ")
+              lib.pipe pool.datasets [
+                (lib.attrValues)
+                (map (dataset: "zfs create ${lib.escapeShellArg "${pool.name}/${dataset.name}"}"))
+                (lib.concatStringsSep "\n  ")
               ]
-            ) (attrValues cfg.pools)}
+            ) (lib.attrValues cfg.pools)}
 
             # Apply pool/dataset properties.
             system fs apply-properties --yes=true
@@ -350,7 +352,7 @@ in
       };
     };
 
-    fileSystems = mapAttrs (mountpoint: dataset: {
+    fileSystems = lib.mapAttrs (mountpoint: dataset: {
       device = dataset;
       fsType = "zfs";
 

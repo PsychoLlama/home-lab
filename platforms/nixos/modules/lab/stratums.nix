@@ -7,9 +7,8 @@
 #
 # The lower stratums should contain as few services as possible.
 
-with lib;
-
 let
+  inherit (lib) types mkOption;
   inherit (cfg) platform framework;
   cfg = config.lab.stratums;
 
