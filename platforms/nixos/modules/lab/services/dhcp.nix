@@ -136,7 +136,8 @@ in
             interfaces = lib.mapAttrsToList (_: network: network.interface) networks;
           };
 
-          subnet4 = lib.mapAttrsToList (_: network: {
+          subnet4 = lib.imap (index: network: {
+            id = index;
             subnet = network.ipv4.subnet;
             pools = lib.forEach network.ipv4.dhcp.pools (lease: {
               pool = "${lease.start} - ${lease.end}";
@@ -159,7 +160,7 @@ in
                   data = network.ipv4.broadcast;
                 }
               ];
-          }) networks;
+          }) (lib.attrValues networks);
 
           host-reservation-identifiers = [
             "hw-address"
