@@ -224,13 +224,11 @@ in
           import common
           cache
 
-          ${
-            lib.optionalString (cfg.zone.name != null) ''
-              file ${cfg.zone.file} ${cfg.zone.name} {
-                reload 0
-              }
-            ''
-          }
+          ${lib.optionalString (cfg.zone.name != null) ''
+            file ${cfg.zone.file} ${cfg.zone.name} {
+              reload 0
+            }
+          ''}
 
           hosts ${cfg.hosts.file} {
             fallthrough

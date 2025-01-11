@@ -72,6 +72,7 @@ makeTest {
   testScript = ''
     start_all()
     machine.wait_for_unit("coredns.service")
+    machine.wait_for_unit("network-online.target")
 
     with subtest("NSID is advertised in responses"):
       nsid_line = machine.succeed("dig +nsid @localhost localhost | grep NSID")
