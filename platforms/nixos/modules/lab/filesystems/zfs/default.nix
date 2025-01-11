@@ -236,7 +236,7 @@ in
 
   config = lib.mkIf cfg.enable {
     boot = {
-      kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+      kernelPackages = pkgs.linuxPackages_6_6; # Latest compatible with ZFS.
       supportedFilesystems = [ "zfs" ];
 
       # Disable the prompt for encryption credentials on boot. It blocks ssh,
