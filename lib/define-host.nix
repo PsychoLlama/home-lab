@@ -99,6 +99,10 @@ in
         ./keys/admin.pub
       ];
     };
+
+    virtualisation.sharedModules = [
+      # TODO: Add all platforms to the container namespace.
+    ];
   };
 
   users.defaultUserShell = home.programs.nushell.package;

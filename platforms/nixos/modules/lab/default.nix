@@ -10,6 +10,7 @@
     ./ssh.nix
     ./stratums.nix
     ./system.nix
+    ./virtualisation.nix
   ];
 
   # A place to store constants. These should be set for every host. Not all
