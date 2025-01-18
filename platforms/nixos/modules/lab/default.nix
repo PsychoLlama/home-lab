@@ -7,6 +7,7 @@
     ./networks.nix
     ./profiles
     ./services
+    ./ssh.nix
     ./stratums.nix
     ./system.nix
   ];

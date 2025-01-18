@@ -11,6 +11,7 @@ inputs: hostName: host:
 
 let
   inherit (config.lab) domain datacenter;
+  home = config.home-manager.users.root;
 
   # Proxy all network traffic through a macvlan interface. This allows the
   # host to communicate with containers using macvlans and vice versa.
@@ -29,12 +30,14 @@ let
       };
     };
   };
+
 in
+
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.clapfile.nixosModules.nixos
-    ../platforms/nixos/modules
+    inputs.self.nixosModules.nixos-platform
     host.profile
     host.module
     macvlan-proxy
@@ -53,8 +56,6 @@ in
       clientid ${config.lab.services.dhcp.lib.toClientId host.ip4}
     '';
   };
-
-  lab.host = host;
 
   nix = {
     # Run garbage collection on a schedule.
@@ -79,7 +80,7 @@ in
     useGlobalPkgs = lib.mkDefault true;
     useUserPackages = lib.mkDefault true;
     sharedModules = [
-      ../platforms/home-manager/modules
+      inputs.self.nixosModules.home-manager-platform
 
       {
         # Manage the system shell by default.
@@ -88,11 +89,17 @@ in
     ];
   };
 
-  users = {
-    defaultUserShell = pkgs.unstable.nushell;
-    users.root.openssh.authorizedKeys.keyFiles = [
-      ./keys/deploy.pub
-      ./keys/admin.pub
-    ];
+  lab = {
+    inherit host;
+
+    ssh = {
+      enable = lib.mkDefault true;
+      authorizedKeys = [
+        ./keys/deploy.pub
+        ./keys/admin.pub
+      ];
+    };
   };
+
+  users.defaultUserShell = home.programs.nushell.package;
 }
