@@ -14,6 +14,10 @@ let
 
   # Proxy all network traffic through a macvlan interface. This allows the
   # host to communicate with containers using macvlans and vice versa.
+  #
+  # WARN: Shortly after enabling macvlan interfaces, a test deploy broke
+  # networking since the macvlan was not available by the time dhcpcd started.
+  # There seems to be a race.
   macvlan-proxy = {
     config.networking = lib.mkIf (config.lab.host.interface != null) {
       useDHCP = false;
