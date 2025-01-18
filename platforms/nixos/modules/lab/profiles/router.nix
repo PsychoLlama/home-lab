@@ -20,7 +20,7 @@ let
 
   # Generate DNS records for every host.
   hostRecords = lib.mapAttrsToList (_: node: {
-    name = "${node.config.networking.hostName}.host";
+    name = node.config.networking.hostName;
     value = node.config.lab.host.ip4;
     type = "A";
   }) nodes;
@@ -72,6 +72,7 @@ in
       pkgs.unstable.conntrack-tools # Inspect active connection states
       pkgs.unstable.doggo # DNS testing
       pkgs.unstable.tcpdump # Inspect traffic (used with Wireshark)
+      config.services.etcd.package # For probing dynamic DNS records
     ];
 
     # VLANs are sent by the WAP (a UniFi U6 Lite).
@@ -148,11 +149,16 @@ in
         server.id = config.networking.fqdn;
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
 
+        discovery = {
+          enable = true;
+          zones = [ "host.${config.lab.datacenter}.${config.lab.domain}" ];
+        };
+
         zone = {
-          name = config.lab.domain;
+          name = "host.${config.lab.domain}";
           records = hostRecords ++ [
             {
-              name = "${laptop.hostName}.host";
+              name = laptop.hostName;
               value = laptop.ip4;
               type = "A";
             }

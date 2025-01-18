@@ -59,6 +59,17 @@ in
       '';
     };
 
+    discovery = {
+      enable = lib.mkEnableOption "Use etcd for service discovery";
+      zones = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = ''
+          DNS zones to resolve using the service discovery mechanism.
+        '';
+      };
+    };
+
     forward = mkOption {
       default = [ ];
       description = ''
@@ -205,6 +216,13 @@ in
       });
     };
 
+    # TODO: Split this into a separate service so it can be deployed on
+    # independent hosts (HA mode).
+    services.etcd = lib.mkIf cfg.discovery.enable {
+      enable = true;
+      package = pkgs.unstable.etcd;
+    };
+
     services.coredns = {
       enable = true;
       package = pkgs.unstable.coredns;
@@ -225,8 +243,16 @@ in
           cache
 
           ${lib.optionalString (cfg.zone.name != null) ''
+            # WARN: This takes full control of whatever zone it's given.
+            # There is no fallthrough. It will fight you.
             file ${cfg.zone.file} ${cfg.zone.name} {
               reload 0
+            }
+          ''}
+
+          ${lib.optionalString cfg.discovery.enable ''
+            etcd ${toString cfg.discovery.zones} {
+              fallthrough
             }
           ''}
 
