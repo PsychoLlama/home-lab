@@ -11,6 +11,7 @@ let
   inherit (config.lab.services.gateway) wan;
   inherit (config.lab.services) discovery;
   cfg = config.lab.profiles.router;
+  json = pkgs.formats.json { };
 
   # Reserve IP addresses for all hosts.
   hostReservations = lib.mapAttrsToList (_: node: {
@@ -123,6 +124,16 @@ in
       discovery.server = {
         enable = true;
         dns.zone = "${config.lab.datacenter}.${config.lab.domain}";
+        static-values = [
+          {
+            key = "${discovery.server.dns.prefix.host.key}/${config.networking.hostName}";
+            value = json.generate "host-record.json" {
+              host = config.lab.host.ip4;
+              type = "A";
+              # use default TTL
+            };
+          }
+        ];
       };
 
       dhcp = {

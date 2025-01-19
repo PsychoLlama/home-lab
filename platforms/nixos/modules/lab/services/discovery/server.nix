@@ -7,6 +7,7 @@
 
 let
   inherit (lib) types;
+  etcd = config.services.etcd.package;
   cfg = config.lab.services.discovery.server;
 in
 
@@ -74,15 +75,65 @@ in
         };
       };
     };
+
+    static-values = lib.mkOption {
+      default = [ ];
+      description = ''
+        Values to add every time the discovery server starts.
+
+        WARNING: Old values are not removed. They must be purged manually.
+      '';
+
+      type = types.listOf (
+        types.submodule (
+          { config, ... }:
+          {
+            options.key = lib.mkOption {
+              type = types.str;
+              example = "/arbitrary/key";
+              description = ''
+                Where to store the data.
+              '';
+            };
+
+            options.value = lib.mkOption {
+              type = types.either types.str types.path;
+              example = "value";
+              description = ''
+                Arbitrary value to store.
+              '';
+
+              apply = value: if lib.isString value then pkgs.writeText "etcd-content" value else value;
+            };
+
+            options.command = lib.mkOption {
+              type = types.str;
+              readOnly = true;
+              description = ''
+                Generated command that updates etcd.
+              '';
+
+              default = ''
+                ${etcd}/bin/etcdctl put -- ${config.key} < ${config.value}
+              '';
+            };
+          }
+        )
+      );
+    };
   };
 
   # TODO:
-  # - Install post-hook to update etcd with static records
   # - Expose this to the network (yolo)
   config = lib.mkIf cfg.enable {
     services.etcd = {
       enable = true;
       package = pkgs.unstable.etcd;
     };
+
+    # Add static values as soon as the service is ready.
+    systemd.services.etcd.postStart =
+      lib.concatMapStringsSep "\n" (lib.getAttr "command")
+        cfg.static-values;
   };
 }
