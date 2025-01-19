@@ -19,25 +19,6 @@ let
   cfg = config.lab.profiles.router;
   json = pkgs.formats.json { };
 
-  # Reserve IP addresses for all hosts.
-  hostReservations = lib.mapAttrsToList (_: node: {
-    type = "client-id";
-    id = config.lab.services.dhcp.lib.toClientId node.config.lab.host.ip4;
-    ip-address = node.config.lab.host.ip4;
-  }) nodes;
-
-  # Generate DNS records for every host.
-  hostRecords = lib.mapAttrsToList (_: node: {
-    name = node.config.networking.hostName;
-    value = node.config.lab.host.ip4;
-    type = "A";
-  }) nodes;
-
-  laptop = {
-    ip4 = "10.0.1.250";
-    hostName = "ava";
-  };
-
   xbox = {
     ip4 = "10.0.2.250";
     ports = {
@@ -164,12 +145,7 @@ in
           (lib.mapAttrsToList (_: node: node.config.lab.host.ip4))
         ];
 
-        reservations = hostReservations ++ [
-          {
-            type = "hw-address";
-            id = "b0:60:88:19:d2:55";
-            ip-address = laptop.ip4;
-          }
+        reservations = [
           {
             type = "hw-address";
             id = "C4:CB:76:8A:C3:D7";
@@ -183,6 +159,7 @@ in
         interfaces = lib.mapAttrsToList (_: net: net.interface) networks;
         server.id = config.networking.fqdn;
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
+        zone.name = "host.${config.lab.domain}";
 
         discovery = {
           enable = true;
@@ -190,17 +167,6 @@ in
 
           zones = [
             "host.${discovery.server.dns.zone}"
-          ];
-        };
-
-        zone = {
-          name = "host.${config.lab.domain}";
-          records = hostRecords ++ [
-            {
-              name = laptop.hostName;
-              value = laptop.ip4;
-              type = "A";
-            }
           ];
         };
 
