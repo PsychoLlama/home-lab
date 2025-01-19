@@ -48,7 +48,7 @@ in
 
   networking = {
     hostName = lib.mkDefault hostName;
-    domain = "host.${domain}";
+    domain = "host.${datacenter}.${domain}";
 
     # Use a special client ID for DHCP. These index to a reserved database
     # making sure it gets the IP it expects.
