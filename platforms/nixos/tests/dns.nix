@@ -17,6 +17,15 @@ makeTest {
         pkgs.doggo
       ];
 
+      # TODO: Manage service discovery in a separate and focused test.
+      lab.services.discovery.server = {
+        enable = true;
+        dns = {
+          zone = "dyn.example.com";
+          prefix.name = "skydns";
+        };
+      };
+
       lab.services.dns = {
         enable = true;
         interfaces = [ "eth1" ];
@@ -24,7 +33,8 @@ makeTest {
 
         discovery = {
           enable = true;
-          zones = [ "dyn.example.com" ];
+          zones = [ config.lab.services.discovery.server.dns.zone ];
+          dns.prefix = "/${config.lab.services.discovery.server.dns.prefix.name}";
         };
 
         zone = {

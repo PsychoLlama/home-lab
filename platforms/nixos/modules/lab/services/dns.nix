@@ -68,6 +68,14 @@ in
           DNS zones to resolve using the service discovery mechanism.
         '';
       };
+
+      dns.prefix = lib.mkOption {
+        type = types.str;
+        description = ''
+          Etcd key prefix where DNS records are stored.
+          Uses reverse scheme, e.g. `/dns/com/example/subdomain`.
+        '';
+      };
     };
 
     forward = mkOption {
@@ -216,13 +224,6 @@ in
       });
     };
 
-    # TODO: Split this into a separate service so it can be deployed on
-    # independent hosts (HA mode).
-    services.etcd = lib.mkIf cfg.discovery.enable {
-      enable = true;
-      package = pkgs.unstable.etcd;
-    };
-
     services.coredns = {
       enable = true;
       package = pkgs.unstable.coredns;
@@ -252,6 +253,7 @@ in
 
           ${lib.optionalString cfg.discovery.enable ''
             etcd ${toString cfg.discovery.zones} {
+              path ${cfg.discovery.dns.prefix}
               fallthrough
             }
           ''}

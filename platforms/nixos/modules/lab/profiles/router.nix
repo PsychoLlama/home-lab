@@ -9,6 +9,7 @@
 let
   inherit (config.lab.services.gateway.networks) home iot guest;
   inherit (config.lab.services.gateway) wan;
+  inherit (config.lab.services) discovery;
   cfg = config.lab.profiles.router;
 
   # Reserve IP addresses for all hosts.
@@ -118,13 +119,19 @@ in
         networks = networks;
       };
 
+      # Powers host and service discovery.
+      discovery.server = {
+        enable = true;
+        dns.zone = "${config.lab.datacenter}.${config.lab.domain}";
+      };
+
       dhcp = {
         enable = true;
         networks = networks;
 
         discovery = {
           enable = true;
-          zone = "host.${config.lab.datacenter}.${config.lab.domain}";
+          dns.prefix = discovery.server.dns.prefix.host.key;
         };
 
         # NOTE: DNS IP address may be in a different subnet. This still
@@ -156,7 +163,11 @@ in
 
         discovery = {
           enable = true;
-          zones = [ config.lab.services.dhcp.discovery.zone ];
+          dns.prefix = "/${discovery.server.dns.prefix.name}";
+
+          zones = [
+            "host.${discovery.server.dns.zone}"
+          ];
         };
 
         zone = {

@@ -11,13 +11,6 @@ let
   cfg = config.lab.services.dhcp;
   kea = pkgs.kea; # Not configurable outside nixpkgs.
   etcd = config.services.etcd.package;
-  etcd-prefix =
-    "/skydns/"
-    + lib.pipe cfg.discovery.zone [
-      (lib.splitString ".")
-      (lib.reverseList)
-      (lib.concatStringsSep "/")
-    ];
 
   # Enrich `cfg.networks` with data from `lab.networks`.
   networks = lib.mapAttrs (
@@ -51,11 +44,14 @@ in
     };
 
     discovery = {
-      enable = lib.mkEnableOption "Sync DHCP leases to etcd";
-      zone = mkOption {
+      enable = lib.mkEnableOption "Sync DHCP leases with etcd";
+
+      dns.prefix = lib.mkOption {
         type = types.str;
-        description = "DNS zone which holds DHCP records";
-        example = "host.example.com";
+        description = ''
+          Etcd key prefix where DNS records are stored.
+          Uses reverse scheme, e.g. `/dns/com/example/subdomain`.
+        '';
       };
     };
 
@@ -164,7 +160,7 @@ in
 
                   # Create etcd key for DNS record
                   def make_etcd_key [hostname: string] {
-                    $"${etcd-prefix}/($hostname)"
+                    $"${cfg.discovery.dns.prefix}/($hostname)"
                   }
 
                   # Create JSON payload for etcd
