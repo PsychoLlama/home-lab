@@ -7,7 +7,13 @@
 }:
 
 let
-  inherit (config.lab.services.gateway.networks) home iot guest;
+  inherit (config.lab.services.gateway.networks)
+    home
+    iot
+    guest
+    datacenter
+    ;
+
   inherit (config.lab.services.gateway) wan;
   inherit (config.lab.services) discovery;
   cfg = config.lab.profiles.router;
@@ -124,6 +130,7 @@ in
       discovery.server = {
         enable = true;
         dns.zone = "${config.lab.datacenter}.${config.lab.domain}";
+
         static-values = [
           {
             key = "${discovery.server.dns.prefix.host.key}/${config.networking.hostName}";
@@ -133,6 +140,11 @@ in
               # use default TTL
             };
           }
+        ];
+
+        allowInterfaces = [
+          home.interface
+          datacenter.interface
         ];
       };
 

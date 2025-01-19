@@ -9,11 +9,22 @@ let
   inherit (lib) types;
   etcd = config.services.etcd.package;
   cfg = config.lab.services.discovery.server;
+  ports = {
+    client = 2379;
+  };
 in
 
 {
   options.lab.services.discovery.server = {
     enable = lib.mkEnableOption "Run a discovery server";
+
+    allowInterfaces = lib.mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = ''
+        Non-firewalled network interfaces allowed to reach etcd.
+      '';
+    };
 
     dns = {
       zone = lib.mkOption {
@@ -125,15 +136,25 @@ in
 
   # TODO:
   # - Expose this to the network (yolo)
+  # - Add a client service daemon that performs healthchecks and updates etcd.
   config = lib.mkIf cfg.enable {
     services.etcd = {
       enable = true;
       package = pkgs.unstable.etcd;
+      extraConf = {
+        # Bind to all interfaces. Highly discouraged, but it's my LAN.
+        LISTEN_CLIENT_URLS = "http://0.0.0.0:${toString ports.client}";
+      };
     };
 
     # Add static values as soon as the service is ready.
     systemd.services.etcd.postStart =
       lib.concatMapStringsSep "\n" (lib.getAttr "command")
         cfg.static-values;
+
+    # Open the firewall for etcd.
+    networking.firewall.interfaces = lib.genAttrs cfg.allowInterfaces (_: {
+      allowedTCPPorts = [ ports.client ];
+    });
   };
 }
