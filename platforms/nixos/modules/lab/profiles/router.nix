@@ -122,6 +122,11 @@ in
         enable = true;
         networks = networks;
 
+        discovery = {
+          enable = true;
+          zone = "host.${config.lab.datacenter}.${config.lab.domain}";
+        };
+
         # NOTE: DNS IP address may be in a different subnet. This still
         # depends on the gateway to forward traffic.
         nameservers = lib.pipe nodes [
@@ -151,7 +156,7 @@ in
 
         discovery = {
           enable = true;
-          zones = [ "host.${config.lab.datacenter}.${config.lab.domain}" ];
+          zones = [ config.lab.services.dhcp.discovery.zone ];
         };
 
         zone = {

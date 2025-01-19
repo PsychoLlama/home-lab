@@ -1,15 +1,30 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib) types mkOption;
 
   cfg = config.lab.services.dhcp;
+  kea = pkgs.kea; # Not configurable outside nixpkgs.
+  etcd = config.services.etcd.package;
+  etcd-prefix =
+    "/skydns/"
+    + lib.pipe cfg.discovery.zone [
+      (lib.splitString ".")
+      (lib.reverseList)
+      (lib.concatStringsSep "/")
+    ];
 
   # Enrich `cfg.networks` with data from `lab.networks`.
   networks = lib.mapAttrs (
     _: network: network // { inherit (config.lab.networks.${network.id}) ipv4; }
   ) cfg.networks;
 in
+
 {
   options.lab.services.dhcp = {
     enable = lib.mkEnableOption "Run a DHCP server";
@@ -33,6 +48,15 @@ in
           }
         )
       );
+    };
+
+    discovery = {
+      enable = lib.mkEnableOption "Sync DHCP leases to etcd";
+      zone = mkOption {
+        type = types.str;
+        description = "DNS zone which holds DHCP records";
+        example = "host.example.com";
+      };
     };
 
     nameservers = mkOption {
@@ -74,7 +98,6 @@ in
       default = [ ];
     };
 
-    # On the fence whether `dhcp.lib` is genius or an anti-pattern.
     lib.toClientId = mkOption {
       type = types.functionTo types.str;
       readOnly = true;
@@ -93,13 +116,13 @@ in
           (lib.splitString ".")
 
           # [127, 0, 0, 1]
-          (lib.map (str: lib.strings.toInt str))
+          (lib.map lib.strings.toInt)
 
           # ["7F", "0", "0", "1"]
-          (lib.map (number: lib.trivial.toHexString number))
+          (lib.map lib.trivial.toHexString)
 
           # ["7F", "00", "00", "01"]
-          (lib.map (hex: lib.strings.fixedWidthString 2 "0" hex))
+          (lib.map (lib.strings.fixedWidthString 2 "0"))
 
           # "7F:00:00:01"
           (lib.concatStringsSep ":")
@@ -124,6 +147,60 @@ in
           valid-lifetime = 3600;
           renew-timer = 900;
           rebind-timer = 1800;
+
+          # TODO: This should live somewhere else. It's still rather
+          # experimental.
+          hooks-libraries = lib.mkIf cfg.discovery.enable [
+            {
+              library = "${kea}/lib/kea/hooks/libdhcp_run_script.so";
+              parameters = {
+                sync = false; # Non-blocking script
+                name = pkgs.writers.writeNu "sync-record-to-etcd.nu" ''
+                  use std/log
+
+                  # etcd freaks out if the path isn't set. It seems to be
+                  # unset by default.
+                  $env.PATH = []
+
+                  # Create etcd key for DNS record
+                  def make_etcd_key [hostname: string] {
+                    $"${etcd-prefix}/($hostname)"
+                  }
+
+                  # Create JSON payload for etcd
+                  def make_record [ip: string] {
+                    {
+                      host: $ip
+                      ttl: 3600
+                      type: "A"
+                    } | to json
+                  }
+
+                  def main [event: string] {
+                    match $event {
+                      "lease4_renew" => {
+                        let etcd_key = make_etcd_key $env.LEASE4_HOSTNAME
+                        let record = make_record $env.LEASE4_ADDRESS
+
+                        log info $"Adding record to etcd ip=($env.LEASE4_ADDRESS) key=($etcd_key)"
+                        ${etcd}/bin/etcdctl put $etcd_key $record
+                      }
+                      "lease4_release" | "lease4_expire" => {
+                        let etcd_key = make_etcd_key $env.LEASE4_HOSTNAME
+
+                        log info $"Removing record from etcd key=($etcd_key)"
+                        ${etcd}/bin/etcdctl del $etcd_key
+                      }
+                      _ => {
+                        log info $"Ignoring change event event=($event)"
+                      }
+                    }
+                  }
+                '';
+
+              };
+            }
+          ];
 
           lease-database = {
             type = "memfile";
