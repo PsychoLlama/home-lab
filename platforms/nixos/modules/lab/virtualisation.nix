@@ -81,6 +81,12 @@ in
             useDHCP = false;
             hostName = lib.mkDefault containerName;
             interfaces.bridge.useDHCP = lib.mkDefault true;
+
+            # Since this registers as a new host on the network it must be
+            # namespaced to avoid conflicts with other instances.
+            dhcpcd.extraConfig = ''
+              hostname ${containerName}-${config.networking.hostName}
+            '';
           };
         };
       };
