@@ -7,8 +7,10 @@
 
 let
   inherit (lib) types;
-  mkIfname = name: "mv-${name}";
   cfg = config.lab.virtualisation;
+
+  # Generate a unique name that does not exceed the 15 character limit.
+  mkIfname = name: "mv-${lib.substring 0 12 (builtins.hashString "md5" name)}";
 in
 
 {
