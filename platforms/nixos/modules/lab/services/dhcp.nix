@@ -204,14 +204,14 @@ in
                       }
                     }
 
-                    $added | par-each { add_lease $in }
-                    $removed | par-each { remove_lease $in }
+                    $removed | each { remove_lease $in }
+                    $added | each { add_lease $in }
 
                     log info $"Leases synchronized"
                   }
 
                   def add_lease [lease] {
-                    let etcd_key = make_etcd_key $lease
+                    let etcd_key = make_etcd_key $lease.hostname
                     let record = { host: $lease.ip } | to json
 
                     log info $"Adding record to etcd ip=($lease.ip) key=($etcd_key)"
@@ -219,15 +219,15 @@ in
                   }
 
                   def remove_lease [lease] {
-                    let etcd_key = make_etcd_key $lease
+                    let etcd_key = make_etcd_key $lease.hostname
 
                     log info $"Removing record from etcd key=($etcd_key)"
                     ${etcd}/bin/etcdctl del $etcd_key
                   }
 
                   # Find the right etcd key for the DNS record
-                  def make_etcd_key [lease] {
-                    $"${cfg.discovery.dns.prefix}/($lease.hostname)"
+                  def make_etcd_key [hostname: string] {
+                    $"${cfg.discovery.dns.prefix}/($hostname)"
                   }
                 '';
               };
