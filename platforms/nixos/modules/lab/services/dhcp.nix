@@ -151,37 +151,60 @@ in
               library = "${kea}/lib/kea/hooks/libdhcp_run_script.so";
               parameters = {
                 sync = false; # Non-blocking script
-                name = pkgs.writers.writeNu "sync-record-to-etcd.nu" ''
+                name = pkgs.unstable.writers.writeNu "sync-records-to-etcd.nu" ''
                   use std/log
 
                   # etcd freaks out if the path isn't set. It seems to be
                   # unset by default.
                   $env.PATH = []
 
-                  # Create etcd key for DNS record
-                  def make_etcd_key [hostname: string] {
-                    $"${cfg.discovery.dns.prefix}/($hostname)"
-                  }
-
+                  # Synchronize DHCP leases to etcd when they change.
                   def main [event: string] {
-                    match $event {
-                      "lease4_renew" => {
-                        let etcd_key = make_etcd_key $env.LEASE4_HOSTNAME
-                        let record = { host: $env.LEASE4_ADDRESS } | to json
+                    if $event != "leases4_committed" {
+                      return
+                    }
 
-                        log info $"Adding record to etcd ip=($env.LEASE4_ADDRESS) key=($etcd_key)"
-                        ${etcd}/bin/etcdctl put $etcd_key $record
-                      }
-                      "lease4_release" | "lease4_expire" => {
-                        let etcd_key = make_etcd_key $env.LEASE4_HOSTNAME
+                    let count_added = $env.LEASES4_SIZE | into int
+                    let count_removed = $env.DELETED_LEASES4_SIZE | into int
+                    log info $"Leases changed added=($count_added) removed=($count_removed)"
 
-                        log info $"Removing record from etcd key=($etcd_key)"
-                        ${etcd}/bin/etcdctl del $etcd_key
-                      }
-                      _ => {
-                        log info $"Ignoring change event event=($event)"
+                    let added = seq 1 $count_added | enumerate | each {|item|
+                      {
+                        hostname: ($env | get $"LEASES4_AT($item.index)_HOSTNAME")
+                        ip: ($env | get $"LEASES4_AT($item.index)_ADDRESS")
                       }
                     }
+
+                    let removed = seq 1 $count_removed | enumerate | each {|item|
+                      {
+                        hostname: ($env | get $"DELETED_LEASES4_AT($item.index)_HOSTNAME")
+                      }
+                    }
+
+                    $added | par-each { add_lease $in }
+                    $removed | par-each { remove_lease $in }
+
+                    log info $"Leases synchronized"
+                  }
+
+                  def add_lease [lease] {
+                    let etcd_key = make_etcd_key $lease
+                    let record = { host: $lease.ip } | to json
+
+                    log info $"Adding record to etcd ip=($lease.ip) key=($etcd_key)"
+                    ${etcd}/bin/etcdctl put $etcd_key $record
+                  }
+
+                  def remove_lease [lease] {
+                    let etcd_key = make_etcd_key $lease
+
+                    log info $"Removing record from etcd key=($etcd_key)"
+                    ${etcd}/bin/etcdctl del $etcd_key
+                  }
+
+                  # Find the right etcd key for the DNS record
+                  def make_etcd_key [lease] {
+                    $"${cfg.discovery.dns.prefix}/($lease.hostname)"
                   }
                 '';
               };
