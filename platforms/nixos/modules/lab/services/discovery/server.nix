@@ -135,7 +135,6 @@ in
   };
 
   # TODO:
-  # - Expose this to the network (yolo)
   # - Add a client service daemon that performs healthchecks and updates etcd.
   config = lib.mkIf cfg.enable {
     services.etcd = {

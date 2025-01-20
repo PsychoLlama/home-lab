@@ -183,24 +183,26 @@ in
 
                   # Synchronize DHCP leases to etcd when they change.
                   def main [event: string] {
+                    log info $"DHCP event ($event) hostname=($env.LEASE4_HOSTNAME? | default '?')"
+
                     if $event != "leases4_committed" {
                       return
                     }
 
-                    let count_added = $env.LEASES4_SIZE | into int
                     let count_removed = $env.DELETED_LEASES4_SIZE | into int
+                    let count_added = $env.LEASES4_SIZE | into int
                     log info $"Leases changed added=($count_added) removed=($count_removed)"
+
+                    let removed = seq 1 $count_removed | enumerate | each {|item|
+                      {
+                        hostname: ($env | get $"DELETED_LEASES4_AT($item.index)_HOSTNAME")
+                      }
+                    }
 
                     let added = seq 1 $count_added | enumerate | each {|item|
                       {
                         hostname: ($env | get $"LEASES4_AT($item.index)_HOSTNAME")
                         ip: ($env | get $"LEASES4_AT($item.index)_ADDRESS")
-                      }
-                    }
-
-                    let removed = seq 1 $count_removed | enumerate | each {|item|
-                      {
-                        hostname: ($env | get $"DELETED_LEASES4_AT($item.index)_HOSTNAME")
                       }
                     }
 

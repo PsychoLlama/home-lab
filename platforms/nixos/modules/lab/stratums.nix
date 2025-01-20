@@ -34,7 +34,8 @@ in
         default = false;
         description = ''
           Whether all critical services have been initialized. This stratum
-          includes the lowest-level services, such as networking and storage.
+          includes the lowest-level services, such as networking and
+          discovery.
         '';
       };
     };
