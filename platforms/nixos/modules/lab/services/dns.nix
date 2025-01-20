@@ -48,6 +48,12 @@ in
       '';
     };
 
+    ttl = mkOption {
+      type = types.str;
+      default = "60";
+      description = "Default TTL for DNS records";
+    };
+
     server.id = mkOption {
       type = types.nullOr types.str;
       default = null;
@@ -192,7 +198,7 @@ in
             options.ttl = mkOption {
               type = types.str;
               description = "Length of time in seconds to cache the record";
-              default = "60";
+              default = cfg.ttl;
             };
           }
         );
@@ -241,7 +247,7 @@ in
 
         . {
           import common
-          cache
+          cache ${cfg.ttl}
 
           ${lib.optionalString (cfg.zone.name != null) ''
             # WARN: This takes full control of whatever zone it's given.
@@ -261,7 +267,7 @@ in
           hosts ${cfg.hosts.file} {
             fallthrough
             reload 0
-            ttl 60
+            ttl ${cfg.ttl}
           }
 
           # Upstream DNS servers

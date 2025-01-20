@@ -163,20 +163,11 @@ in
                     $"${cfg.discovery.dns.prefix}/($hostname)"
                   }
 
-                  # Create JSON payload for etcd
-                  def make_record [ip: string] {
-                    {
-                      host: $ip
-                      ttl: 3600
-                      type: "A"
-                    } | to json
-                  }
-
                   def main [event: string] {
                     match $event {
                       "lease4_renew" => {
                         let etcd_key = make_etcd_key $env.LEASE4_HOSTNAME
-                        let record = make_record $env.LEASE4_ADDRESS
+                        let record = { host: $env.LEASE4_ADDRESS } | to json
 
                         log info $"Adding record to etcd ip=($env.LEASE4_ADDRESS) key=($etcd_key)"
                         ${etcd}/bin/etcdctl put $etcd_key $record
