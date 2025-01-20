@@ -1,6 +1,6 @@
 {
   imports = [
-    ./dhcp.nix
+    ./dhcp
     ./discovery
     ./dns.nix
     ./gateway.nix
