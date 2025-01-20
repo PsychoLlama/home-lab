@@ -35,13 +35,22 @@ let
     );
 
   networkOption =
-    { config, ... }:
+    { config, name, ... }:
     let
       # WARN: `cidr` isn't set when evaluating documentation. Mark any derived
       # properties as `visible = false`.
       ipv4 = parseCidrNotation config.ipv4.cidr;
     in
     {
+      options.name = mkOption {
+        type = types.str;
+        default = name;
+        description = ''
+          Unique name of the network. Be careful changing it - some modules
+          use it as persistent state.
+        '';
+      };
+
       options.ipv4 = {
         cidr = mkOption {
           description = ''

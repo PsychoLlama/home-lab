@@ -94,6 +94,29 @@ in
       default = [ ];
     };
 
+    lib.toSubnetId = mkOption {
+      type = types.functionTo types.int;
+      readOnly = true;
+      description = ''
+        Convert a network ID to a subnet ID by hashing the network name.
+      '';
+
+      default =
+        networkName:
+        lib.pipe networkName [
+          (builtins.hashString "md5")
+
+          # Trim to avoid exceeding the max integer size of 2^32.
+          (lib.substring 0 7)
+
+          # Hashes are hex encoded.
+          lib.fromHexString
+
+          # Subnet IDs must never be zero.
+          (builtins.add 1)
+        ];
+    };
+
     lib.toClientId = mkOption {
       type = types.functionTo types.str;
       readOnly = true;
@@ -222,8 +245,8 @@ in
             interfaces = lib.mapAttrsToList (_: network: network.interface) networks;
           };
 
-          subnet4 = lib.imap (index: network: {
-            id = index;
+          subnet4 = lib.map (network: {
+            id = cfg.lib.toSubnetId network.id;
             subnet = network.ipv4.subnet;
             pools = lib.forEach network.ipv4.dhcp.pools (lease: {
               pool = "${lease.start} - ${lease.end}";
