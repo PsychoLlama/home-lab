@@ -160,6 +160,7 @@ in
         server.id = config.networking.fqdn;
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
         zone.name = "host.${config.lab.domain}";
+        prometheus.enable = true;
 
         discovery = {
           enable = true;

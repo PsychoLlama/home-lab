@@ -65,6 +65,15 @@ in
       '';
     };
 
+    prometheus = {
+      enable = lib.mkEnableOption "Enable Prometheus metrics exporter";
+      port = mkOption {
+        type = types.int;
+        default = 9153;
+        description = "Port to expose Prometheus metrics";
+      };
+    };
+
     discovery = {
       enable = lib.mkEnableOption "Use etcd for service discovery";
       zones = mkOption {
@@ -227,6 +236,9 @@ in
       # Expose DNS+UDP (no TCP support).
       firewall.interfaces = lib.genAttrs cfg.interfaces (_: {
         allowedUDPPorts = [ 53 ];
+        allowedTCPPorts = lib.mkIf cfg.prometheus.enable [
+          cfg.prometheus.port
+        ];
       });
     };
 
@@ -248,6 +260,10 @@ in
         . {
           import common
           cache ${cfg.ttl}
+
+          ${lib.optionalString cfg.prometheus.enable ''
+            prometheus 0.0.0.0:${toString cfg.prometheus.port}
+          ''}
 
           ${lib.optionalString (cfg.zone.name != null) ''
             # WARN: This takes full control of whatever zone it's given.
