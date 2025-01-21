@@ -42,7 +42,7 @@ def add_lease [lease] {
   }
 
   let etcd_key = make_etcd_key $lease.hostname
-  let record = { host: $lease.ip } | to json
+  let record = { host: $lease.ip } | to json --raw
 
   log info $"Adding record to etcd ip=($lease.ip) key=($etcd_key)"
   etcdctl put $etcd_key $record
