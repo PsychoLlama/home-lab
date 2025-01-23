@@ -3,5 +3,6 @@
     ./file-server.nix
     ./observability
     ./router.nix
+    ./vpn
   ];
 }
