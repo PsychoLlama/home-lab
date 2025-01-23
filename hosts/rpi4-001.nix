@@ -5,7 +5,10 @@ let
   inherit (config.lab.services.gateway) wan;
 in
 {
-  lab.profiles.router.enable = true;
+  lab.profiles = {
+    router.enable = true;
+    vpn.client.enable = true;
+  };
 
   # Assign sensible names to the network interfaces. Anything with vlans needs
   # a hardware-related filter to avoid conflicts with virtual devices.

@@ -19,17 +19,18 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    networking.firewall.allowedTCPPorts = [ port ];
+
     services.headscale = {
       enable = true;
       settings = {
         server_url = "http://${config.networking.hostName}.host.${datacenter}.${domain}:${toString port}";
         listen_addr = "0.0.0.0:${toString port}";
-        dns.base_domain = "vpn.${datacenter}.${domain}";
+        dns.base_domain = "${datacenter}.vpn.${domain}";
+        logtail.enabled = true;
 
         # TODO: Define ACLs.
       };
     };
-
-    networking.firewall.allowedTCPPorts = [ port ];
   };
 }

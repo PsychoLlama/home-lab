@@ -36,6 +36,9 @@
       inherit (nixpkgs-unstable) lib;
       inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;
 
+      domain = "selfhosted.city";
+      datacenter = "nova";
+
       # A subset of Hydra's standard architectures.
       standardSystems = [
         "x86_64-linux"
@@ -130,8 +133,7 @@
 
       colmena = (lib.mapAttrs defineHost hosts) // rec {
         defaults.lab = {
-          domain = "selfhosted.city";
-          datacenter = "nova";
+          inherit datacenter domain;
 
           networks = {
             datacenter.ipv4 = {
@@ -259,6 +261,40 @@
                           required = true;
                         }
                       ];
+                    };
+
+                    vpn = {
+                      about = "Manage the VPN.";
+                      subcommands.register = {
+                        about = "Register a node on the VPN.";
+                        args = [
+                          {
+                            id = "host";
+                            about = "Host to initialize.";
+                            required = true;
+                          }
+                          {
+                            id = "server_url";
+                            about = "URL of the VPN server.";
+                            short = "s";
+                            long = "server-url";
+                            default_value = "http://rpi4-003.host.${datacenter}.${domain}:8080";
+                          }
+                        ];
+
+                        # TODO: Use Colmena's deploy key commands instead and
+                        # defer the oneshot setup by the key service.
+                        run = pkgs.unstable.writers.writeNu "bootstrap-vpn-client.nu" ''
+                          use std/log
+
+                          let server_host = $env.server_url | url parse | get host
+                          let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
+                          log info $"Auth key created id=($response.id)"
+
+                          ssh $env.host tailscale up --login-server $env.server_url --auth-key $response.key
+                          log info "VPN client ready"
+                        '';
+                      };
                     };
                   };
                 };
