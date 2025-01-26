@@ -1,0 +1,2 @@
+# Hide diffs for encrypted files
+*.age -diff
