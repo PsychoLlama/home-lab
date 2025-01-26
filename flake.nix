@@ -19,6 +19,14 @@
         stable.follows = "nixpkgs";
       };
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs = {
+        home-manager.follows = "home-manager";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs =
@@ -29,6 +37,7 @@
       nixos-hardware,
       colmena,
       clapfile,
+      agenix,
       ...
     }@flake-inputs:
 
@@ -78,6 +87,7 @@
           system = "aarch64-linux";
           ip4 = "10.0.0.203";
           interface = "enu1u1";
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2VZGgphnMAD5tLG+IHBlBWdlUPNfvYEMDK8OQCrG/A" ];
         };
         rpi3-002 = {
           module = ./hosts/rpi3-002.nix;
@@ -85,6 +95,7 @@
           system = "aarch64-linux";
           ip4 = "10.0.0.202";
           interface = "enu1u1";
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrGfslz9RlB2EzrTL3SfO/NZB5fPiVXWkK+aQRZrlel" ];
         };
         rpi4-001 = {
           module = ./hosts/rpi4-001.nix;
@@ -92,6 +103,7 @@
           system = "aarch64-linux";
           ip4 = "10.0.0.1"; # Router
           interface = null; # No "primary" interface.
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAyb4vh9xDEEV+30G0UPMTSdtVq3Tyfgl9I9VRwf226v" ];
         };
         rpi4-002 = {
           module = ./hosts/rpi4-002.nix;
@@ -100,6 +112,7 @@
           ip4 = "10.0.0.208";
           interface = "end0";
           builder.enable = true;
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJLMZ6+HaPahE4gGIAWW/uGIl/y40p/rSfIhb5t4G+g9" ];
         };
         rpi4-003 = {
           module = ./hosts/rpi4-003.nix;
@@ -108,6 +121,7 @@
           ip4 = "10.0.0.204";
           interface = "end0";
           builder.enable = true;
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFsNbo3bbm0G11GAbRwnr944AitRyqoQMN4LG7rMsvpK" ];
         };
       };
 
@@ -210,6 +224,7 @@
             packages = [
               pkgs.nixVersions.latest
               colmena.packages.${system}.colmena
+              agenix.packages.${system}.default
 
               (pkgs.clapfile.command {
                 command = {

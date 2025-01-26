@@ -85,8 +85,11 @@ in
     inputs.home-manager.nixosModules.home-manager
     inputs.clapfile.nixosModules.nixos
     inputs.self.nixosModules.nixos-platform
+    inputs.agenix.nixosModules.default
+
     host.profile
     host.module
+
     macvlan-proxy
   ];
 

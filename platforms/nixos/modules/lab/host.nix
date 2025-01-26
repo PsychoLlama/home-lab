@@ -40,6 +40,12 @@ in
       description = "Module for host-specific configuration";
     };
 
+    publicKeys = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "Public keys associated with this host";
+    };
+
     # Option names mirror `config.nix.buildMachines`.
     builder = {
       enable = lib.mkEnableOption "Use this machine as a remote builder";
