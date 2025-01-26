@@ -4,5 +4,6 @@
     ./discovery
     ./dns.nix
     ./gateway.nix
+    ./vpn
   ];
 }

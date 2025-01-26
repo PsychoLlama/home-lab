@@ -2,35 +2,27 @@
 
 let
   inherit (config.lab) datacenter domain;
+  inherit (config.lab.services.vpn.server.listen) port;
   cfg = config.lab.profiles.vpn.server;
-  port = 8080;
 in
 
 {
   options.lab.profiles.vpn.server = {
     enable = lib.mkEnableOption ''
-      Use the Headscale VPN coordination server.
-
-      Work in progress.
-
-      This provides automatic DNS and ACLs restricting privileged lab services
-      to authorized clients.
+      Run a VPN server on this host.
     '';
   };
 
-  config = lib.mkIf cfg.enable {
-    networking.firewall.allowedTCPPorts = [ port ];
+  config.lab.services.vpn.server = lib.mkIf cfg.enable {
+    enable = true;
 
-    services.headscale = {
-      enable = true;
-      settings = {
-        server_url = "http://${config.networking.hostName}.host.${datacenter}.${domain}:${toString port}";
-        listen_addr = "0.0.0.0:${toString port}";
-        dns.base_domain = "${datacenter}.vpn.${domain}";
-        logtail.enabled = true;
+    url = "http://${config.networking.hostName}.host.${datacenter}.${domain}:${toString port}";
+    dns.zone = "${datacenter}.vpn.${domain}";
+    openFirewall = true;
 
-        # TODO: Define ACLs.
-      };
+    listen = {
+      address = "0.0.0.0";
+      port = 8080;
     };
   };
 }

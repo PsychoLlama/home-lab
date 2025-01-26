@@ -2,7 +2,6 @@
   nodes,
   config,
   lib,
-  pkgs,
   ...
 }:
 
@@ -21,7 +20,6 @@ in
     services = {
       prometheus = {
         enable = true;
-        package = pkgs.unstable.prometheus;
         retentionTime = "1y";
         port = 9090;
 
@@ -31,10 +29,12 @@ in
           evaluation_interval = "30s";
         };
 
+        # TODO: Make this a preset. Generate scrapers.
         exporters.node = {
           enable = true;
           enabledCollectors = [ "systemd" ];
           port = 9100;
+          listenAddress = "rpi4-002.nova.vpn.selfhosted.city";
         };
 
         scrapeConfigs = [
@@ -78,7 +78,6 @@ in
 
       grafana = {
         enable = true;
-        package = pkgs.unstable.grafana;
 
         provision = {
           enable = true;
