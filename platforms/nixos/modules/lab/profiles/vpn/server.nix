@@ -29,6 +29,11 @@ in
 
     # Experimental: Expose the VPN server through a Cloudflare Tunnel.
     # TODO: Move this to a separate module and route services by VPN/ACL.
+    #
+    # TODO: Find a workaround for `POST` WebSocket upgrades. The tailscale
+    # client initiates handshakes with `POST`, but this is not RFC-compliant.
+    # CF Tunnels strip the upgrade headers and the handshake fails.
+    # https://github.com/cloudflare/cloudflared/issues/883
     services.cloudflared = {
       enable = true;
 
