@@ -139,7 +139,7 @@ in
   config = lib.mkIf cfg.enable {
     services.etcd = {
       enable = true;
-      package = pkgs.unstable.etcd;
+      package = pkgs.etcd;
       extraConf = {
         # Bind to all interfaces. Highly discouraged, but it's my LAN.
         LISTEN_CLIENT_URLS = "http://0.0.0.0:${toString ports.client}";

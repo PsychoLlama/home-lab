@@ -404,7 +404,12 @@
                 # nix build .#tests.<module>.<test-name>
                 # ```
                 passthru = pkgs.callPackage ./platforms/nixos/tests {
-                  inherit (flake-inputs) colmena clapfile home-manager;
+                  inherit (flake-inputs)
+                    colmena
+                    clapfile
+                    home-manager
+                    agenix
+                    ;
                 };
               };
             }

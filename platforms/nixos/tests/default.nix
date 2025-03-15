@@ -4,6 +4,7 @@
   colmena,
   clapfile,
   home-manager,
+  agenix,
 }:
 
 let
@@ -14,6 +15,7 @@ let
         colmena.nixosModules.assertionModule
         home-manager.nixosModules.home-manager
         clapfile.nixosModules.nixos
+        agenix.nixosModules.default
         ../modules
       ];
 
