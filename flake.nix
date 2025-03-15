@@ -55,8 +55,7 @@
       ];
 
       # Necessary evils with non-free licenses.
-      # To be replaced the instant there is a viable alternative.
-      evilPackages = [ "vault-bin" ];
+      evilPackages = [ ];
 
       # Load nixpkgs with home-lab overrides.
       loadPkgs =
