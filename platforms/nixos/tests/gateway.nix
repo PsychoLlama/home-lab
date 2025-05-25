@@ -100,10 +100,10 @@ makeTest {
     world.start()
     client.start()
 
-    world.wait_for_unit("network-online.target")
+    world.wait_for_unit("network.target")
     world.wait_for_unit("httpd.service")
 
-    client.wait_for_unit("network-online.target")
+    client.wait_for_unit("network.target")
     client.wait_for_unit("httpd.service")
 
     # This makes sure there's no magic in the test that allows the client and
@@ -112,7 +112,7 @@ makeTest {
       client.fail("curl --fail --connect-timeout 2 http://${ip.world}")
 
     gateway.start()
-    gateway.wait_for_unit("network-online.target")
+    gateway.wait_for_unit("dhcpcd.service")
     gateway.wait_for_unit("sshd.service")
 
     with subtest("preflight checks"):
@@ -126,7 +126,14 @@ makeTest {
 
     with subtest("gateway was assigned correct IP address"):
       result = json.loads(gateway.succeed("ip --json addr show eth1"))
-      gateway_wan_ip = result[0]["addr_info"][1]["local"]
+      dynamic_ip4s = [
+        addr["local"]
+        for addr in result[0]["addr_info"]
+        if addr["family"] == "inet" and "dynamic" in addr
+      ]
+
+      assert len(dynamic_ip4s) >= 1, "Gateway has no dynamic IP address"
+      gateway_wan_ip = dynamic_ip4s[0]
 
       print(f"Gateway WAN IP: {gateway_wan_ip}")
       assert gateway_wan_ip == "${ip.g8w_wan}", "Gateway has wrong WAN IP"

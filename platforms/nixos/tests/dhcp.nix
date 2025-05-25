@@ -90,7 +90,6 @@ makeTest {
     client.start()
 
     server.wait_for_unit("kea-dhcp4-server.service")
-    client.wait_for_unit("systemd-networkd-wait-online.service")
 
     with subtest("correct client IP is assigned"):
       client.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.22/24'")
