@@ -26,37 +26,5 @@ in
         port = 8080;
       };
     };
-
-    # Experimental: Expose the VPN server through a Cloudflare Tunnel.
-    # TODO: Move this to a separate module and route services by VPN/ACL.
-    #
-    # TODO: Find a workaround for `POST` WebSocket upgrades. The tailscale
-    # client initiates handshakes with `POST`, but this is not RFC-compliant.
-    # CF Tunnels strip the upgrade headers and the handshake fails.
-    # https://github.com/cloudflare/cloudflared/issues/883
-    services.cloudflared = {
-      enable = true;
-
-      # Depends on Cloudflare for TLS termination. This is a security risk,
-      # but considering the reputational damage to Cloudflare if they MITM'd
-      # it, it's low on my list of concerns.
-      #
-      # NOTE: The default certificate only works for immediate subdomains.
-      tunnels.vpn = {
-        credentialsFile = config.age.secrets.vpn-tunnel-key.path;
-        default = "http_status:404";
-        ingress = {
-          "vpn.${domain}" = {
-            service = "http://localhost:${toString port}";
-          };
-        };
-      };
-    };
-
-    age.secrets.vpn-tunnel-key = {
-      file = ./vpn-tunnel-key.age;
-      group = config.services.cloudflared.group;
-      owner = config.services.cloudflared.user;
-    };
   };
 }
