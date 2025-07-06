@@ -48,7 +48,7 @@
     hardware.raspberry-pi."4".fkms-3d.enable = true;
 
     # Enable audio.
-    hardware.pulseaudio.enable = true;
+    services.pulseaudio.enable = true;
 
     # Necessary for building boot images and running NixOS tests.
     lab.host.builder.supportedFeatures = [
