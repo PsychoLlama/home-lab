@@ -80,6 +80,14 @@
 
       # Each record maps to `config.lab.host`.
       hosts = with deviceProfiles; {
+        nas-001 = {
+          module = ./hosts/nas-001.nix;
+          profile = cm3588;
+          system = "aarch64-linux";
+          ip4 = "10.0.0.15";
+          interface = "enP4p65s0";
+          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOx6MIH8pVfBi0dckuIgssJO5JzlnEKrJrhNSPs7giTR" ];
+        };
         rpi3-001 = {
           module = ./hosts/rpi3-001.nix;
           profile = raspberry-pi-3;

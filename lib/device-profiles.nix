@@ -58,4 +58,25 @@
       "nixos-test"
     ];
   };
+
+  cm3588 = {
+    hardware.enableRedistributableFirmware = true;
+
+    boot = {
+      # Yoinked from `nixos-hardware`. It's the only meaningful export.
+      kernelParams = [ "console=ttyS2,1500000n8" ];
+
+      # Bootstrapped from `github:Mic92/nixos-aarch64-images#cm3588NAS`.
+      loader = {
+        grub.enable = false;
+        generic-extlinux-compatible.enable = true;
+      };
+    };
+
+    fileSystems."/" = {
+      device = "/dev/disk/by-label/NIXOS_SD";
+      fsType = "ext4";
+      options = [ "noatime" ];
+    };
+  };
 }
