@@ -10,6 +10,7 @@ let
   inherit (config.lab.filesystems.zfs) decryption pools;
   cfg = config.lab.profiles.file-server;
 in
+
 {
   options.lab.profiles.file-server = {
     enable = lib.mkEnableOption "Run a file server";
@@ -30,9 +31,9 @@ in
           {
             type = "raidz1";
             sources = [
-              "sda"
-              "sdb"
-              "sdc"
+              "nvme0"
+              "nvme1"
+              "nvme2"
             ];
           }
         ];
@@ -72,11 +73,11 @@ in
 
           folders."/mnt/pool0/syncthing/attic" = {
             id = "attic";
+            label = "Attic";
             devices = [
               "laptop"
               "phone"
             ];
-            label = "Attic";
           };
 
           devices = {
@@ -87,7 +88,7 @@ in
 
             phone = {
               addresses = [ "dynamic" ];
-              id = "S2U7KKV-SXJGOI3-6MSJWIT-U2JP32Y-HH7WZU5-ZDS6KAT-6CNYRAM-ZQTWZAQ";
+              id = "7B5KM6T-7NXKMY5-KM7TIQJ-WFX2OBO-OHMZOPA-HAXTV5B-5RNKXFM-OEF5AAL";
             };
           };
         };
