@@ -1,3 +1,4 @@
+use std/testing *
 use std assert
 use propctl.nu
 
@@ -20,7 +21,7 @@ def fill_partial_state [partial_state: record]: nothing -> record {
   | upsert datasets { fill_missing_resource_fields }
 }
 
-#[test]
+@test
 def test_flatten_empty_expected_state [] {
   let state = fill_partial_state {}
   let expected = propctl flatten-state-file $state
@@ -28,7 +29,7 @@ def test_flatten_empty_expected_state [] {
   assert equal $expected []
 }
 
-#[test]
+@test
 def test_flatten_expected_state_with_dataset_properties [] {
   let state = fill_partial_state {
     datasets: {
@@ -50,7 +51,7 @@ def test_flatten_expected_state_with_dataset_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_flatten_expected_state_with_pool_properties [] {
   let state = fill_partial_state {
     pools: {
@@ -68,7 +69,7 @@ def test_flatten_expected_state_with_pool_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_unmanaged_pools_and_datasets [] {
   let state = fill_partial_state {
     datasets: {
@@ -95,7 +96,7 @@ def test_unmanaged_pools_and_datasets [] {
   ]
 }
 
-#[test]
+@test
 def test_unmanaged_properties [] {
   let state = fill_partial_state {
     pools: {
@@ -133,7 +134,7 @@ def test_unmanaged_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_diff_added_properties [] {
   let expected = [
     [type,    name,   prop,        value, source];
@@ -152,7 +153,7 @@ def test_diff_added_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_diff_changed_properties [] {
   let expected = [
     [type,    name,   prop,        value, source];
@@ -174,7 +175,7 @@ def test_diff_changed_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_removed_properties [] {
   let expected = [
     [type,    name,   prop,        value, source];
@@ -195,7 +196,7 @@ def test_removed_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_diff_added_and_removed_properties [] {
   let expected = [
     [type,    name,    prop,        value, source];
@@ -219,7 +220,7 @@ def test_diff_added_and_removed_properties [] {
   ]
 }
 
-#[test]
+@test
 def test_modified_dataset_execution_plan [] {
   let diff = [
     [type,    change, name,    prop,        actual, expected];
@@ -234,7 +235,7 @@ def test_modified_dataset_execution_plan [] {
   ]
 }
 
-#[test]
+@test
 def test_removed_dataset_props_execution_plan [] {
   let diff = [
     [type,    change, name,    prop,     actual, expected];
@@ -250,7 +251,7 @@ def test_removed_dataset_props_execution_plan [] {
   ]
 }
 
-#[test]
+@test
 def test_modified_pool_execution_plan [] {
   let diff = [
     [type, change, name, prop,       actual, expected];

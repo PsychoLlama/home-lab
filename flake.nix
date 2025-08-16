@@ -363,7 +363,7 @@
               {
                 ${dirname} = shell;
               }
-            ) [ "nixos/modules/lab/filesystems/zfs/develop.nix" ]
+            ) [ "platforms/nixos/modules/lab/filesystems/zfs/develop.nix" ]
           );
         in
 

@@ -131,13 +131,13 @@ export def filter-unmanaged-state [
   state_file: record
   actual_state: table
 ] {
-  $actual_state | filter {|entry|
+  $actual_state | where {|entry|
     let expected = $state_file
-    | get -is (match $entry.type {
+    | get -o (match $entry.type {
         pool => "pools"
         dataset => "datasets"
       })
-    | get -is $entry.name
+    | get -o $entry.name
 
     # If the state file doesn't specify the pool/dataset, then ignore it.
     if $expected == null {
@@ -186,7 +186,7 @@ export def generate-diff [
   # differ between the two.
   let additions_or_modifications = $expected | each {|entry|
     let actual = $keyed_actual
-    | get -si (get_composite_id $entry)
+    | get -o (get_composite_id $entry)
     | get value?
 
     # Values are identical. No change needed.
@@ -209,7 +209,7 @@ export def generate-diff [
 
   # Find values in "actual" that do not exist in "expected".
   let deletions = $actual | each {|entry|
-    let expected = $keyed_expected | get -si (get_composite_id $entry)
+    let expected = $keyed_expected | get -o (get_composite_id $entry)
 
     if $expected != null {
       return null
@@ -227,7 +227,7 @@ export def generate-diff [
 
   $additions_or_modifications
   | append $deletions
-  | filter {|change| $change != null }
+  | where {|change| $change != null }
   | each { merge { sort_key: (get_composite_id $in) } }
   | sort-by sort_key
   | reject sort_key
