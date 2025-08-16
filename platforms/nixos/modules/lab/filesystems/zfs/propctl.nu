@@ -78,15 +78,14 @@ export def read-system-state []: nothing -> table {
   let pools = zpool get all -H
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
-  | each { merge { type: pool } }
+  | upsert type pool
   | where source == local
   | where prop !~ 'feature@' # Not supported yet.
 
-  let datasets = zfs get -Ht filesystem all
+  let datasets = zfs get -s local -Ht filesystem all
   | lines
   | parse "{name}\t{prop}\t{value}\t{source}"
-  | each { merge { type: dataset } }
-  | where source == local
+  | upsert type dataset
 
   $pools | append $datasets
 }
