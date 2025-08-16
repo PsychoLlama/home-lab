@@ -57,7 +57,22 @@ let
       (lib.mergeAttrsList)
     ];
   };
+
+  hostId = lib.pipe config.networking.hostName [
+    # Convert to a 32-bit hex string.
+    (builtins.hashString "md5")
+
+    # Split into a list of characters.
+    (lib.splitString "")
+
+    # Grab 32-bits of entropy (8 hex chars).
+    (lib.take 9)
+
+    # And back to a string.
+    (lib.concatStrings)
+  ];
 in
+
 {
   options.lab.filesystems.zfs = {
     enable = lib.mkEnableOption ''
@@ -243,6 +258,10 @@ in
       # server in stage 1.
       zfs.requestEncryptionCredentials = false;
     };
+
+    # Required by `zpool`. It uses the host ID as a unique marker ensuring
+    # only one host mounts the disk at once.
+    networking.hostId = lib.mkDefault hostId;
 
     # This is used by other units to defer start until FS mounts are ready.
     systemd.targets.${cfg.decryption.name} = {
