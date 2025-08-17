@@ -31,19 +31,20 @@ in
           {
             type = "raidz1";
             sources = [
-              "nvme0"
-              "nvme1"
-              "nvme2"
+              "nvme0n1"
+              "nvme1n1"
+              "nvme2n1"
             ];
           }
         ];
 
+        # NOTE: Some properties must be set at creation time.
+        # This script doesn't support it.
         properties = {
-          xattr = "sa";
-          acltype = "posixacl";
+          xattr = "on";
+          acltype = "posix";
           atime = "off";
-          encryption = "aes-256-gcm";
-          keyformat = "passphrase";
+          keylocation = "prompt";
           compression = "on";
           mountpoint = "none";
         };
