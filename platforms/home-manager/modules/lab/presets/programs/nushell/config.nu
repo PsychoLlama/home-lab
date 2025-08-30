@@ -33,3 +33,5 @@ $env.config = {
     reset_application_mode: true
   }
 }
+
+use lab

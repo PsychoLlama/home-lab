@@ -19,5 +19,15 @@ in
     package = pkgs.unstable.nushell;
     extraConfig = lib.readFile ./config.nu;
     extraEnv = lib.readFile ./env.nu;
+
+    libraries = {
+      enable = true;
+      path = [
+        (lib.fileset.toSource {
+          root = ./libraries;
+          fileset = ./libraries;
+        })
+      ];
+    };
   };
 }
