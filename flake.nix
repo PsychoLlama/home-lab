@@ -306,16 +306,19 @@
 
                         # TODO: Use Colmena's deploy key commands instead and
                         # defer the oneshot setup by the key service.
-                        run = pkgs.unstable.writers.writeNu "bootstrap-vpn-client.nu" ''
-                          use std/log
+                        run =
+                          pkgs.unstable.writers.writeNu "bootstrap-vpn-client.nu"
+                            # nu
+                            ''
+                              use std/log
 
-                          let server_host = $env.server_url | url parse | get host
-                          let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
-                          log info $"Auth key created id=($response.id)"
+                              let server_host = $env.server_url | url parse | get host
+                              let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
+                              log info $"Auth key created id=($response.id)"
 
-                          ssh $env.host tailscale up --login-server $env.server_url --auth-key $response.key
-                          log info "VPN client ready"
-                        '';
+                              ssh $env.host tailscale up --login-server $env.server_url --auth-key $response.key
+                              log info "VPN client ready"
+                            '';
                       };
                     };
                   };

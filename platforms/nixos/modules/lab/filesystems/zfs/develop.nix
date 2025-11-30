@@ -9,12 +9,15 @@ shell: {
       run-tests
     '')
 
-    (pkgs.unstable.writers.writeNuBin "unit-test-watch" ''
-      unit-test
-      watch . --glob=*propctl.nu {
-        clear
+    (pkgs.unstable.writers.writeNuBin "unit-test-watch"
+      # nu
+      ''
         unit-test
-      }
-    '')
+        watch . --glob=*propctl.nu {
+          clear
+          unit-test
+        }
+      ''
+    )
   ];
 }

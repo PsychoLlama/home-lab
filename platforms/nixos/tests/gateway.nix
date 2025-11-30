@@ -94,61 +94,63 @@ makeTest {
       };
   };
 
-  testScript = ''
-    import json
+  testScript =
+    # python
+    ''
+      import json
 
-    world.start()
-    client.start()
+      world.start()
+      client.start()
 
-    world.wait_for_unit("network.target")
-    world.wait_for_unit("httpd.service")
+      world.wait_for_unit("network.target")
+      world.wait_for_unit("httpd.service")
 
-    client.wait_for_unit("network.target")
-    client.wait_for_unit("httpd.service")
+      client.wait_for_unit("network.target")
+      client.wait_for_unit("httpd.service")
 
-    # This makes sure there's no magic in the test that allows the client and
-    # outside world to communicate directly.
-    with subtest("client cannot reach world without gateway"):
-      client.fail("curl --fail --connect-timeout 2 http://${ip.world}")
+      # This makes sure there's no magic in the test that allows the client and
+      # outside world to communicate directly.
+      with subtest("client cannot reach world without gateway"):
+        client.fail("curl --fail --connect-timeout 2 http://${ip.world}")
 
-    gateway.start()
-    gateway.wait_for_unit("dhcpcd.service")
-    gateway.wait_for_unit("sshd.service")
+      gateway.start()
+      gateway.wait_for_unit("dhcpcd.service")
+      gateway.wait_for_unit("sshd.service")
 
-    with subtest("preflight checks"):
-      world.succeed("curl --fail http://localhost")
+      with subtest("preflight checks"):
+        world.succeed("curl --fail http://localhost")
 
-      # Same network. If this fails, it implies a firewall issue on the "world".
-      gateway.succeed("curl --fail http://${ip.world}")
-      gateway.succeed("curl --fail http://${ip.client}")
+        # Same network. If this fails, it implies a firewall issue on the "world".
+        gateway.succeed("curl --fail http://${ip.world}")
+        gateway.succeed("curl --fail http://${ip.client}")
 
-      client.succeed("ping -c 1 ${ip.g8w_lan}")
+        client.succeed("ping -c 1 ${ip.g8w_lan}")
 
-    with subtest("gateway was assigned correct IP address"):
-      result = json.loads(gateway.succeed("ip --json addr show eth1"))
-      dynamic_ip4s = [
-        addr["local"]
-        for addr in result[0]["addr_info"]
-        if addr["family"] == "inet" and "dynamic" in addr
-      ]
+      with subtest("gateway was assigned correct IP address"):
+        result = json.loads(gateway.succeed("ip --json addr show eth1"))
+        dynamic_ip4s = [
+          addr["local"]
+          for addr in result[0]["addr_info"]
+          if addr["family"] == "inet" and "dynamic" in addr
+        ]
 
-      assert len(dynamic_ip4s) >= 1, "Gateway has no dynamic IP address"
-      gateway_wan_ip = dynamic_ip4s[0]
+        assert len(dynamic_ip4s) >= 1, "Gateway has no dynamic IP address"
+        gateway_wan_ip = dynamic_ip4s[0]
 
-      print(f"Gateway WAN IP: {gateway_wan_ip}")
-      assert gateway_wan_ip == "${ip.g8w_wan}", "Gateway has wrong WAN IP"
+        print(f"Gateway WAN IP: {gateway_wan_ip}")
+        assert gateway_wan_ip == "${ip.g8w_wan}", "Gateway has wrong WAN IP"
 
-    with subtest("client can communicate through the gateway"):
-      gateway.succeed("curl --fail http://${ip.world}")
+      with subtest("client can communicate through the gateway"):
+        gateway.succeed("curl --fail http://${ip.world}")
 
-    with subtest("SSH is not open to the world"):
-      world.fail("nc -w 1 -z ${ip.g8w_wan} 22")
+      with subtest("SSH is not open to the world"):
+        world.fail("nc -w 1 -z ${ip.g8w_wan} 22")
 
-    with subtest("SSH is open on the LAN"):
-      client.succeed("nc -w 1 -z ${ip.g8w_lan} 22")
+      with subtest("SSH is open on the LAN"):
+        client.succeed("nc -w 1 -z ${ip.g8w_lan} 22")
 
-    with subtest("outside world cannot reach the client"):
-      # Requests from the outside should fail.
-      world.fail("curl --fail --connect-timeout 2 http://${ip.client}")
-  '';
+      with subtest("outside world cannot reach the client"):
+        # Requests from the outside should fail.
+        world.fail("curl --fail --connect-timeout 2 http://${ip.client}")
+    '';
 }

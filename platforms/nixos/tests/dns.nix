@@ -85,43 +85,45 @@ makeTest {
       ];
     };
 
-  testScript = ''
-    import json
+  testScript =
+    # python
+    ''
+      import json
 
-    start_all()
-    machine.wait_for_unit("coredns.service")
-    machine.wait_for_unit("etcd.service")
-    machine.wait_for_unit("network-online.target")
+      start_all()
+      machine.wait_for_unit("coredns.service")
+      machine.wait_for_unit("etcd.service")
+      machine.wait_for_unit("network-online.target")
 
-    with subtest("NSID is advertised in responses"):
-      nsid_line = machine.succeed("dig +nsid @localhost localhost | grep NSID")
-      print(nsid_line)
-      assert "magic-string-nsid" in nsid_line, "NSID not in response"
+      with subtest("NSID is advertised in responses"):
+        nsid_line = machine.succeed("dig +nsid @localhost localhost | grep NSID")
+        print(nsid_line)
+        assert "magic-string-nsid" in nsid_line, "NSID not in response"
 
-    with subtest("resolves custom records"):
-      result = machine.succeed("doggo @localhost TXT custom-record.host.example.com")
-      print(result)
-      assert "magic-string-record" in result, "Custom record not in response"
+      with subtest("resolves custom records"):
+        result = machine.succeed("doggo @localhost TXT custom-record.host.example.com")
+        print(result)
+        assert "magic-string-record" in result, "Custom record not in response"
 
-    with subtest("uses local server as system DNS resolver"):
-      # Not specifying the server address - pull from `/etc/resolv.conf`.
-      result = machine.succeed("doggo TXT custom-record.host.example.com")
-      print(result)
-      assert "magic-string-record" in result, "Local server was not used"
+      with subtest("uses local server as system DNS resolver"):
+        # Not specifying the server address - pull from `/etc/resolv.conf`.
+        result = machine.succeed("doggo TXT custom-record.host.example.com")
+        print(result)
+        assert "magic-string-record" in result, "Local server was not used"
 
-    with subtest("serves records from the host file"):
-      result = machine.succeed("doggo custom-host.arpa")
-      print(result)
-      assert "127.1.2.3" in result, "Record from host file was not found"
+      with subtest("serves records from the host file"):
+        result = machine.succeed("doggo custom-host.arpa")
+        print(result)
+        assert "127.1.2.3" in result, "Record from host file was not found"
 
-    with subtest("resolves dynamic hosts from etcd"):
-      payload = json.dumps({ "host": "10.20.30.40", "ttl": 3600, "type": "A" })
-      machine.succeed(f"etcdctl put /skydns/com/example/dyn/test '{payload}'")
+      with subtest("resolves dynamic hosts from etcd"):
+        payload = json.dumps({ "host": "10.20.30.40", "ttl": 3600, "type": "A" })
+        machine.succeed(f"etcdctl put /skydns/com/example/dyn/test '{payload}'")
 
-      resolved = machine.succeed("doggo @localhost A test.dyn.example.com")
-      print(resolved)
-      assert "10.20.30.40" in resolved, "Dynamic record not in response"
+        resolved = machine.succeed("doggo @localhost A test.dyn.example.com")
+        print(resolved)
+        assert "10.20.30.40" in resolved, "Dynamic record not in response"
 
-    # No tests for DNS forwarding. Just try not to break it :)
-  '';
+      # No tests for DNS forwarding. Just try not to break it :)
+    '';
 }

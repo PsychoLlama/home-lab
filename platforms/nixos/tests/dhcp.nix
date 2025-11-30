@@ -83,35 +83,37 @@ makeTest {
       };
   };
 
-  testScript = ''
-    import json
+  testScript =
+    # python
+    ''
+      import json
 
-    server.start()
-    client.start()
+      server.start()
+      client.start()
 
-    server.wait_for_unit("kea-dhcp4-server.service")
+      server.wait_for_unit("kea-dhcp4-server.service")
 
-    with subtest("correct client IP is assigned"):
-      client.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.22/24'")
+      with subtest("correct client IP is assigned"):
+        client.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.22/24'")
 
-    with subtest("default gateway is assigned"):
-      routes = json.loads(client.succeed("ip --json route"))
-      gateways = {
-        route["gateway"] for route in routes
-        if (
-          route["dev"] == "eth1" and
-          route["protocol"] == "dhcp" and
-          "gateway" in route
-        )
-      }
+      with subtest("default gateway is assigned"):
+        routes = json.loads(client.succeed("ip --json route"))
+        gateways = {
+          route["gateway"] for route in routes
+          if (
+            route["dev"] == "eth1" and
+            route["protocol"] == "dhcp" and
+            "gateway" in route
+          )
+        }
 
-      assert "10.0.5.3" in gateways, f"Gateway was not assigned: {gateways}"
+        assert "10.0.5.3" in gateways, f"Gateway was not assigned: {gateways}"
 
-    with subtest("expected DNS servers are provided"):
-      client.succeed("resolvectl dns eth1 | grep -q '10.0.5.3'")
+      with subtest("expected DNS servers are provided"):
+        client.succeed("resolvectl dns eth1 | grep -q '10.0.5.3'")
 
-    with subtest("reservations are given to recognized hosts"):
-      reserved.start()
-      reserved.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.68/24'")
-  '';
+      with subtest("reservations are given to recognized hosts"):
+        reserved.start()
+        reserved.wait_until_succeeds("ip addr show eth1 | grep -q '10.0.5.68/24'")
+    '';
 }

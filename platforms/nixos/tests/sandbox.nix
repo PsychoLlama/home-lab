@@ -9,8 +9,10 @@ makeTest {
       environment.systemPackages = [ pkgs.hello ];
     };
 
-  testScript = ''
-    start_all()
-    machine.shell_interact()
-  '';
+  testScript =
+    # python
+    ''
+      start_all()
+      machine.shell_interact()
+    '';
 }
