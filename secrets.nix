@@ -17,6 +17,6 @@ in
 {
   # Generated with: `cloudflared tunnel create <name>`
   "vpn-tunnel-key.age".publicKeys = getPublicKeysWhere (
-    node: node.config.lab.profiles.vpn.server.enable
+    node: node.config.lab.stacks.vpn.server.enable
   );
 }

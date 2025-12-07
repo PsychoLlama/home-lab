@@ -16,7 +16,7 @@ let
 
   inherit (config.lab.services.gateway) wan;
   inherit (config.lab.services) discovery;
-  cfg = config.lab.profiles.router;
+  cfg = config.lab.stacks.router;
   json = pkgs.formats.json { };
 
   xbox = {
@@ -43,13 +43,13 @@ let
   };
 in
 {
-  options.lab.profiles.router = {
+  options.lab.stacks.router = {
     enable = lib.mkEnableOption ''
       Turn this device into a router.
 
       The network interface names MUST match the ones configured in
       `router.networks`. Configure them with udev before enabling this
-      profile.
+      stack.
     '';
   };
 

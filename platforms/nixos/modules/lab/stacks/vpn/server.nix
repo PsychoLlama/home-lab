@@ -3,11 +3,11 @@
 let
   inherit (config.lab) datacenter domain;
   inherit (config.lab.services.vpn.server.listen) port;
-  cfg = config.lab.profiles.vpn.server;
+  cfg = config.lab.stacks.vpn.server;
 in
 
 {
-  options.lab.profiles.vpn.server = {
+  options.lab.stacks.vpn.server = {
     enable = lib.mkEnableOption ''
       Run a VPN server on this host.
     '';

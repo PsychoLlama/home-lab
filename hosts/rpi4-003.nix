@@ -1,5 +1,5 @@
 {
-  lab.profiles = {
+  lab.stacks = {
     vpn.server.enable = true;
     vpn.client.enable = true;
   };

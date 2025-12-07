@@ -1,5 +1,5 @@
 {
-  lab.profiles = {
+  lab.stacks = {
     vpn.client.enable = true;
     file-server.enable = true;
   };

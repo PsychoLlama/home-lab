@@ -1,11 +1,11 @@
 { lib, config, ... }:
 
 let
-  cfg = config.lab.profiles.fancy-shell;
+  cfg = config.lab.stacks.fancy-shell;
 in
 
 {
-  options.lab.profiles.fancy-shell = {
+  options.lab.stacks.fancy-shell = {
     enable = lib.mkEnableOption "Configure a fancy login shell";
   };
 

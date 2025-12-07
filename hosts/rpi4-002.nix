@@ -1,5 +1,5 @@
 {
-  lab.profiles = {
+  lab.stacks = {
     observability.enable = true;
     vpn.client.enable = true;
   };

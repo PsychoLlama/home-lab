@@ -128,7 +128,7 @@ in
 
       {
         # Manage the system shell by default.
-        lab.profiles.fancy-shell.enable = lib.mkDefault true;
+        lab.stacks.fancy-shell.enable = lib.mkDefault true;
       }
     ];
   };

@@ -8,11 +8,11 @@
 let
   inherit (config.lab) domain;
   inherit (config.lab.filesystems.zfs) decryption pools;
-  cfg = config.lab.profiles.file-server;
+  cfg = config.lab.stacks.file-server;
 in
 
 {
-  options.lab.profiles.file-server = {
+  options.lab.stacks.file-server = {
     enable = lib.mkEnableOption "Run a file server";
   };
 

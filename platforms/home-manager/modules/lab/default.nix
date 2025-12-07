@@ -1,6 +1,6 @@
 {
   imports = [
     ./presets
-    ./profiles
+    ./stacks
   ];
 }

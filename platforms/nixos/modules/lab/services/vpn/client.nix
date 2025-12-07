@@ -1,13 +1,13 @@
 { config, lib, ... }:
 
 let
-  cfg = config.lab.profiles.vpn.client;
+  cfg = config.lab.services.vpn.client;
 in
 
 {
-  options.lab.profiles.vpn.client = {
+  options.lab.services.vpn.client = {
     enable = lib.mkEnableOption ''
-      Enable the VPN client.
+      Enable the Tailscale VPN client.
 
       This requires manual setup. The first time the host comes online, run:
       $ tailscale up --auth-key <auth_key> --login-server <server_url>

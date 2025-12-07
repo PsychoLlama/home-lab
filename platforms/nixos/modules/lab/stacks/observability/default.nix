@@ -8,11 +8,11 @@
 # WIP: Playing around with Grafana's observability tools.
 
 let
-  cfg = config.lab.profiles.observability;
+  cfg = config.lab.stacks.observability;
 in
 
 {
-  options.lab.profiles.observability = {
+  options.lab.stacks.observability = {
     enable = lib.mkEnableOption "Enable observability services";
   };
 

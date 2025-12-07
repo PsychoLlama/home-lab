@@ -5,7 +5,7 @@ let
   inherit (config.lab.services.gateway) wan;
 in
 {
-  lab.profiles = {
+  lab.stacks = {
     router.enable = true;
     vpn.client.enable = true;
   };

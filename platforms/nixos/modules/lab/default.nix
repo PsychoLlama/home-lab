@@ -5,7 +5,7 @@
     ./filesystems
     ./host.nix
     ./networks.nix
-    ./profiles
+    ./stacks
     ./services
     ./ssh.nix
     ./stratums.nix
