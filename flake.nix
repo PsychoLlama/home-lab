@@ -5,7 +5,6 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    clapfile.url = "github:PsychoLlama/clapfile";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
@@ -36,7 +35,6 @@
       nixpkgs,
       nixos-hardware,
       colmena,
-      clapfile,
       agenix,
       ...
     }@flake-inputs:
@@ -69,7 +67,6 @@
 
           overlays = [
             self.overlays.unstable-packages
-            clapfile.overlays.programs
           ];
         };
 
@@ -220,97 +217,61 @@
               colmena.packages.${system}.colmena
               agenix.packages.${system}.default
 
-              (pkgs.clapfile.command {
-                command = {
-                  name = "project";
-                  about = "Project task runner";
-                  subcommands = {
-                    bootstrap = {
-                      about = "Build a bootable image for a specific host.";
-                      run = pkgs.writers.writeBash "bootstrap" ''
-                        set -eux
-                        nix build ".#packages.$arch.$host-image"
-                        readlink -f result
-                      '';
+              (pkgs.unstable.writers.writeNuBin "project-bootstrap"
+                # nu
+                ''
+                  # Build a bootable image for a specific host.
+                  export def main [
+                    host: string  # Host name to build image for
+                    --arch: string = "aarch64-linux"  # Target architecture
+                  ] {
+                    nix build $".#packages.($arch).($host)-image"
+                    readlink -f result
+                  }
+                ''
+              )
 
-                      args = [
-                        {
-                          id = "host";
-                          required = true;
-                        }
-                        {
-                          id = "arch";
-                          long = "arch";
-                          value_name = "system";
-                          default_value = "aarch64-linux";
-                        }
-                      ];
-                    };
+              (pkgs.unstable.writers.writeNuBin "project-sandbox"
+                # nu
+                ''
+                  # Enter a VM sandbox for experimentation.
+                  export def main [] {
+                    nix run ".#tests.sandbox.driver"
+                  }
+                ''
+              )
 
-                    sandbox = {
-                      about = "Enter a VM sandbox for experimentation.";
-                      run = pkgs.writers.writeBash "sandbox" ''
-                        set -eux
-                        nix run ".#tests.sandbox.driver"
-                      '';
-                    };
+              (pkgs.unstable.writers.writeNuBin "project-test"
+                # nu
+                ''
+                  # Run one of the tests under `nixos/tests`.
+                  export def main [
+                    expr: string  # dot.separated test path under `outputs.tests`
+                  ] {
+                    nix run $".#tests.($expr).driver"
+                  }
+                ''
+              )
 
-                    test = {
-                      about = "Run one of the tests under `nixos/tests`.";
-                      run = pkgs.writers.writeBash "test" ''
-                        set -eux
-                        nix run ".#tests.$expr.driver"
-                      '';
+              (pkgs.unstable.writers.writeNuBin "project-vpn-register"
+                # nu
+                ''
+                  # Register a node on the VPN.
+                  export def main [
+                    host: string  # Host to initialize
+                    --server-url: string = "http://rpi4-003.host.${datacenter}.${domain}:8080"  # URL of the VPN server
+                  ] {
+                    use std/log
 
-                      args = [
-                        {
-                          id = "expr";
-                          value_name = "test-path";
-                          help = "dot.separated test path under `outputs.tests`";
-                          required = true;
-                        }
-                      ];
-                    };
+                    let server_host = $server_url | url parse | get host
+                    let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
+                    log info $"Auth key created id=($response.id)"
 
-                    vpn = {
-                      about = "Manage the VPN.";
-                      subcommands.register = {
-                        about = "Register a node on the VPN.";
-                        args = [
-                          {
-                            id = "host";
-                            about = "Host to initialize.";
-                            required = true;
-                          }
-                          {
-                            id = "server_url";
-                            about = "URL of the VPN server.";
-                            short = "s";
-                            long = "server-url";
-                            default_value = "http://rpi4-003.host.${datacenter}.${domain}:8080";
-                          }
-                        ];
-
-                        # TODO: Use Colmena's deploy key commands instead and
-                        # defer the oneshot setup by the key service.
-                        run =
-                          pkgs.unstable.writers.writeNu "bootstrap-vpn-client.nu"
-                            # nu
-                            ''
-                              use std/log
-
-                              let server_host = $env.server_url | url parse | get host
-                              let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
-                              log info $"Auth key created id=($response.id)"
-
-                              ssh $env.host tailscale up --login-server $env.server_url --auth-key $response.key
-                              log info "VPN client ready"
-                            '';
-                      };
-                    };
-                  };
-                };
-              })
+                    ssh $host tailscale up --login-server $server_url --auth-key $response.key
+                    log info "VPN client ready"
+                  }
+                ''
+              )
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
@@ -381,7 +342,7 @@
           testScripts = eachSystem (
             system: pkgs: {
               docs = pkgs.callPackage ./platforms/nixos/doc {
-                inherit (flake-inputs) colmena home-manager clapfile;
+                inherit (flake-inputs) colmena home-manager;
                 revision = self.rev or "latest";
               };
 
@@ -404,7 +365,6 @@
                 passthru = pkgs.callPackage ./platforms/nixos/tests {
                   inherit (flake-inputs)
                     colmena
-                    clapfile
                     home-manager
                     agenix
                     ;

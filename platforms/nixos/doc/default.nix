@@ -2,7 +2,6 @@
   pkgs,
   lib,
   colmena,
-  clapfile,
   home-manager,
   revision,
   ...
@@ -24,7 +23,6 @@ let
       colmena.nixosModules.deploymentOptions
       colmena.nixosModules.assertionModule
       home-manager.nixosModules.home-manager
-      clapfile.nixosModules.nixos
       ../modules
 
       {

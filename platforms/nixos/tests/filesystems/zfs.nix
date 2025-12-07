@@ -69,7 +69,7 @@ makeTest {
       start_all()
 
       with subtest("pool creation"):
-        machine.succeed("system fs init")
+        machine.succeed("zfs-init")
 
         # ZFS has no export format. The convention is parsing with awk.
         pool_details = machine.succeed(

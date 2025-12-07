@@ -9,7 +9,6 @@
     ./services
     ./ssh.nix
     ./stratums.nix
-    ./system.nix
     ./virtualisation.nix
   ];
 
