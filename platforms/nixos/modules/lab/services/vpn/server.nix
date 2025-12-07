@@ -54,6 +54,15 @@ in
         here indexed by hostname.
       '';
     };
+
+    dns.nameservers = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ config.lab.networks.datacenter.ipv4.gateway ];
+      description = ''
+        DNS servers advertised to VPN clients for resolving non-MagicDNS
+        queries. Required when MagicDNS is enabled (the default).
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -65,7 +74,10 @@ in
       settings = {
         server_url = cfg.url;
         listen_addr = "${cfg.listen.address}:${toString cfg.listen.port}";
-        dns.base_domain = cfg.dns.zone;
+        dns = {
+          base_domain = cfg.dns.zone;
+          nameservers.global = cfg.dns.nameservers;
+        };
         logtail.enabled = lib.mkDefault true;
       };
     };
