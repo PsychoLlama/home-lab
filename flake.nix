@@ -88,22 +88,6 @@
           interface = "enP4p65s0";
           publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOx6MIH8pVfBi0dckuIgssJO5JzlnEKrJrhNSPs7giTR" ];
         };
-        rpi3-001 = {
-          module = ./hosts/rpi3-001.nix;
-          profile = raspberry-pi-3;
-          system = "aarch64-linux";
-          ip4 = "10.0.0.203";
-          interface = "enu1u1";
-          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2VZGgphnMAD5tLG+IHBlBWdlUPNfvYEMDK8OQCrG/A" ];
-        };
-        rpi3-002 = {
-          module = ./hosts/rpi3-002.nix;
-          profile = raspberry-pi-3;
-          system = "aarch64-linux";
-          ip4 = "10.0.0.202";
-          interface = "enu1u1";
-          publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrGfslz9RlB2EzrTL3SfO/NZB5fPiVXWkK+aQRZrlel" ];
-        };
         rpi4-001 = {
           module = ./hosts/rpi4-001.nix;
           profile = raspberry-pi-4;

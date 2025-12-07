@@ -18,6 +18,7 @@ Test builds locally with colmena:
 ```sh
 colmena build --on @rpi4        # all rpi4 devices
 colmena build --on rpi4-001     # specific host
+colmena build --on nas-001      # NAS device
 ```
 
 ## Deploying
