@@ -3,12 +3,12 @@
 
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     clapfile.url = "github:PsychoLlama/clapfile";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -143,7 +143,10 @@
       overlays = {
         # Add `pkgs.unstable` to the package set.
         unstable-packages = final: prev: {
-          unstable = import nixpkgs-unstable { inherit (prev) system config; };
+          unstable = import nixpkgs-unstable {
+            inherit (prev.stdenv.hostPlatform) system;
+            inherit (prev) config;
+          };
         };
       };
 
@@ -381,7 +384,7 @@
           hostImages = lib.foldlAttrs (
             packages: hostName: node:
             lib.recursiveUpdate packages {
-              ${node.pkgs.system}."${hostName}-image" = makeImage {
+              ${node.pkgs.stdenv.hostPlatform.system}."${hostName}-image" = makeImage {
                 inherit nixpkgs;
                 nixosSystem = node;
               };

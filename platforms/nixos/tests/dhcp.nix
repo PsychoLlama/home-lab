@@ -43,15 +43,14 @@ makeTest {
           }
         ];
 
-        systemd.network = {
-          enable = true;
-          networks = {
-            "01-eth1" = {
-              name = "eth1";
-              networkConfig.Address = "10.0.5.11/24";
-            };
-          };
-        };
+        # Use scripted networking instead of systemd-networkd to avoid
+        # port 67 binding conflicts with Kea DHCP server.
+        networking.interfaces.eth1.ipv4.addresses = [
+          {
+            address = "10.0.5.11";
+            prefixLength = 24;
+          }
+        ];
       };
 
     client = {

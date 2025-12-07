@@ -32,13 +32,13 @@ let
         networking.hostName = "machine";
         networking.domain = "example.com";
         lab.host = {
-          system = pkgs.system;
+          system = pkgs.stdenv.hostPlatform.system;
           ip4 = "127.0.0.1";
         };
       }
     ];
 
-    inherit (pkgs) system;
+    inherit (pkgs.stdenv.hostPlatform) system;
     inherit pkgs;
   };
 
