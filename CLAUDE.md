@@ -2,6 +2,16 @@
 
 NixOS configurations for my home lab infrastructure.
 
+## Architecture
+
+Modules live under `platforms/<platform>/modules/lab/` (nixos, home-manager). Three layers:
+
+- **Presets** (`presets/`): Opinionated config for exactly one program. Self-contained and reusable.
+- **Services** (`services/`): Higher-level DSL abstracting a program. Reusable, but may reference other services and shared config (`lab.networks`, `lab.host`, etc).
+- **Stacks** (`stacks/`): Combine presets and services into a role (e.g., `router`, `file-server`). Specific to this lab.
+
+Hosts in `hosts/` are minimal—they adopt stacks and add hardware-specific overrides.
+
 ## Testing
 
 Tests mirror the filesystem under `platforms/nixos/tests/`:
