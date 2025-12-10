@@ -9,7 +9,6 @@
     ./services
     ./ssh.nix
     ./stratums.nix
-    ./virtualisation.nix
   ];
 
   # A place to store constants. These should be set for every host. Not all
