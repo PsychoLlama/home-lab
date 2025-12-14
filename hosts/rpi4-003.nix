@@ -1,8 +1,5 @@
 {
-  lab.stacks = {
-    vpn.server.enable = true;
-    vpn.client.enable = true;
-  };
+  lab.stacks.vpn.client.enable = true;
 
   home-manager.users.root.home.stateVersion = "23.11";
   system.stateVersion = "21.05";

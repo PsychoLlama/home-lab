@@ -253,25 +253,6 @@
                 ''
               )
 
-              (pkgs.unstable.writers.writeNuBin "project-vpn-register"
-                # nu
-                ''
-                  # Register a node on the VPN.
-                  export def main [
-                    host: string  # Host to initialize
-                    --server-url: string = "http://rpi4-003.host.${datacenter}.${domain}:8080"  # URL of the VPN server
-                  ] {
-                    use std/log
-
-                    let server_host = $server_url | url parse | get host
-                    let response = ssh $server_host headscale preauthkey create --user dc-${datacenter} --output json | from json
-                    log info $"Auth key created id=($response.id)"
-
-                    ssh $host tailscale up --login-server $server_url --auth-key $response.key
-                    log info "VPN client ready"
-                  }
-                ''
-              )
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
