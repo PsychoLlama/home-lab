@@ -17,6 +17,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    lab.services.vpn.client.tags = [ "monitoring" ];
+
     services = {
       prometheus = {
         enable = true;

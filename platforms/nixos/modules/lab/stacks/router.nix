@@ -55,6 +55,7 @@ in
 
   config = lib.mkIf cfg.enable {
     deployment.tags = [ "router" ];
+    lab.services.vpn.client.tags = [ "router" ];
 
     environment.systemPackages = [
       pkgs.unstable.bottom # System load observer

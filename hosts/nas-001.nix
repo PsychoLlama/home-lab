@@ -1,6 +1,9 @@
 {
   lab.stacks = {
-    vpn.client.enable = true;
+    vpn.client = {
+      enable = true;
+      tags = [ "nas" ];
+    };
     file-server.enable = true;
   };
 
