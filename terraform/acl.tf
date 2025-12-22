@@ -1,0 +1,45 @@
+resource "tailscale_acl" "primary" {
+  acl = jsonencode({
+    tagOwners = {
+      "tag:lab"        = ["autogroup:admin", "tag:lab"]
+      "tag:laptop"     = ["autogroup:admin", "tag:laptop"]
+      "tag:mobile"     = ["autogroup:admin", "tag:mobile"]
+      "tag:nas"        = ["autogroup:admin", "tag:nas"]
+      "tag:nova"       = ["autogroup:admin", "tag:nova"]
+      "tag:router"     = ["autogroup:admin", "tag:router"]
+      "tag:monitoring" = ["autogroup:admin", "tag:monitoring"]
+    }
+
+    grants = [
+      # Laptop can reach everything
+      { src = ["tag:laptop"], dst = ["*"], ip = ["*"] },
+
+      # Phone can reach laptop on dev server ports.
+      {
+        src = ["tag:mobile"]
+        dst = ["tag:laptop"]
+        ip  = ["8080", "5173", "3000"]
+      },
+
+      # Phone can reach everything in the lab.
+      { src = ["tag:mobile"], dst = ["tag:lab"], ip = ["*"] },
+
+      # Monitoring can scrape exporters on all lab nodes
+      {
+        src = ["tag:monitoring"]
+        dst = ["tag:lab"]
+        ip  = ["9090", "9100", "9153"]
+      }
+    ]
+
+    ssh = [
+      # Laptop can SSH to all lab devices.
+      {
+        action = "accept"
+        src    = ["tag:laptop"]
+        dst    = ["tag:lab"]
+        users  = ["root"]
+      }
+    ]
+  })
+}

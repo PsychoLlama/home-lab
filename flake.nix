@@ -214,6 +214,7 @@
           baseShellEnvironment = pkgs.mkShell {
             packages = [
               pkgs.nixVersions.latest
+              pkgs.opentofu
               colmena.packages.${system}.colmena
               agenix.packages.${system}.default
 

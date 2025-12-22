@@ -1,4 +1,8 @@
 .terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform/.env
 .direnv
 result
 result-*
