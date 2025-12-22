@@ -5,10 +5,26 @@
   ...
 }:
 
-# WIP: Playing around with Grafana's observability tools.
-
 let
   cfg = config.lab.stacks.observability;
+
+  # Find all nodes with node-exporter enabled
+  nodeExporterTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.services.node-exporter.enable))
+    (lib.mapAttrsToList (name: _: {
+      targets = [ "${name}:9100" ];
+      labels.instance = name;
+    }))
+  ];
+
+  # Find all nodes with DNS enabled
+  dnsTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.services.dns.enable))
+    (lib.mapAttrsToList (name: _: {
+      targets = [ "${name}:9153" ];
+      labels.instance = name;
+    }))
+  ];
 in
 
 {
@@ -31,48 +47,25 @@ in
           evaluation_interval = "30s";
         };
 
-        # TODO: Make this a preset. Generate scrapers.
-        exporters.node = {
-          enable = true;
-          enabledCollectors = [ "systemd" ];
-          port = 9100;
-        };
-
         scrapeConfigs = [
           {
             job_name = "prometheus";
             static_configs = [
               {
                 targets = [ "localhost:9090" ];
-                labels = {
-                  instance = "prometheus";
-                };
+                labels.instance = "prometheus";
               }
             ];
           }
 
           {
             job_name = "coredns";
-            static_configs = [
-              {
-                targets = [ "${nodes.rpi4-001.config.networking.fqdn}:9153" ];
-                labels = {
-                  instance = "coredns";
-                };
-              }
-            ];
+            static_configs = dnsTargets;
           }
 
           {
             job_name = "node";
-            static_configs = [
-              {
-                targets = [ "localhost:9100" ];
-                labels = {
-                  instance = "localhost";
-                };
-              }
-            ];
+            static_configs = nodeExporterTargets;
           }
         ];
       };

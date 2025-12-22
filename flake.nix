@@ -140,6 +140,9 @@
         defaults.lab = {
           inherit datacenter domain;
 
+          # Enable node exporter on all lab nodes for monitoring
+          services.node-exporter.enable = true;
+
           networks = {
             datacenter.ipv4 = {
               cidr = "10.0.0.1/24";
