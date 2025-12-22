@@ -15,15 +15,17 @@ let
 in
 
 {
-  # Generated with: `cloudflared tunnel create <name>`
-  "vpn-tunnel-key.age".publicKeys = getPublicKeysWhere (
-    node: node.config.lab.stacks.vpn.server.enable
-  );
-
   # Tailscale OAuth client secret for automatic node authentication.
   # Create at: https://login.tailscale.com/admin/settings/oauth
   # Scope: auth_keys (write), with tags containing all lab node tags.
   "tailscale-oauth.age".publicKeys = getPublicKeysWhere (
     node: node.config.lab.services.vpn.client.enable
+  );
+
+  # Cloudflare API token for ACME DNS-01 challenge.
+  # Create at: https://dash.cloudflare.com/profile/api-tokens
+  # Permissions: Zone DNS Edit + Zone Read for selfhosted.city
+  "cloudflare-api-token.age".publicKeys = getPublicKeysWhere (
+    node: node.config.lab.services.ingress.enable
   );
 }
