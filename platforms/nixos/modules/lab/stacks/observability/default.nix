@@ -36,7 +36,6 @@ in
           enable = true;
           enabledCollectors = [ "systemd" ];
           port = 9100;
-          listenAddress = "rpi4-002.nova.vpn.selfhosted.city";
         };
 
         scrapeConfigs = [
