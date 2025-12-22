@@ -16,8 +16,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    age.secrets.tailscale-oauth.file = ./tailscale-oauth.age;
+
     services.tailscale = {
       enable = true;
+      authKeyFile = config.age.secrets.tailscale-oauth.path;
       extraUpFlags =
         let
           baseTags = [ "lab" config.lab.datacenter ];
