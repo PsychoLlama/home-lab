@@ -17,8 +17,7 @@ Hosts in `hosts/` are minimal—they adopt stacks and add hardware-specific over
 Tests mirror the filesystem under `platforms/nixos/tests/`:
 
 ```sh
-nix build .#tests.dhcp              # platforms/nixos/tests/dhcp.nix
-nix build .#tests.filesystems.zfs   # platforms/nixos/tests/filesystems/zfs.nix
+nix build .#tests.dhcp  # platforms/nixos/tests/dhcp.nix
 ```
 
 ## Building

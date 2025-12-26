@@ -18,46 +18,6 @@ let
     (map (mount: mount.name))
   ];
 
-  nulib = lib.fileset.toSource {
-    root = ./.;
-    fileset = lib.fileset.fileFilter (f: f.hasExt "nu") ./.;
-  };
-
-  # Expected property/settings for zpools and datasets. Managed by
-  # `./propctl.nu`.
-  zfsStateFile = {
-    pools = lib.mapAttrs (_: pool: {
-      ignored_properties = pool.unmanaged.settings;
-      properties = pool.settings;
-    }) cfg.pools;
-
-    datasets = lib.pipe cfg.pools [
-      (lib.attrValues)
-
-      (map (pool: [
-        # Declare pool properties
-        {
-          ${pool.name} = {
-            ignored_properties = pool.unmanaged.properties;
-            inherit (pool) properties;
-          };
-        }
-
-        # Declare dataset properties
-        (lib.mapAttrs' (_: dataset: {
-          name = "${pool.name}/${dataset.name}";
-          value = {
-            ignored_properties = dataset.unmanaged.properties;
-            inherit (dataset) properties;
-          };
-        }) pool.datasets)
-      ]))
-
-      (lib.flatten)
-      (lib.mergeAttrsList)
-    ];
-  };
-
   hostId = lib.pipe config.networking.hostName [
     # Convert to a 32-bit hex string.
     (builtins.hashString "md5")
@@ -79,12 +39,8 @@ in
       Mount and manage encrypted ZFS pools. This option changes the kernel and
       boot process. Reboot the machine after changing this option.
 
-      ZFS requires some manual management (setup, decryption) so this module
-      exposes `zfs-*` commands for administration tasks.
-
-      Be aware that any services depending on ZFS datasets will fail to start
-      until the datasets are decrypted and mounted. Defer services with
-      `zfs.decryption.target`.
+      Use `zfs-attach` and `zfs-detach` to decrypt/encrypt pools after boot.
+      Services depending on ZFS datasets should wait on `zfs.decryption.target`.
     '';
 
     decryption = {
@@ -113,19 +69,13 @@ in
       description = "Mapping of mount points to ZFS datasets";
     };
 
-    # Since storage admin is potentially dangerous and occasionally requires
-    # manual intervention (e.g. encryption keys), managing pools, datasets,
-    # and properties in code is just as much an exercise in documentation as
-    # execution. Things may fail. That's okay. At least you'll know how the
-    # system should look.
+    # Pool config is documentation. Create pools manually following the
+    # structure defined here.
     pools = mkOption {
       default = { };
       description = ''
-        Mapping of pool names to ZFS pool configurations.
-
-        This option doesn't do anything by default. It adds administration
-        commands that generate the pool, but for safety it only takes effect
-        when run manually.
+        Declarative pool/dataset configuration for documentation purposes.
+        Pools must be created manually - see the file-server README.
       '';
 
       type = types.attrsOf (
@@ -139,20 +89,6 @@ in
               default = name;
             };
 
-            options.settings = mkOption {
-              type = types.attrsOf types.str;
-              default = { };
-              description = ''
-                Mapping of ZFS pool settings. See `zpoolprops(7)` for a list of
-                available options.
-              '';
-
-              example = {
-                autoexpand = "on";
-                autotrim = "off";
-              };
-            };
-
             options.properties = mkOption {
               type = types.attrsOf types.str;
               default = { };
@@ -160,20 +96,6 @@ in
                 Mapping of ZFS filesystem props to apply. See `zfsprops(7)` for
                 a list of available options.
               '';
-            };
-
-            options.unmanaged = {
-              settings = mkOption {
-                type = types.listOf types.str;
-                description = "Unmanaged zpool settings to ignore.";
-                default = [ ];
-              };
-
-              properties = mkOption {
-                type = types.listOf types.str;
-                description = "Unmanaged dataset properties to ignore.";
-                default = [ "nixos:shutdown-time" ];
-              };
             };
 
             options.vdevs = mkOption {
@@ -233,12 +155,6 @@ in
                         of available options.
                       '';
                     };
-
-                    options.unmanaged.properties = mkOption {
-                      type = types.listOf types.str;
-                      description = "Unmanaged dataset properties to ignore.";
-                      default = [ ];
-                    };
                   }
                 )
               );
@@ -270,97 +186,22 @@ in
       after = [ "local-fs.target" ];
     };
 
-    environment.systemPackages =
-      let
-        expectedStateFile = pkgs.writers.writeJSON "expected-state.json" zfsStateFile;
-      in
-      [
-        (pkgs.unstable.writers.writeNuBin "zfs-attach"
-          # nu
-          ''
-            # Decrypt and mount ZFS datasets.
-            export def main [] {
-              zfs load-key -a
-              ${concatMapStringsSep "\n              " (mountpoint: "mount ${mountpoint}") topoSortedMounts}
-              systemctl start ${cfg.decryption.target}
-            }
-          ''
-        )
+    environment.systemPackages = [
+      (pkgs.writeShellScriptBin "zfs-attach" ''
+        set -euo pipefail
+        zpool import -a
+        zfs load-key -a
+        ${concatMapStringsSep "\n" (mountpoint: "mount ${mountpoint}") topoSortedMounts}
+        systemctl start ${cfg.decryption.target}
+      '')
 
-        (pkgs.unstable.writers.writeNuBin "zfs-detach"
-          # nu
-          ''
-            # Unmount ZFS datasets.
-            export def main [] {
-              systemctl stop ${cfg.decryption.target}
-              ${concatMapStringsSep "\n              " (mountpoint: "umount ${mountpoint}") (lib.reverseList topoSortedMounts)}
-              zfs unload-key -a
-            }
-          ''
-        )
-
-        (pkgs.unstable.writers.writeNuBin "zfs-export-properties"
-          # nu
-          ''
-            # Export known pool/dataset properties to a state file format.
-            export def main [] {
-              use ${nulib}/propctl.nu
-              propctl export-system-state | to json
-            }
-          ''
-        )
-
-        (pkgs.unstable.writers.writeNuBin "zfs-apply-properties"
-          # nu
-          ''
-            # Manage ZFS dataset properties and pool attributes.
-            export def main [
-              --state-file: string = "${expectedStateFile}"  # Path to JSON file with expected properties
-              --yes (-y)  # Automatically confirm changes
-            ] {
-              $env.EXPECTED_STATE = $state_file
-              if $yes { $env.AUTO_CONFIRM = "true" }
-              use ${nulib}/propctl.nu
-              propctl plan | propctl apply
-            }
-          ''
-        )
-
-        (pkgs.unstable.writers.writeNuBin "zfs-init"
-          # nu
-          ''
-            # Create ZFS pools.
-            export def main [] {
-              # Create ZFS pools.
-              ${lib.pipe cfg.pools [
-                (lib.attrValues)
-                (map (
-                  pool:
-                  "zpool create ${lib.escapeShellArg pool.name} ${
-                    concatMapStringsSep " " (
-                      vdev: lib.concatStringsSep " " ((if vdev.type != null then [ vdev.type ] else [ ]) ++ vdev.sources)
-                    ) pool.vdevs
-                  }"
-                ))
-                (lib.concatStringsSep "\n              ")
-              ]}
-
-              # Create datasets.
-              ${concatMapStringsSep "\n              " (
-                pool:
-                lib.pipe pool.datasets [
-                  (lib.attrValues)
-                  (map (dataset: "zfs create ${lib.escapeShellArg "${pool.name}/${dataset.name}"}"))
-                  (lib.concatStringsSep "\n              ")
-                ]
-              ) (lib.attrValues cfg.pools)}
-
-              # Apply pool/dataset properties.
-              zfs-apply-properties --yes
-            }
-          ''
-        )
-      ];
+      (pkgs.writeShellScriptBin "zfs-detach" ''
+        set -euo pipefail
+        systemctl stop ${cfg.decryption.target}
+        ${concatMapStringsSep "\n" (mountpoint: "umount ${mountpoint}") (lib.reverseList topoSortedMounts)}
+        zfs unload-key -a
+      '')
+    ];
 
     fileSystems = lib.mapAttrs (mountpoint: dataset: {
       device = dataset;

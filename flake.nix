@@ -212,9 +212,8 @@
       };
 
       devShells = eachSystem (
-        system: pkgs:
-        let
-          baseShellEnvironment = pkgs.mkShell {
+        system: pkgs: {
+          default = pkgs.mkShell {
             packages = [
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
@@ -239,37 +238,7 @@
               ''}
             '';
           };
-
-          # Some modules require special tools or languages for development.
-          # The pattern is to take the base development shell and extend it.
-          devShellSpecializations = lib.mergeAttrsList (
-            map (
-              relativePath:
-
-              let
-                absolutePath = ./. + "/${relativePath}";
-                customizeShell = import absolutePath { inherit pkgs; };
-                shell = baseShellEnvironment.overrideAttrs customizeShell;
-                dirname = lib.pipe relativePath [
-                  (lib.splitString "/")
-                  (lib.reverseList)
-                  (lib.drop 1)
-                  (lib.reverseList)
-                  (lib.concatStringsSep "/")
-                  (dir: dir + "/")
-                ];
-              in
-
-              {
-                ${dirname} = shell;
-              }
-            ) [ "platforms/nixos/modules/lab/filesystems/zfs/develop.nix" ]
-          );
-        in
-
-        # Each shell is indexed by its relative project path. This avoids
-        # conflicts and can be derived using `git rev-parse --show-prefix`.
-        devShellSpecializations // { default = baseShellEnvironment; }
+        }
       );
 
       packages =

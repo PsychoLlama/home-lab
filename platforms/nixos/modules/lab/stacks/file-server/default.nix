@@ -39,7 +39,6 @@ in
         ];
 
         # NOTE: Some properties must be set at creation time.
-        # This script doesn't support it.
         properties = {
           xattr = "on";
           acltype = "posix";

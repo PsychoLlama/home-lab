@@ -1,6 +1,6 @@
 {
   imports = [
-    ./file-server.nix
+    ./file-server
     ./ingress.nix
     ./observability
     ./router.nix
