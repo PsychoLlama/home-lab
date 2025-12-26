@@ -39,3 +39,7 @@ colmena apply test --on rpi4-001 --evaluator streaming
 ```
 
 This activates the config without adding it to the boot menu - safer for remote changes.
+
+## Formatting
+
+Always run `just fmt` before committing.
