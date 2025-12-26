@@ -54,7 +54,5 @@ in
 
     systemd.services.caddy.serviceConfig.EnvironmentFile =
       config.age.secrets.cloudflare-api-token.path;
-
-    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 443 ];
   };
 }

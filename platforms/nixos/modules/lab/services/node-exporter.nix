@@ -15,14 +15,9 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    services.prometheus.exporters.node = {
-      enable = true;
-      enabledCollectors = cfg.collectors;
-      port = 9100;
-    };
-
-    # Allow monitoring hosts to scrape metrics
-    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 9100 ];
+  config.services.prometheus.exporters.node = lib.mkIf cfg.enable {
+    enable = true;
+    enabledCollectors = cfg.collectors;
+    port = 9100;
   };
 }

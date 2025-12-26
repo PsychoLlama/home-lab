@@ -15,15 +15,8 @@ resource "tailscale_acl" "primary" {
       # Laptop can reach everything
       { src = ["tag:laptop"], dst = ["*"], ip = ["*"] },
 
-      # Phone can reach laptop on dev server ports.
-      {
-        src = ["tag:mobile"]
-        dst = ["tag:laptop"]
-        ip  = ["8080", "5173", "3000"]
-      },
-
-      # Phone can reach everything in the lab.
-      { src = ["tag:mobile"], dst = ["tag:lab"], ip = ["*"] },
+      # Phone can reach ingress.
+      { src = ["tag:mobile"], dst = ["tag:ingress"], ip = ["80", "443"] },
 
       # Monitoring can scrape exporters on all lab nodes
       {
