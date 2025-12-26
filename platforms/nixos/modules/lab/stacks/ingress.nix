@@ -9,18 +9,20 @@ in
     enable = lib.mkEnableOption "ingress stack (Caddy + VPN)";
 
     virtualHosts = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule {
-        options = {
-          serverName = lib.mkOption {
-            type = lib.types.str;
-            description = "FQDN for this virtual host";
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            serverName = lib.mkOption {
+              type = lib.types.str;
+              description = "FQDN for this virtual host";
+            };
+            backend = lib.mkOption {
+              type = lib.types.str;
+              description = "Backend URL to proxy to";
+            };
           };
-          backend = lib.mkOption {
-            type = lib.types.str;
-            description = "Backend URL to proxy to";
-          };
-        };
-      });
+        }
+      );
       default = { };
     };
   };

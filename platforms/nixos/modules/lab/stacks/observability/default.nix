@@ -11,19 +11,23 @@ let
   # Find all nodes with node-exporter enabled
   nodeExporterTargets = lib.pipe nodes [
     (lib.filterAttrs (_: node: node.config.lab.services.node-exporter.enable))
-    (lib.mapAttrsToList (name: _: {
-      targets = [ "${name}:9100" ];
-      labels.instance = name;
-    }))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:9100" ];
+        labels.instance = name;
+      }
+    ))
   ];
 
   # Find all nodes with DNS enabled
   dnsTargets = lib.pipe nodes [
     (lib.filterAttrs (_: node: node.config.lab.services.dns.enable))
-    (lib.mapAttrsToList (name: _: {
-      targets = [ "${name}:9153" ];
-      labels.instance = name;
-    }))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:9153" ];
+        labels.instance = name;
+      }
+    ))
   ];
 in
 

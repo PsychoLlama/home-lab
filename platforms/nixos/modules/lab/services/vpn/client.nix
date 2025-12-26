@@ -23,7 +23,10 @@ in
       authKeyFile = config.age.secrets.tailscale-oauth.path;
       extraUpFlags =
         let
-          baseTags = [ "lab" config.lab.datacenter ];
+          baseTags = [
+            "lab"
+            config.lab.datacenter
+          ];
           allTags = baseTags ++ cfg.tags;
           tagList = lib.concatMapStringsSep "," (t: "tag:${t}") allTags;
         in
