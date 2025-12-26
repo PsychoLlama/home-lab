@@ -24,7 +24,9 @@ in
     host.module
   ];
 
-  deployment.targetHost = config.networking.fqdn;
+  # Deploy over Tailscale (MagicDNS resolves short hostnames)
+  deployment.targetHost = config.networking.hostName;
+
   environment.sessionVariables.DATACENTER = datacenter;
 
   networking = {

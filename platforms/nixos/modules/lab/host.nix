@@ -53,13 +53,15 @@ in
       uri = mkOption {
         type = types.str;
         description = "URI for the remote builder";
+
+        # Build over Tailscale (MagicDNS resolves short hostnames)
         default = "ssh://${cfg.builder.sshUser}@${cfg.builder.hostName}";
       };
 
       hostName = mkOption {
         type = types.str;
         description = "The hostname of the remote builder";
-        default = config.networking.fqdn;
+        default = config.networking.hostName;
       };
 
       systems = mkOption {
