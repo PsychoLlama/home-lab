@@ -218,8 +218,10 @@
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
               pkgs.just
+              pkgs.nixfmt-rfc-style
               pkgs.nixVersions.latest
               pkgs.opentofu
+              pkgs.treefmt
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
