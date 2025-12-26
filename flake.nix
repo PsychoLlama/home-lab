@@ -216,47 +216,11 @@
         let
           baseShellEnvironment = pkgs.mkShell {
             packages = [
+              agenix.packages.${system}.default
+              colmena.packages.${system}.colmena
+              pkgs.just
               pkgs.nixVersions.latest
               pkgs.opentofu
-              colmena.packages.${system}.colmena
-              agenix.packages.${system}.default
-
-              (pkgs.unstable.writers.writeNuBin "project-bootstrap"
-                # nu
-                ''
-                  # Build a bootable image for a specific host.
-                  export def main [
-                    host: string  # Host name to build image for
-                    --arch: string = "aarch64-linux"  # Target architecture
-                  ] {
-                    nix build $".#packages.($arch).($host)-image"
-                    readlink -f result
-                  }
-                ''
-              )
-
-              (pkgs.unstable.writers.writeNuBin "project-sandbox"
-                # nu
-                ''
-                  # Enter a VM sandbox for experimentation.
-                  export def main [] {
-                    nix run ".#tests.sandbox.driver"
-                  }
-                ''
-              )
-
-              (pkgs.unstable.writers.writeNuBin "project-test"
-                # nu
-                ''
-                  # Run one of the tests under `nixos/tests`.
-                  export def main [
-                    expr: string  # dot.separated test path under `outputs.tests`
-                  ] {
-                    nix run $".#tests.($expr).driver"
-                  }
-                ''
-              )
-
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
