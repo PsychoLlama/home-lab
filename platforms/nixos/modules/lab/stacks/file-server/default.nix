@@ -23,6 +23,7 @@ in
       enable = true;
       mounts = {
         "/mnt/pool0" = "pool0";
+        "/mnt/pool0/restic" = "pool0/restic";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
       };
 
@@ -48,6 +49,7 @@ in
           mountpoint = "none";
         };
 
+        datasets.restic.properties."com.sun:auto-snapshot" = "true";
         datasets.syncthing.properties."com.sun:auto-snapshot" = "true";
       };
     };
@@ -58,6 +60,19 @@ in
 
       # Don't start automatically. Wait for pool decryption.
       wantedBy = lib.mkForce [ decryption.target ];
+    };
+
+    systemd.services.restic-rest-server = {
+      requires = [ decryption.target ];
+      after = [ decryption.target ];
+
+      # Don't start automatically. Wait for pool decryption.
+      wantedBy = lib.mkForce [ decryption.target ];
+    };
+
+    lab.services.restic-server = {
+      enable = true;
+      dataDir = "/mnt/pool0/restic";
     };
 
     services = {
