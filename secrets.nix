@@ -2,6 +2,9 @@ let
   inherit (flake.inputs.nixpkgs) lib;
   flake = builtins.getFlake (toString ./.);
 
+  # Personal key for decrypting/editing secrets locally.
+  adminKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHAMADENOb8Pe0kysfLc6BxK2VUiPMt57IOaDYa7J/M5";
+
   /**
     Find all public keys for nodes that match the given predicate.
   */
@@ -12,26 +15,31 @@ let
       (lib.mapAttrsToList (_: node: node.config.lab.host.publicKeys))
       (lib.flatten)
     ];
+
+  /**
+    Build the full key list for a secret: admin key + matching node keys.
+  */
+  keysFor = predicate: [ adminKey ] ++ getPublicKeysWhere predicate;
 in
 
 {
   # Tailscale OAuth client secret for automatic node authentication.
   # Create at: https://login.tailscale.com/admin/settings/oauth
   # Scope: auth_keys (write), with tags containing all lab node tags.
-  "tailscale-oauth.age".publicKeys = getPublicKeysWhere (
+  "platforms/nixos/modules/lab/services/vpn/tailscale-oauth.age".publicKeys = keysFor (
     node: node.config.lab.services.vpn.client.enable
   );
 
   # Cloudflare API token for ACME DNS-01 challenge.
   # Create at: https://dash.cloudflare.com/profile/api-tokens
   # Permissions: Zone DNS Edit + Zone Read for selfhosted.city
-  "cloudflare-api-token.age".publicKeys = getPublicKeysWhere (
+  "platforms/nixos/modules/lab/services/ingress/cloudflare-api-token.age".publicKeys = keysFor (
     node: node.config.lab.services.ingress.enable
   );
 
   # Restic REST server htpasswd file for client authentication.
   # Generate entries with: htpasswd -nB workstation-hostname
-  "restic-htpasswd.age".publicKeys = getPublicKeysWhere (
+  "platforms/nixos/modules/lab/services/restic-server/restic-htpasswd.age".publicKeys = keysFor (
     node: node.config.lab.services.restic-server.enable
   );
 }
