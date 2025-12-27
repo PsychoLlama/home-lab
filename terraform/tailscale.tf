@@ -1,3 +1,8 @@
+data "tailscale_device" "ingress" {
+  hostname = "rpi4-003"
+  wait_for = "60s"
+}
+
 resource "tailscale_acl" "primary" {
   acl = jsonencode({
     tagOwners = {
@@ -30,6 +35,13 @@ resource "tailscale_acl" "primary" {
         src = ["tag:ingress"]
         dst = ["tag:monitoring"]
         ip  = ["3000"]
+      },
+
+      # Ingress can reach Syncthing GUI on NAS
+      {
+        src = ["tag:ingress"]
+        dst = ["tag:nas"]
+        ip  = ["8384"]
       }
     ]
 

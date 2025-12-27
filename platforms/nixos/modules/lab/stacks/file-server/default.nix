@@ -66,6 +66,7 @@ in
         package = pkgs.unstable.syncthing;
         dataDir = "/mnt/pool0/syncthing";
         configDir = "/mnt/pool0/syncthing/.config";
+        guiAddress = "0.0.0.0:8384";
 
         settings = {
           options.urAccepted = 3;
