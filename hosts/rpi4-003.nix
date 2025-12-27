@@ -10,6 +10,11 @@
       serverName = "syncthing.selfhosted.city";
       backend = "nas-001:8384";
     };
+
+    virtualHosts.restic = {
+      serverName = "restic.selfhosted.city";
+      backend = "nas-001:8000";
+    };
   };
 
   home-manager.users.root.home.stateVersion = "23.11";

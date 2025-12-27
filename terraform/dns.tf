@@ -22,3 +22,12 @@ resource "cloudflare_dns_record" "syncthing" {
   ttl     = 300
   proxied = false
 }
+
+resource "cloudflare_dns_record" "restic" {
+  zone_id = data.cloudflare_zone.main.zone_id
+  name    = "restic"
+  type    = "A"
+  content = data.tailscale_device.ingress.addresses[0]
+  ttl     = 300
+  proxied = false
+}

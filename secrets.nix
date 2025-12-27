@@ -28,4 +28,10 @@ in
   "cloudflare-api-token.age".publicKeys = getPublicKeysWhere (
     node: node.config.lab.services.ingress.enable
   );
+
+  # Restic REST server htpasswd file for client authentication.
+  # Generate entries with: htpasswd -nB workstation-hostname
+  "restic-htpasswd.age".publicKeys = getPublicKeysWhere (
+    node: node.config.lab.services.restic-server.enable
+  );
 }

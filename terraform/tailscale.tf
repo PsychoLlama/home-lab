@@ -37,11 +37,11 @@ resource "tailscale_acl" "primary" {
         ip  = ["3000"]
       },
 
-      # Ingress can reach Syncthing GUI on NAS
+      # Ingress can reach Syncthing GUI and Restic on NAS
       {
         src = ["tag:ingress"]
         dst = ["tag:nas"]
-        ip  = ["8384"]
+        ip  = ["8000", "8384"]
       }
     ]
 

@@ -6,6 +6,7 @@
     ./gateway.nix
     ./ingress
     ./node-exporter.nix
+    ./restic-server
     ./vpn
   ];
 }
