@@ -43,3 +43,17 @@ This activates the config without adding it to the boot menu - safer for remote 
 ## Formatting
 
 Always run `just fmt` before committing.
+
+## Infrastructure
+
+OpenTofu (`tofu`) manages external infrastructure in `terraform/`:
+
+- **Cloudflare**: DNS for `selfhosted.city`
+- **Tailscale**: ACL policies
+
+Tailscale bypasses the firewall, so don't open ports for inter-host traffic.
+
+## Tools
+
+- Use `tofu`, not `terraform`
+- Use `doggo`, not `dig`
