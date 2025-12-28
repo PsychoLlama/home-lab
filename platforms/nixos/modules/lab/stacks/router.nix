@@ -153,6 +153,27 @@ in
             id = "C4:CB:76:F1:58:EC";
             ip-address = xbox.ip4;
           }
+
+          # Withings Scale
+          {
+            type = "hw-address";
+            id = "00:24:E4:D0:77:56";
+            ip-address = "10.0.2.240";
+          }
+
+          # Withings BPM
+          {
+            type = "hw-address";
+            id = "00:24:E4:C9:CA:0A";
+            ip-address = "10.0.2.241";
+          }
+
+          # Withings Sleep
+          {
+            type = "hw-address";
+            id = "00:24:E4:AB:2E:FE";
+            ip-address = "10.0.2.242";
+          }
         ];
       };
 
