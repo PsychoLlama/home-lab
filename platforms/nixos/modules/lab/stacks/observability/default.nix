@@ -29,6 +29,17 @@ let
       }
     ))
   ];
+
+  # Find all nodes with Home Assistant enabled
+  homeAssistantTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.stacks.home-automation.enable))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:8123" ];
+        labels.instance = name;
+      }
+    ))
+  ];
 in
 
 {
@@ -39,9 +50,17 @@ in
   config = lib.mkIf cfg.enable {
     lab.services.vpn.client.tags = [ "monitoring" ];
 
+    # Home Assistant API token for Prometheus scraping
+    age.secrets.ha-prometheus-token = {
+      file = ./ha-prometheus-token.age;
+      owner = "prometheus";
+      group = "prometheus";
+    };
+
     services = {
       prometheus = {
         enable = true;
+        checkConfig = "syntax-only"; # Skip credential file checks (runtime paths)
         retentionTime = "1y";
         port = 9090;
 
@@ -70,6 +89,13 @@ in
           {
             job_name = "node";
             static_configs = nodeExporterTargets;
+          }
+
+          {
+            job_name = "home-assistant";
+            metrics_path = "/api/prometheus";
+            authorization.credentials_file = config.age.secrets.ha-prometheus-token.path;
+            static_configs = homeAssistantTargets;
           }
         ];
       };

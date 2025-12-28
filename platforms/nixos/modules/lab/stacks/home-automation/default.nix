@@ -37,6 +37,7 @@ in
 
         # Services
         "ntfy"
+        "prometheus"
 
         # OAuth support
         "application_credentials"
@@ -75,6 +76,9 @@ in
         automation = { };
         script = { };
         scene = { };
+
+        # Expose metrics to Prometheus
+        prometheus = { };
       };
     };
   };

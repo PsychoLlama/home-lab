@@ -42,4 +42,10 @@ in
   "platforms/nixos/modules/lab/services/restic-server/restic-htpasswd.age".publicKeys = keysFor (
     node: node.config.lab.services.restic-server.enable
   );
+
+  # Home Assistant long-lived access token for Prometheus scraping.
+  # Create at: HA Profile → Long-Lived Access Tokens
+  "platforms/nixos/modules/lab/stacks/observability/ha-prometheus-token.age".publicKeys = keysFor (
+    node: node.config.lab.stacks.observability.enable
+  );
 }
