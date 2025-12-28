@@ -150,7 +150,7 @@ in
         reservations = [
           {
             type = "hw-address";
-            id = "C4:CB:76:8A:C3:D7";
+            id = "C4:CB:76:F1:58:EC";
             ip-address = xbox.ip4;
           }
         ];
