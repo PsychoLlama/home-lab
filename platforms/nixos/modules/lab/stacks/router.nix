@@ -83,7 +83,7 @@ in
       };
     };
 
-    # Bridge mDNS between my IoT, Guest, and Home LAN.
+    # Bridge mDNS between my IoT, Guest, Home, and Datacenter LANs.
     services.avahi = {
       enable = true;
       reflector = true;
@@ -93,6 +93,7 @@ in
         iot.interface
         home.interface
         guest.interface
+        datacenter.interface
       ];
     };
 

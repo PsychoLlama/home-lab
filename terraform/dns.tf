@@ -31,3 +31,12 @@ resource "cloudflare_dns_record" "restic" {
   ttl     = 300
   proxied = false
 }
+
+resource "cloudflare_dns_record" "home" {
+  zone_id = data.cloudflare_zone.main.zone_id
+  name    = "home"
+  type    = "A"
+  content = data.tailscale_device.ingress.addresses[0]
+  ttl     = 300
+  proxied = false
+}

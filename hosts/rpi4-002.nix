@@ -1,5 +1,6 @@
 {
   lab.stacks = {
+    home-automation.enable = true;
     observability.enable = true;
     vpn.client.enable = true;
   };

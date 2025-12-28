@@ -15,6 +15,11 @@
       serverName = "restic.selfhosted.city";
       backend = "nas-001:8000";
     };
+
+    virtualHosts.home = {
+      serverName = "home.selfhosted.city";
+      backend = "rpi4-002:8123";
+    };
   };
 
   home-manager.users.root.home.stateVersion = "23.11";
