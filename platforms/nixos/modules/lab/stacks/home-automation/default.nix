@@ -11,6 +11,13 @@ in
   config = lib.mkIf cfg.enable {
     lab.services.vpn.client.tags = [ "home-automation" ];
 
+    # mDNS client for device discovery (works with router's Avahi reflector)
+    services.avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
+
     services.home-assistant = {
       enable = true;
 
