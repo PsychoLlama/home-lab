@@ -2,6 +2,7 @@
   description = "Hobbyist home lab";
 
   inputs = {
+    systems.url = "github:nix-systems/default";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
@@ -24,6 +25,15 @@
       inputs = {
         home-manager.follows = "home-manager";
         nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+      };
+    };
+
+    terranix = {
+      url = "github:terranix/terranix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
       };
     };
   };
@@ -36,6 +46,7 @@
       nixos-hardware,
       colmena,
       agenix,
+      terranix,
       ...
     }@flake-inputs:
 
@@ -217,6 +228,7 @@
             packages = [
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
+              terranix.packages.${system}.terranix
               pkgs.just
               pkgs.nixfmt-rfc-style
               pkgs.nixVersions.latest
@@ -292,7 +304,25 @@
               };
             }
           );
+
+          # Generate Terraform JSON config from Nix modules
+          terraformConfig = eachSystem (
+            system: _: {
+              terraform-config = terranix.lib.terranixConfiguration {
+                inherit system;
+                extraArgs = {
+                  nodes = hive.nodes;
+                };
+
+                modules = [ ./terraform/config.nix ];
+              };
+            }
+          );
         in
-        lib.recursiveUpdate hostImages testScripts;
+        lib.foldl lib.recursiveUpdate { } [
+          hostImages
+          testScripts
+          terraformConfig
+        ];
     };
 }

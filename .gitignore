@@ -2,7 +2,9 @@
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.*
-terraform/.env
+.env
+terraform/.result
+terraform/config.tf.json
 .direnv
 result
 result-*

@@ -51,6 +51,15 @@ OpenTofu (`tofu`) manages external infrastructure in `terraform/`:
 - **Cloudflare**: DNS for `selfhosted.city`
 - **Tailscale**: ACL policies
 
+Config is generated from Nix via Terranix (`terraform/*.nix`). It pulls from the colmena hive—virtualHosts become DNS records, service tags become ACL grants.
+
+```sh
+just tf-gen    # Generate terraform/config.tf.json from Nix
+just tf-apply  # Generate + apply
+```
+
+Credentials come from `TF_VAR_*` env vars (see `.env`).
+
 Tailscale bypasses the firewall, so don't open ports for inter-host traffic.
 
 ## Tools

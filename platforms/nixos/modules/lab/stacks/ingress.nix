@@ -25,6 +25,10 @@ in
               default = false;
               description = "Skip TLS verification for HTTPS backends";
             };
+            targetTag = lib.mkOption {
+              type = lib.types.str;
+              description = "Tailscale ACL tag for the backend service (used for firewall grants)";
+            };
           };
         }
       );

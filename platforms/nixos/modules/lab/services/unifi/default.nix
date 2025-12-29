@@ -42,13 +42,18 @@ in
       };
       # Bind to specific interfaces - not exposed to WAN
       ports = [
-        # AP communication (wap interface only)
-        "10.0.1.1:8080:8080" # Device inform
-        "10.0.1.1:3478:3478/udp" # STUN
-        "10.0.1.1:10001:10001/udp" # AP discovery
-        # Web UI via Tailscale only (ingress connects through Tailscale)
-        # TODO: Hardcoded Tailscale IP is brittle. If the IP changes, update
-        # this or implement dynamic IP resolution at service start.
+        # Device inform: APs phone home to report status and receive config
+        "10.0.1.1:8080:8080"
+
+        # STUN: NAT traversal for guest portal hotspot functionality
+        "10.0.1.1:3478:3478/udp"
+
+        # AP discovery: L3 adoption when APs aren't on the same L2 network
+        "10.0.1.1:10001:10001/udp"
+
+        # Web UI: HTTPS management interface, exposed only on Tailscale IP
+        # so ingress can proxy it. TODO: Hardcoded IP is brittle - if the
+        # Tailscale IP changes, this breaks.
         "100.88.147.49:8443:8443"
       ];
       volumes = [
@@ -61,7 +66,10 @@ in
       # Home network (where AP lives)
       wap = {
         allowedTCPPorts = [ 8080 ]; # Device inform
-        allowedUDPPorts = [ 3478 10001 ]; # STUN + discovery
+        allowedUDPPorts = [
+          3478
+          10001
+        ]; # STUN + discovery
       };
     };
   };
