@@ -47,6 +47,10 @@ in
       ];
 
       config = {
+        # Disable hardware integrations (no USB/Bluetooth on this host)
+        usb = { };
+        bluetooth = { };
+
         homeassistant = {
           name = "Home";
           unit_system = "us_customary";
@@ -72,10 +76,12 @@ in
         zeroconf = { };
         ssdp = { };
 
-        # Automation framework
-        automation = { };
-        script = { };
-        scene = { };
+        # Automation framework (UI-managed via storage)
+        # NOTE: These files must exist in /var/lib/hass/ on first deploy:
+        #   touch automations.yaml scripts.yaml scenes.yaml
+        automation = "!include automations.yaml";
+        script = "!include scripts.yaml";
+        scene = "!include scenes.yaml";
 
         # Expose metrics to Prometheus
         prometheus = { };
