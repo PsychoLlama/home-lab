@@ -7,6 +7,7 @@
     ./ingress
     ./node-exporter.nix
     ./restic-server
+    ./unifi
     ./vpn
   ];
 }

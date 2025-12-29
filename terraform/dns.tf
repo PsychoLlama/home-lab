@@ -40,3 +40,12 @@ resource "cloudflare_dns_record" "home" {
   ttl     = 300
   proxied = false
 }
+
+resource "cloudflare_dns_record" "unifi" {
+  zone_id = data.cloudflare_zone.main.zone_id
+  name    = "unifi"
+  type    = "A"
+  content = data.tailscale_device.ingress.addresses[0]
+  ttl     = 300
+  proxied = false
+}

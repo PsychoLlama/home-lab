@@ -50,6 +50,13 @@ resource "tailscale_acl" "primary" {
         src = ["tag:ingress"]
         dst = ["tag:home-automation"]
         ip  = ["8123"]
+      },
+
+      # Ingress can reach UniFi controller on router
+      {
+        src = ["tag:ingress"]
+        dst = ["tag:router"]
+        ip  = ["8443"]
       }
     ]
 

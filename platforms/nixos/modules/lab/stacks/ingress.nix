@@ -20,6 +20,11 @@ in
               type = lib.types.str;
               description = "Backend URL to proxy to";
             };
+            insecure = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Skip TLS verification for HTTPS backends";
+            };
           };
         }
       );

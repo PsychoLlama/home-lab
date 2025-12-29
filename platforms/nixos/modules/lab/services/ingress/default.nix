@@ -15,17 +15,27 @@ let
   };
 
   # Generate Caddyfile from virtualHosts
-  caddyfile = pkgs.writeText "Caddyfile" (
-    lib.concatStringsSep "\n\n" (
-      lib.mapAttrsToList (_: vhost: ''
-        ${vhost.serverName} {
-          tls {
-            dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  mkVhost =
+    _: vhost:
+    let
+      transport = lib.optionalString vhost.insecure ''
+        {
+          transport http {
+            tls_insecure_skip_verify
           }
-          reverse_proxy ${vhost.backend}
+        }'';
+    in
+    ''
+      ${vhost.serverName} {
+        tls {
+          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         }
-      '') cfg.virtualHosts
-    )
+        reverse_proxy ${vhost.backend}${lib.optionalString vhost.insecure " "}${transport}
+      }
+    '';
+
+  caddyfile = pkgs.writeText "Caddyfile" (
+    lib.concatStringsSep "\n" (lib.mapAttrsToList mkVhost cfg.virtualHosts)
   );
 in
 
@@ -44,6 +54,11 @@ in
             backend = lib.mkOption {
               type = lib.types.str;
               description = "Backend URL to proxy to";
+            };
+            insecure = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Skip TLS verification for HTTPS backends";
             };
           };
         }

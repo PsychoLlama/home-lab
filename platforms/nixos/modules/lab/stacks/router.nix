@@ -57,6 +57,9 @@ in
     deployment.tags = [ "router" ];
     lab.services.vpn.client.tags = [ "router" ];
 
+    # UniFi Network Controller for managing the U6-Lite AP
+    lab.services.unifi.enable = true;
+
     environment.systemPackages = [
       pkgs.unstable.bottom # System load observer
       pkgs.unstable.conntrack-tools # Inspect active connection states
