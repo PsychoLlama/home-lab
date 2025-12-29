@@ -27,6 +27,11 @@
       # UniFi uses a self-signed cert; skip verification since it's internal
       insecure = true;
     };
+
+    virtualHosts.ntfy = {
+      serverName = "ntfy.selfhosted.city";
+      backend = "rpi4-002:2586";
+    };
   };
 
   home-manager.users.root.home.stateVersion = "23.11";

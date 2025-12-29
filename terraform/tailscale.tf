@@ -15,6 +15,7 @@ resource "tailscale_acl" "primary" {
       "tag:monitoring"      = ["autogroup:admin", "tag:monitoring"]
       "tag:ingress"         = ["autogroup:admin", "tag:ingress"]
       "tag:home-automation" = ["autogroup:admin", "tag:home-automation"]
+      "tag:ntfy"            = ["autogroup:admin", "tag:ntfy"]
     }
 
     grants = [
@@ -50,6 +51,20 @@ resource "tailscale_acl" "primary" {
         src = ["tag:ingress"]
         dst = ["tag:home-automation"]
         ip  = ["8123"]
+      },
+
+      # Home Assistant can reach ingress (for ntfy integration)
+      {
+        src = ["tag:home-automation"]
+        dst = ["tag:ingress"]
+        ip  = ["443"]
+      },
+
+      # Ingress can reach ntfy
+      {
+        src = ["tag:ingress"]
+        dst = ["tag:ntfy"]
+        ip  = ["2586"]
       },
 
       # Ingress can reach UniFi controller on router
