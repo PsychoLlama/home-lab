@@ -23,12 +23,11 @@ in
       authKeyFile = config.age.secrets.tailscale-oauth.path;
       extraUpFlags =
         let
-          baseTags = [
+          # Minimal tags for initial auth - Terraform manages the full set
+          tagList = lib.concatMapStringsSep "," (t: "tag:${t}") [
             "lab"
             config.lab.datacenter
           ];
-          allTags = baseTags ++ cfg.tags;
-          tagList = lib.concatMapStringsSep "," (t: "tag:${t}") allTags;
         in
         [ "--advertise-tags=${tagList}" ];
     };

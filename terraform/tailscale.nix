@@ -12,10 +12,12 @@ let
     "mobile"
   ];
 
+  # Nodes with VPN enabled (for device tag management)
+  vpnNodes = lib.filterAttrs (_: node: node.config.lab.services.vpn.client.enable) nodes;
+
   # Collect all unique tags from all hosts
-  hostTags = lib.pipe nodes [
+  hostTags = lib.pipe vpnNodes [
     lib.attrValues
-    (lib.filter (node: node.config.lab.services.vpn.client.enable))
     (map (
       node:
       node.config.lab.services.vpn.client.tags
@@ -111,4 +113,24 @@ in
       }
     ];
   };
+
+  # Look up each VPN-enabled device by hostname
+  data.tailscale_device = lib.mapAttrs (hostname: _: {
+    inherit hostname;
+  }) vpnNodes;
+
+  # Apply tags to each device via Terraform (instead of --advertise-tags)
+  resource.tailscale_device_tags = lib.mapAttrs (
+    name: node:
+
+    {
+      device_id = "\${data.tailscale_device.${name}.id}";
+      tags = map (t: "tag:${t}") (
+        node.config.lab.services.vpn.client.tags
+        ++ [
+          "lab"
+          node.config.lab.datacenter
+        ]
+      );
+    }) vpnNodes;
 }

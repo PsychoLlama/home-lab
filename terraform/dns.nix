@@ -23,10 +23,7 @@ assert lib.assertMsg (
     filter.name = domain;
   };
 
-  data.tailscale_device.ingress = {
-    hostname = ingressHostName;
-    wait_for = "60s";
-  };
+  data.tailscale_device.ingress.hostname = ingressHostName;
 
   resource.cloudflare_dns_record = lib.mapAttrs' (_: vhost: {
     name = subdomainOf vhost.serverName;
