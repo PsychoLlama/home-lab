@@ -39,6 +39,9 @@
     };
   };
 
+  # Public ingress via Cloudflare Tunnel (no open WAN ports)
+  lab.stacks.ingress.public.enable = true;
+
   home-manager.users.root.home.stateVersion = "23.11";
   system.stateVersion = "21.05";
 }

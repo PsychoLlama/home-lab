@@ -8,6 +8,7 @@
     ./node-exporter.nix
     ./ntfy.nix
     ./restic-server
+    ./tunnel
     ./unifi
     ./vpn
   ];

@@ -19,6 +19,11 @@
     sensitive = true;
   };
 
+  variable.cloudflare_account_id = {
+    type = "string";
+    description = "Cloudflare account ID for Zero Trust resources";
+  };
+
   variable.tailscale_api_key = {
     type = "string";
     sensitive = true;

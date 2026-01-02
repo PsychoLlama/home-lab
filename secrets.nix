@@ -48,4 +48,9 @@ in
   "platforms/nixos/modules/lab/stacks/observability/ha-prometheus-token.age".publicKeys = keysFor (
     node: node.config.lab.stacks.observability.enable
   );
+
+  # Cloudflare Tunnel token for public ingress.
+  "platforms/nixos/modules/lab/services/tunnel/cloudflare-tunnel-token.age".publicKeys = keysFor (
+    node: node.config.lab.services.tunnel.enable
+  );
 }
