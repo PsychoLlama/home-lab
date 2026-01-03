@@ -208,6 +208,12 @@ in
         };
 
         forward = [
+          # MagicDNS for Tailscale hostnames (used by split-horizon CNAMEs)
+          {
+            zone = "ts.net";
+            method = "udp";
+            udp.ip = "100.100.100.100";
+          }
           {
             zone = ".";
             tls = {
