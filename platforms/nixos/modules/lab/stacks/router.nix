@@ -182,11 +182,21 @@ in
 
       dns = {
         enable = true;
-        interfaces = lib.mapAttrsToList (_: net: net.interface) networks;
+        interfaces = lib.mapAttrsToList (_: net: net.interface) networks ++ [ "tailscale0" ];
         server.id = config.networking.fqdn;
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
-        zone.name = "host.${config.lab.domain}";
         prometheus.enable = true;
+
+        # Wildcard zone for services (routes all *.selfhosted.city to ingress)
+        zones.${config.lab.domain} = {
+          records = [
+            {
+              type = "CNAME";
+              name = "*";
+              value = "rpi4-003.${config.lab.tailnet}.";
+            }
+          ];
+        };
 
         discovery = {
           enable = true;

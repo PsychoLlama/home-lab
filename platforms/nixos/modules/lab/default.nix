@@ -26,5 +26,11 @@
       example = "garage";
       description = "Name of the datacenter. This becomes a subdomain.";
     };
+
+    tailnet = lib.mkOption {
+      type = lib.types.str;
+      example = "tailabcdef.ts.net";
+      description = "Tailscale MagicDNS suffix for the tailnet";
+    };
   };
 }

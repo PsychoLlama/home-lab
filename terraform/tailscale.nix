@@ -1,10 +1,18 @@
 { lib, nodes, ... }:
 
 let
+  # Read lab config from any node (shared via defaults)
+  labConfig = (lib.head (lib.attrValues nodes)).config.lab;
+  domain = labConfig.domain;
+
   # Find the ingress host by looking for which node has ingress enabled
   ingressHosts = lib.filterAttrs (_: node: node.config.lab.stacks.ingress.enable or false) nodes;
   ingressHostName = lib.head (lib.attrNames ingressHosts);
   virtualHosts = ingressHosts.${ingressHostName}.config.lab.stacks.ingress.virtualHosts;
+
+  # Find the router host (runs CoreDNS for split horizon DNS)
+  routerHosts = lib.filterAttrs (_: node: node.config.lab.stacks.router.enable or false) nodes;
+  routerHostName = lib.head (lib.attrNames routerHosts);
 
   # Client device tags (not managed by NixOS, but referenced in grants)
   clientTags = [
@@ -102,6 +110,13 @@ in
           "443"
         ];
       }
+
+      # All devices can use the router's DNS server for split horizon DNS
+      {
+        src = [ "*" ];
+        dst = [ "tag:router" ];
+        ip = [ "53" ];
+      }
     ];
 
     ssh = [
@@ -133,4 +148,10 @@ in
         ]
       );
     }) vpnNodes;
+
+  # Split horizon DNS: forward domain queries to the router's CoreDNS
+  resource.tailscale_dns_split_nameservers.private_services = {
+    inherit domain;
+    nameservers = [ "\${data.tailscale_device.${routerHostName}.addresses[0]}" ];
+  };
 }

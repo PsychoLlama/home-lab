@@ -147,74 +147,76 @@ in
       );
     };
 
-    zone = {
-      name = mkOption {
-        type = types.nullOr types.str;
-        example = "dc1.example.com";
-        default = null;
-        description = ''
-          The DNS zone to serve. This is the domain name for which the server
-          is authoritative. It is used to generate the zone file.
-        '';
-      };
+    zones = mkOption {
+      type = types.attrsOf (
+        types.submodule (
+          { name, ... }:
+          {
+            options.records = mkOption {
+              type = types.listOf (
+                types.submodule {
+                  options.type = mkOption {
+                    type = types.str;
+                    description = "The type of DNS record to create";
+                  };
 
-      file = mkOption {
-        type = types.path;
-        default = pkgs.unstable.writeText "local.zone" ''
-          $ORIGIN ${cfg.zone.name}.
-          @       IN SOA dns trash (
-                  1         ; Version number
-                  60        ; Zone refresh interval
-                  30        ; Zone update retry timeout
-                  180       ; Zone TTL
-                  3600)     ; Negative response TTL
+                  options.name = mkOption {
+                    type = types.str;
+                    description = ''
+                      Any BIND zone record identifier, usually a subdomain name.
+                      Use <literal>@</literal> for apex records.
+                    '';
+                  };
 
-          ; Custom records
-          ${lib.concatMapStrings (record: ''
-            ${record.name}  ${record.ttl} IN ${record.type} ${record.value}
-          '') cfg.zone.records}
-        '';
+                  options.value = mkOption {
+                    type = types.str;
+                    description = "IP addresses pointing to the service";
+                  };
 
-        description = ''
-          Path to a BIND zone file. Setting this option will override
-          the generated config.
-        '';
-      };
+                  options.ttl = mkOption {
+                    type = types.str;
+                    description = "Length of time in seconds to cache the record";
+                    default = cfg.ttl;
+                  };
+                }
+              );
 
-      records = mkOption {
-        type = types.listOf (
-          types.submodule {
-            options.type = mkOption {
-              type = types.str;
-              description = "The type of DNS record to create";
+              description = "DNS records for this zone";
+              default = [ ];
             };
 
-            options.name = mkOption {
-              type = types.str;
-              description = ''
-                Any BIND zone record identifier, usually a subdomain name.
-                Use <literal>@</literal> for apex records.
+            options.file = mkOption {
+              type = types.path;
+              readOnly = true;
+              default = pkgs.unstable.writeText "${name}.zone" ''
+                $ORIGIN ${name}.
+                @       IN SOA dns trash (
+                        1         ; Version number
+                        60        ; Zone refresh interval
+                        30        ; Zone update retry timeout
+                        180       ; Zone TTL
+                        3600)     ; Negative response TTL
 
-                Note: Only domains within the lab's zone are recognized.
+                ; Custom records
+                ${lib.concatMapStrings (record: ''
+                  ${record.name}  ${record.ttl} IN ${record.type} ${record.value}
+                '') cfg.zones.${name}.records}
+              '';
+
+              description = ''
+                Path to a BIND zone file. Setting this option will override
+                the generated config.
               '';
             };
-
-            options.value = mkOption {
-              type = types.str;
-              description = "IP addresses pointing to the service";
-            };
-
-            options.ttl = mkOption {
-              type = types.str;
-              description = "Length of time in seconds to cache the record";
-              default = cfg.ttl;
-            };
           }
-        );
+        )
+      );
 
-        description = "Insert custom DNS records";
-        default = [ ];
-      };
+      default = { };
+      description = ''
+        DNS zones to serve. Each attribute name is the zone name (e.g.,
+        "example.com") and the value contains the zone configuration.
+      '';
     };
 
     hosts.file = mkOption {
@@ -257,27 +259,44 @@ in
           ${lib.optionalString (cfg.server.id != null) "nsid ${cfg.server.id}"}
         }
 
+        ${lib.optionalString cfg.discovery.enable ''
+          # Discovery zones get their own server block to avoid being
+          # shadowed by wildcard zones in parent domains.
+          ${toString cfg.discovery.zones} {
+            import common
+            cache ${cfg.ttl}
+
+            etcd {
+              path ${cfg.discovery.dns.prefix}
+              fallthrough
+            }
+
+            ${lib.concatMapStringsSep "\n" forward cfg.forward}
+          }
+        ''}
+
+        ${lib.concatStrings (
+          lib.mapAttrsToList (zoneName: zone: ''
+            # Zone server block for ${zoneName}
+            ${zoneName} {
+              import common
+              cache ${cfg.ttl}
+
+              file ${zone.file} {
+                reload 0
+              }
+
+              ${lib.concatMapStringsSep "\n" forward cfg.forward}
+            }
+          '') cfg.zones
+        )}
+
         . {
           import common
           cache ${cfg.ttl}
 
           ${lib.optionalString cfg.prometheus.enable ''
             prometheus 0.0.0.0:${toString cfg.prometheus.port}
-          ''}
-
-          ${lib.optionalString (cfg.zone.name != null) ''
-            # WARN: This takes full control of whatever zone it's given.
-            # There is no fallthrough. It will fight you.
-            file ${cfg.zone.file} ${cfg.zone.name} {
-              reload 0
-            }
-          ''}
-
-          ${lib.optionalString cfg.discovery.enable ''
-            etcd ${toString cfg.discovery.zones} {
-              path ${cfg.discovery.dns.prefix}
-              fallthrough
-            }
           ''}
 
           hosts ${cfg.hosts.file} {

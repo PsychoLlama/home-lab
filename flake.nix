@@ -56,6 +56,7 @@
 
       domain = "selfhosted.city";
       datacenter = "nova";
+      tailnet = "taila3423a.ts.net";
 
       # A subset of Hydra's standard architectures.
       standardSystems = [
@@ -149,7 +150,7 @@
 
       colmena = (lib.mapAttrs defineHost hosts) // rec {
         defaults.lab = {
-          inherit datacenter domain;
+          inherit datacenter domain tailnet;
 
           # Enable node exporter on all lab nodes for monitoring
           services.node-exporter.enable = true;

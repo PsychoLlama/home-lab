@@ -37,15 +37,34 @@ makeTest {
           dns.prefix = "/${config.lab.services.discovery.server.dns.prefix.name}";
         };
 
-        zone = {
-          name = "host.example.com";
-          records = [
-            {
-              type = "TXT";
-              name = "custom-record";
-              value = "magic-string-record";
-            }
-          ];
+        # Test multiple zones with hierarchy (more specific zone takes precedence)
+        zones = {
+          # Wildcard zone for services - separate from discovery zone
+          "services.test" = {
+            records = [
+              {
+                type = "CNAME";
+                name = "*";
+                value = "ingress.services.test.";
+              }
+              {
+                type = "A";
+                name = "ingress";
+                value = "192.168.1.1";
+              }
+            ];
+          };
+
+          # More specific zone takes precedence over parent wildcard
+          "host.services.test" = {
+            records = [
+              {
+                type = "TXT";
+                name = "custom-record";
+                value = "magic-string-record";
+              }
+            ];
+          };
         };
 
         hosts.file = pkgs.writeText "hosts" ''
@@ -101,13 +120,13 @@ makeTest {
         assert "magic-string-nsid" in nsid_line, "NSID not in response"
 
       with subtest("resolves custom records"):
-        result = machine.succeed("doggo @localhost TXT custom-record.host.example.com")
+        result = machine.succeed("doggo @localhost TXT custom-record.host.services.test")
         print(result)
         assert "magic-string-record" in result, "Custom record not in response"
 
       with subtest("uses local server as system DNS resolver"):
         # Not specifying the server address - pull from `/etc/resolv.conf`.
-        result = machine.succeed("doggo TXT custom-record.host.example.com")
+        result = machine.succeed("doggo TXT custom-record.host.services.test")
         print(result)
         assert "magic-string-record" in result, "Local server was not used"
 
@@ -123,6 +142,25 @@ makeTest {
         resolved = machine.succeed("doggo @localhost A test.dyn.example.com")
         print(resolved)
         assert "10.20.30.40" in resolved, "Dynamic record not in response"
+
+      with subtest("wildcard zone resolves subdomains"):
+        # The wildcard *.services.test should return a CNAME to ingress.services.test
+        result = machine.succeed("doggo @localhost CNAME foo.services.test")
+        print(result)
+        assert "ingress.services.test." in result, "Wildcard CNAME not in response"
+
+      with subtest("wildcard CNAME chain resolves to A record"):
+        # Following the CNAME to ingress.services.test should resolve to an A record
+        result = machine.succeed("doggo @localhost A foo.services.test")
+        print(result)
+        assert "192.168.1.1" in result, "Wildcard CNAME chain did not resolve to A record"
+
+      with subtest("specific zone takes precedence over wildcard"):
+        # host.services.test is more specific than services.test, so its records
+        # should be served instead of the wildcard from services.test
+        result = machine.succeed("doggo @localhost TXT custom-record.host.services.test")
+        print(result)
+        assert "magic-string-record" in result, "Specific zone did not take precedence"
 
       # No tests for DNS forwarding. Just try not to break it :)
     '';
