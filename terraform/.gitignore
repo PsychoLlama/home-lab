@@ -1,6 +1,5 @@
 # Generated from Nix
 config.json
-.result
 
 # Terraform state and cache
 .terraform/
