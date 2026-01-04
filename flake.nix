@@ -29,13 +29,6 @@
       };
     };
 
-    terranix = {
-      url = "github:terranix/terranix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        systems.follows = "systems";
-      };
-    };
   };
 
   outputs =
@@ -46,7 +39,6 @@
       nixos-hardware,
       colmena,
       agenix,
-      terranix,
       ...
     }@flake-inputs:
 
@@ -229,7 +221,6 @@
             packages = [
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
-              terranix.packages.${system}.terranix
               pkgs.just
               pkgs.nixfmt-rfc-style
               pkgs.nixVersions.latest
@@ -306,24 +297,17 @@
             }
           );
 
-          # Generate Terraform JSON config from Nix modules
-          terraformConfig = eachSystem (
-            system: _: {
-              terraform-config = terranix.lib.terranixConfiguration {
-                inherit system;
-                extraArgs = {
-                  nodes = hive.nodes;
-                };
-
-                modules = [ ./terraform/config.nix ];
-              };
+          # Export node data as JSON for Terraform consumption
+          terraformData = eachSystem (
+            _: pkgs: {
+              terraform-config = pkgs.callPackage ./pkgs/terraform-config { nodes = hive.nodes; };
             }
           );
         in
         lib.foldl lib.recursiveUpdate { } [
           hostImages
           testScripts
-          terraformConfig
+          terraformData
         ];
     };
 }

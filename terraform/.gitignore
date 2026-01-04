@@ -1,0 +1,9 @@
+# Generated from Nix
+config.json
+.result
+
+# Terraform state and cache
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl

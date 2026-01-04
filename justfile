@@ -26,10 +26,10 @@ test expr:
 check:
     @just fmt-check
 
-# Generate Terraform config from Nix.
+# Generate Terraform data from Nix.
 tf-gen:
     nix build .#terraform-config -o terraform/.result
-    install -m 644 terraform/.result terraform/config.tf.json
+    install -m 644 terraform/.result terraform/config.json
 
 # Apply infrastructure changes (runs plan first).
 tf-apply: tf-gen

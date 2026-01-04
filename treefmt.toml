@@ -1,3 +1,8 @@
 [formatter.nix]
 command = "nixfmt"
 includes = ["*.nix"]
+
+[formatter.tofu]
+command = "tofu"
+options = ["fmt", "-"]
+includes = ["*.tf"]
