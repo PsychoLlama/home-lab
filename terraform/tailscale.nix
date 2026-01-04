@@ -75,6 +75,14 @@ in
     ]);
 
     grants = ingressGrants ++ [
+      # Cloudflare Tunnel -> Caddy (both on ingress host)
+      # Tunnel routes through Caddy for access logging.
+      {
+        src = [ "tag:public-gateway" ];
+        dst = [ "tag:ingress" ];
+        ip = [ "443" ];
+      }
+
       # Home Assistant -> ingress for ntfy-sh webhooks
       {
         src = [ "tag:home-automation" ];
@@ -135,6 +143,7 @@ in
   }) vpnNodes;
 
   # Apply tags to each device via Terraform (instead of --advertise-tags)
+  # depends_on ACL because tags must exist in tagOwners before assignment.
   resource.tailscale_device_tags = lib.mapAttrs (
     name: node:
 
@@ -147,6 +156,7 @@ in
           node.config.lab.datacenter
         ]
       );
+      depends_on = [ "tailscale_acl.primary" ];
     }) vpnNodes;
 
   # Split horizon DNS: forward domain queries to the router's CoreDNS
