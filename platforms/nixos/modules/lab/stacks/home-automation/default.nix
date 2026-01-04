@@ -38,6 +38,7 @@ in
         # Services
         "ntfy"
         "prometheus"
+        "webhook"
 
         # OAuth support
         "application_credentials"
