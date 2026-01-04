@@ -27,6 +27,7 @@ let
     in
     ''
       ${vhost.serverName} {
+        log
         tls {
           dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         }
@@ -44,6 +45,7 @@ in
     enable = lib.mkEnableOption "Caddy reverse proxy with automatic HTTPS";
 
     virtualHosts = lib.mkOption {
+      default = { };
       type = lib.types.attrsOf (
         lib.types.submodule {
           options = {
@@ -67,7 +69,6 @@ in
           };
         }
       );
-      default = { };
     };
   };
 
