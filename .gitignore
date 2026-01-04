@@ -3,8 +3,6 @@
 *.tfstate
 *.tfstate.*
 .env
-terraform/.result
-terraform/config.tf.json
 .direnv
 result
 result-*

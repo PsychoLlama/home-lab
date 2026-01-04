@@ -28,8 +28,7 @@ check:
 
 # Generate Terraform data from Nix.
 tf-gen:
-    nix build .#terraform-config -o terraform/.result
-    install -m 644 terraform/.result terraform/config.json
+    nix build .#terraform-config -o terraform/config.json
 
 # Apply infrastructure changes (runs plan first).
 tf-apply: tf-gen
