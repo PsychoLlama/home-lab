@@ -230,6 +230,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Ensure CoreDNS starts after Tailscale so the interface has its IPv4 address.
+    # CoreDNS caches interface addresses at startup and won't rebind later.
+    systemd.services.coredns = lib.mkIf (lib.elem "tailscale0" cfg.interfaces) {
+      wants = [ "tailscaled.service" ];
+      after = [ "tailscaled.service" ];
+    };
+
     networking = {
       # Ignore advertised DNS servers and resolve queries locally. In HA
       # setups, other nameservers may be unresponsive.

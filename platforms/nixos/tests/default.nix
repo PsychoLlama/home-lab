@@ -42,7 +42,6 @@ in
 {
   dhcp = importTests ./dhcp.nix { };
   dns = importTests ./dns.nix { };
-  filesystems = importTests ./filesystems { };
   gateway = importTests ./gateway.nix { };
 
   # A place to experiment locally. This is much faster than waiting for

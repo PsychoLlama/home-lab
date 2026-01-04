@@ -29,7 +29,7 @@ Tests can be executed by entering a dev shell and running `project test <drv_pat
 
 ```bash
 # Example:
-project test filesystems.zfs
+project test dns
 ```
 
 To cripple your machine by running all tests, do:
