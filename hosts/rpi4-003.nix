@@ -1,5 +1,5 @@
 {
-  lab.stacks.ingress = {
+  lab.stacks.ingress.private = {
     enable = true;
     virtualHosts.grafana = {
       serverName = "grafana.selfhosted.city";

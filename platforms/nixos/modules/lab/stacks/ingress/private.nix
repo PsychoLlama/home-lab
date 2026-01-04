@@ -1,12 +1,12 @@
 { config, lib, ... }:
 
 let
-  cfg = config.lab.stacks.ingress;
+  cfg = config.lab.stacks.ingress.private;
 in
 
 {
-  options.lab.stacks.ingress = {
-    enable = lib.mkEnableOption "ingress stack (Caddy + VPN)";
+  options.lab.stacks.ingress.private = {
+    enable = lib.mkEnableOption "private ingress stack (Caddy + VPN)";
 
     virtualHosts = lib.mkOption {
       type = lib.types.attrsOf (
