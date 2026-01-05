@@ -14,36 +14,52 @@ let
     hash = "sha256-ea8PC/+SlPRdEVVF/I3c1CBprlVp1nrumKM5cMwJJ3U=";
   };
 
-  # Generate Caddyfile from virtualHosts
-  mkVhost =
+  # Parse backend URL to extract dial address
+  # Handles both "host:port" and "https://host:port" formats
+  parseBackend =
+    backend:
+    let
+      isHttps = lib.hasPrefix "https://" backend;
+      stripped = lib.removePrefix "https://" (lib.removePrefix "http://" backend);
+    in
+    {
+      dial = stripped;
+      inherit isHttps;
+    };
+
+  # Generate a route for a virtualHost
+  mkRoute =
     _: vhost:
     let
-      proxyOpts = lib.optionalString (vhost.insecure || vhost.streaming) ''
+      backend = parseBackend vhost.backend;
+      needsTls = vhost.insecure || backend.isHttps;
+      needsTransport = needsTls || vhost.streaming;
+      transport = lib.optionalAttrs needsTransport (
         {
-          ${lib.optionalString vhost.streaming "flush_interval -1"}
-          transport http {
-            ${lib.optionalString vhost.insecure "tls_insecure_skip_verify"}
-            ${lib.optionalString vhost.streaming ''
-              read_timeout 0
-              write_timeout 0''}
-          }
-        }'';
-    in
-    ''
-      ${vhost.serverName} {
-        log
-        tls {
-          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+          protocol = "http";
         }
-        reverse_proxy ${vhost.backend}${
-          lib.optionalString (vhost.insecure || vhost.streaming) " "
-        }${proxyOpts}
+        // lib.optionalAttrs needsTls {
+          tls.insecure_skip_verify = vhost.insecure;
+        }
+        // lib.optionalAttrs vhost.streaming {
+          read_timeout = 0;
+          write_timeout = 0;
+        }
+      );
+      handler = {
+        handler = "reverse_proxy";
+        upstreams = [ { dial = backend.dial; } ];
       }
-    '';
+      // lib.optionalAttrs vhost.streaming { flush_interval = -1; }
+      // lib.optionalAttrs (transport != { }) { inherit transport; };
+    in
+    {
+      match = [ { host = [ vhost.serverName ]; } ];
+      handle = [ handler ];
+    };
 
-  caddyfile = pkgs.writeText "Caddyfile" (
-    lib.concatStringsSep "\n" (lib.mapAttrsToList mkVhost cfg.virtualHosts)
-  );
+  # Collect all server names for TLS policy
+  allServerNames = lib.mapAttrsToList (_: vhost: vhost.serverName) cfg.virtualHosts;
 in
 
 {
@@ -89,7 +105,30 @@ in
     services.caddy = {
       enable = true;
       package = caddyWithCloudflare;
-      configFile = caddyfile;
+
+      settings = {
+        apps = {
+          http.servers.main = {
+            listen = [ ":443" ];
+            routes = lib.mapAttrsToList mkRoute cfg.virtualHosts;
+          };
+
+          tls.automation.policies = [
+            {
+              subjects = allServerNames;
+              issuers = [
+                {
+                  module = "acme";
+                  challenges.dns.provider = {
+                    name = "cloudflare";
+                    api_token = "{env.CLOUDFLARE_API_TOKEN}";
+                  };
+                }
+              ];
+            }
+          ];
+        };
+      };
     };
 
     systemd.services.caddy.serviceConfig.EnvironmentFile = config.age.secrets.cloudflare-api-token.path;
