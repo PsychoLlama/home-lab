@@ -40,6 +40,68 @@ let
       }
     ))
   ];
+
+  # Find all nodes with Syncthing enabled
+  syncthingTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.services.syncthing.enable))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:8384" ];
+        labels.instance = name;
+      }
+    ))
+  ];
+
+  # Find all nodes with Caddy ingress enabled and metrics exposed
+  caddyTargets = lib.pipe nodes [
+    (lib.filterAttrs (
+      _: node:
+      node.config.lab.services.ingress.enable && node.config.lab.services.ingress.prometheus.enable
+    ))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:2019" ];
+        labels.instance = name;
+      }
+    ))
+  ];
+
+  # Find all nodes with etcd discovery server enabled
+  etcdTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.services.discovery.server.enable))
+    (lib.mapAttrsToList (
+      name: _: {
+        targets = [ "${name}:2379" ];
+        labels.instance = name;
+      }
+    ))
+  ];
+
+  # Find all nodes with Kea DHCP metrics enabled
+  keaTargets = lib.pipe nodes [
+    (lib.filterAttrs (
+      _: node: node.config.lab.services.dhcp.enable && node.config.lab.services.dhcp.prometheus.enable
+    ))
+    (lib.mapAttrsToList (
+      name: node: {
+        targets = [ "${name}:${toString node.config.lab.services.dhcp.prometheus.port}" ];
+        labels.instance = name;
+      }
+    ))
+  ];
+
+  # Find all nodes with ntfy metrics enabled
+  ntfyTargets = lib.pipe nodes [
+    (lib.filterAttrs (
+      _: node: node.config.lab.services.ntfy.enable && node.config.lab.services.ntfy.prometheus.enable
+    ))
+    (lib.mapAttrsToList (
+      name: node: {
+        targets = [ "${name}:${toString node.config.lab.services.ntfy.prometheus.port}" ];
+        labels.instance = name;
+      }
+    ))
+  ];
 in
 
 {
@@ -96,6 +158,31 @@ in
             metrics_path = "/api/prometheus";
             authorization.credentials_file = config.age.secrets.ha-prometheus-token.path;
             static_configs = homeAssistantTargets;
+          }
+
+          {
+            job_name = "syncthing";
+            static_configs = syncthingTargets;
+          }
+
+          {
+            job_name = "caddy";
+            static_configs = caddyTargets;
+          }
+
+          {
+            job_name = "etcd";
+            static_configs = etcdTargets;
+          }
+
+          {
+            job_name = "kea";
+            static_configs = keaTargets;
+          }
+
+          {
+            job_name = "ntfy";
+            static_configs = ntfyTargets;
           }
         ];
       };

@@ -55,6 +55,8 @@ in
   options.lab.services.ingress = {
     enable = lib.mkEnableOption "Caddy reverse proxy with automatic HTTPS";
 
+    prometheus.enable = lib.mkEnableOption "Expose Prometheus metrics on :2019";
+
     hosts = lib.mkOption {
       default = { };
       type = lib.types.attrsOf (
@@ -100,6 +102,11 @@ in
       package = caddyWithCloudflare;
 
       settings = {
+        admin = lib.mkIf cfg.prometheus.enable {
+          listen = "0.0.0.0:2019";
+          origins = [ "0.0.0.0:2019" ];
+        };
+
         apps = {
           http.servers.main = {
             listen = [ ":443" ];

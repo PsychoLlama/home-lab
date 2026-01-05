@@ -21,6 +21,16 @@ in
 {
   options.lab.services.dhcp = {
     enable = lib.mkEnableOption "Run a DHCP server";
+
+    prometheus = {
+      enable = lib.mkEnableOption "Expose Prometheus metrics via kea-exporter";
+      port = lib.mkOption {
+        type = types.port;
+        default = 9547;
+        description = "Port for the Prometheus metrics endpoint";
+      };
+    };
+
     networks = mkOption {
       description = "DHCP server configuration per interface";
       default = { };
@@ -159,13 +169,38 @@ in
       value.allowedUDPPorts = [ 67 ];
     }) networks;
 
+    # Prometheus exporter for Kea DHCP metrics
+    services.prometheus.exporters.kea = lib.mkIf cfg.prometheus.enable {
+      enable = true;
+      port = cfg.prometheus.port;
+      targets = [ "http://localhost:8000" ];
+    };
+
     services.kea = {
+      # Control agent provides HTTP API for metrics
+      ctrl-agent = lib.mkIf cfg.prometheus.enable {
+        enable = true;
+        settings = {
+          http-host = "127.0.0.1";
+          http-port = 8000;
+          control-sockets.dhcp4 = {
+            socket-type = "unix";
+            socket-name = "/run/kea/dhcp4.sock";
+          };
+        };
+      };
+
       dhcp4 = {
         enable = true;
         settings = {
           valid-lifetime = 3600;
           renew-timer = 900;
           rebind-timer = 1800;
+
+          control-socket = lib.mkIf cfg.prometheus.enable {
+            socket-type = "unix";
+            socket-name = "/run/kea/dhcp4.sock";
+          };
 
           hooks-libraries = lib.mkIf cfg.discovery.enable [
             {

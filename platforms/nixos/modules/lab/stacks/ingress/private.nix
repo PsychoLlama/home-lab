@@ -17,6 +17,7 @@ in
 
     lab.services.ingress = {
       enable = true;
+      prometheus.enable = true;
 
       hosts."grafana.selfhosted.city" = {
         backend = "rpi4-002:3000";

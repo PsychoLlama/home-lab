@@ -1,5 +1,8 @@
 {
-  lab.services.ntfy.enable = true;
+  lab.services.ntfy = {
+    enable = true;
+    prometheus.enable = true;
+  };
 
   lab.stacks = {
     home-automation.enable = true;

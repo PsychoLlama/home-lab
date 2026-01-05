@@ -23,11 +23,39 @@ locals {
       ip  = ["443"]
     },
 
-    # Monitoring access (scrape all lab nodes on exporter ports)
+    # Monitoring: node-exporter runs on all lab hosts
     {
       src = ["tag:monitoring"]
       dst = ["tag:lab"]
-      ip  = ["9090", "9100", "9153"]
+      ip  = ["9100"]
+    },
+
+    # Monitoring: router services (CoreDNS, etcd, Kea)
+    {
+      src = ["tag:monitoring"]
+      dst = ["tag:router"]
+      ip  = ["2379", "9153", "9547"]
+    },
+
+    # Monitoring: ingress services (Caddy)
+    {
+      src = ["tag:monitoring"]
+      dst = ["tag:ingress"]
+      ip  = ["2019"]
+    },
+
+    # Monitoring: NAS services (Syncthing)
+    {
+      src = ["tag:monitoring"]
+      dst = ["tag:nas"]
+      ip  = ["8384"]
+    },
+
+    # Monitoring: ntfy metrics (runs on same host as monitoring)
+    {
+      src = ["tag:monitoring"]
+      dst = ["tag:ntfy"]
+      ip  = ["9095"]
     },
 
     # Devices managed outside the home lab.

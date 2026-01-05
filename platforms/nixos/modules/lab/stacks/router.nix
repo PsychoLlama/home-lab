@@ -147,6 +147,7 @@ in
 
       dhcp = {
         enable = true;
+        prometheus.enable = true;
         networks = networks;
 
         discovery = {
