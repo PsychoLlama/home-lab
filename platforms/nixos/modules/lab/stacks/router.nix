@@ -19,6 +19,11 @@ let
   cfg = config.lab.stacks.router;
   json = pkgs.formats.json { };
 
+  ap = {
+    ip4 = "10.0.1.2";
+    mac = "24:5A:4C:13:7D:A0";
+  };
+
   xbox = {
     ip4 = "10.0.2.250";
     ports = {
@@ -123,7 +128,13 @@ in
             value = json.generate "host-record.json" {
               host = config.lab.host.ip4;
               type = "A";
-              # use default TTL
+            };
+          }
+          {
+            key = "${discovery.server.dns.prefix.host.key}/access-point";
+            value = json.generate "access-point-record.json" {
+              host = ap.ip4;
+              type = "A";
             };
           }
         ];
@@ -151,6 +162,13 @@ in
         ];
 
         reservations = [
+          # UniFi U6-Lite access point
+          {
+            type = "hw-address";
+            id = ap.mac;
+            ip-address = ap.ip4;
+          }
+
           {
             type = "hw-address";
             id = "C4:CB:76:F1:58:EC";
