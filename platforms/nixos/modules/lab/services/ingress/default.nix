@@ -18,10 +18,14 @@ let
   mkVhost =
     _: vhost:
     let
-      transport = lib.optionalString vhost.insecure ''
+      proxyOpts = lib.optionalString (vhost.insecure || vhost.streaming) ''
         {
+          ${lib.optionalString vhost.streaming "flush_interval -1"}
           transport http {
-            tls_insecure_skip_verify
+            ${lib.optionalString vhost.insecure "tls_insecure_skip_verify"}
+            ${lib.optionalString vhost.streaming ''
+              read_timeout 0
+              write_timeout 0''}
           }
         }'';
     in
@@ -31,7 +35,9 @@ let
         tls {
           dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         }
-        reverse_proxy ${vhost.backend}${lib.optionalString vhost.insecure " "}${transport}
+        reverse_proxy ${vhost.backend}${
+          lib.optionalString (vhost.insecure || vhost.streaming) " "
+        }${proxyOpts}
       }
     '';
 
@@ -61,6 +67,11 @@ in
               type = lib.types.bool;
               default = false;
               description = "Skip TLS verification for HTTPS backends";
+            };
+            streaming = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Enable streaming mode for WebSocket/SSE backends (disables timeouts)";
             };
             targetTag = lib.mkOption {
               type = lib.types.str;

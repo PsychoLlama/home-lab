@@ -53,6 +53,7 @@ in
         serverName = "ntfy.selfhosted.city";
         backend = "rpi4-002:2586";
         targetTag = "ntfy";
+        streaming = true;
       };
     };
   };
