@@ -12,6 +12,33 @@ Modules live under `platforms/<platform>/modules/lab/` (nixos, home-manager). Th
 
 Hosts in `hosts/` are minimal—they adopt stacks and add hardware-specific overrides.
 
+## ACL Tags
+
+Services and stacks expose read-only `acl.tag` options for Tailscale ACL management. This centralizes tag definitions and enables type-safe cross-references.
+
+**Defining tags** (in services/stacks):
+
+```nix
+acl.tag = lib.mkOption {
+  type = lib.types.str;
+  readOnly = true;
+  default = "ntfy";  # or "router", "ingress", etc.
+  description = "Tailscale ACL tag for this service";
+};
+```
+
+**Referencing tags** (via `nodes`):
+
+```nix
+# In a module that needs another host's tag
+{ nodes, ... }:
+{
+  acl.tag = nodes.rpi4-002.config.lab.services.ntfy.acl.tag;
+}
+```
+
+**Prometheus ACL tags**: Services exposing metrics also define `prometheus.acl.tag` (usually derived from their parent's `acl.tag`). These are collected by `pkgs/terraform-config` to generate monitoring grants automatically—no need to hard-code them in `tailscale.tf`.
+
 ## Testing
 
 Tests mirror the filesystem under `platforms/nixos/tests/`:
