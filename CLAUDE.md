@@ -35,10 +35,12 @@ colmena build --on nas-001      # NAS device
 Always use `test` activation (not `switch`) unless explicitly asked:
 
 ```sh
-colmena apply test --on rpi4-001 --evaluator streaming
+colmena apply test --on rpi4-001
 ```
 
 This activates the config without adding it to the boot menu - safer for remote changes.
+
+**Note:** Do not use `--evaluator streaming` with `colmena apply`. It has a bug where it silently skips the build/deploy phase after evaluation, reporting success without actually deploying. Safe to use with `colmena build` only.
 
 ## Formatting
 
