@@ -98,12 +98,12 @@ in
 
           devices = {
             laptop = {
-              addresses = [ "tcp://ava.host.${domain}" ];
+              addresses = [ "tcp://ava" ];
               id = "JPX6IWF-HZIA465-YNSYU4H-YTHKJL6-CO3KN66-EKMNT7O-7DBTGWI-V6ICAQN";
             };
 
             phone = {
-              addresses = [ "dynamic" ];
+              addresses = [ "tcp://google-pixel-7" ];
               id = "7B5KM6T-7NXKMY5-KM7TIQJ-WFX2OBO-OHMZOPA-HAXTV5B-5RNKXFM-OEF5AAL";
             };
           };
