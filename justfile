@@ -30,6 +30,10 @@ check:
 tf-gen:
     nix build .#terraform-config -o terraform/config.json
 
+# Show planned infrastructure changes.
+tf-plan: tf-gen
+    tofu -chdir=terraform plan
+
 # Apply infrastructure changes (runs plan first).
 tf-apply: tf-gen
     tofu -chdir=terraform apply
