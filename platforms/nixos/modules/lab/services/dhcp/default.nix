@@ -29,6 +29,12 @@ in
         default = 9547;
         description = "Port for the Prometheus metrics endpoint";
       };
+      acl.tag = lib.mkOption {
+        type = types.str;
+        readOnly = true;
+        default = "router";
+        description = "Tailscale ACL tag for monitoring access";
+      };
     };
 
     networks = mkOption {

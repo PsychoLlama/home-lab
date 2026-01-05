@@ -107,10 +107,17 @@ in
 {
   options.lab.stacks.observability = {
     enable = lib.mkEnableOption "Enable observability services";
+
+    acl.tag = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "monitoring";
+      description = "Tailscale ACL tag for this stack";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    lab.services.vpn.client.tags = [ "monitoring" ];
+    lab.services.vpn.client.tags = [ cfg.acl.tag ];
 
     # Home Assistant API token for Prometheus scraping
     age.secrets.ha-prometheus-token = {

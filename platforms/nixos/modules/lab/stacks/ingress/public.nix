@@ -7,10 +7,17 @@ in
 {
   options.lab.stacks.ingress.public = {
     enable = lib.mkEnableOption "public ingress stack (Cloudflare Tunnel + VPN)";
+
+    acl.tag = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "public-gateway";
+      description = "Tailscale ACL tag for this stack";
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    lab.services.vpn.client.tags = [ "public-gateway" ];
+    lab.services.vpn.client.tags = [ cfg.acl.tag ];
 
     lab.services.tunnel = {
       enable = true;
@@ -23,7 +30,7 @@ in
       hosts.home = {
         service = "https://home.selfhosted.city";
         path = "/api/webhook/.*";
-        acl.tag = "ingress";
+        acl.tag = config.lab.stacks.ingress.private.acl.tag;
       };
     };
   };

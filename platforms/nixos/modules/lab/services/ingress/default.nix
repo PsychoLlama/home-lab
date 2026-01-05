@@ -55,7 +55,21 @@ in
   options.lab.services.ingress = {
     enable = lib.mkEnableOption "Caddy reverse proxy with automatic HTTPS";
 
-    prometheus.enable = lib.mkEnableOption "Expose Prometheus metrics on :2019";
+    prometheus = {
+      enable = lib.mkEnableOption "Expose Prometheus metrics on :2019";
+      port = lib.mkOption {
+        type = lib.types.int;
+        readOnly = true;
+        default = 2019;
+        description = "Port for Caddy Prometheus metrics";
+      };
+      acl.tag = lib.mkOption {
+        type = lib.types.str;
+        readOnly = true;
+        default = "ingress";
+        description = "Tailscale ACL tag for monitoring access";
+      };
+    };
 
     hosts = lib.mkOption {
       default = { };

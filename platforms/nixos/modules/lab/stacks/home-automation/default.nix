@@ -6,10 +6,32 @@ in
 {
   options.lab.stacks.home-automation = {
     enable = lib.mkEnableOption "Home automation stack with Home Assistant";
+
+    acl.tag = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "home-automation";
+      description = "Tailscale ACL tag for this stack";
+    };
+
+    prometheus = {
+      port = lib.mkOption {
+        type = lib.types.int;
+        readOnly = true;
+        default = 8123;
+        description = "Port for Home Assistant Prometheus metrics";
+      };
+      acl.tag = lib.mkOption {
+        type = lib.types.str;
+        readOnly = true;
+        default = cfg.acl.tag;
+        description = "Tailscale ACL tag for monitoring access";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    lab.services.vpn.client.tags = [ "home-automation" ];
+    lab.services.vpn.client.tags = [ cfg.acl.tag ];
 
     # mDNS client for device discovery (works with router's Avahi reflector)
     services.avahi = {

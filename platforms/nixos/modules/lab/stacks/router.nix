@@ -56,11 +56,18 @@ in
       `router.networks`. Configure them with udev before enabling this
       stack.
     '';
+
+    acl.tag = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = "router";
+      description = "Tailscale ACL tag for this stack";
+    };
   };
 
   config = lib.mkIf cfg.enable {
     deployment.tags = [ "router" ];
-    lab.services.vpn.client.tags = [ "router" ];
+    lab.services.vpn.client.tags = [ cfg.acl.tag ];
 
     # UniFi Network Controller for managing the U6-Lite AP
     lab.services.unifi.enable = true;

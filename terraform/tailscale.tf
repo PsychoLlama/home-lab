@@ -8,6 +8,16 @@ locals {
     }
   ]
 
+  # Generate monitoring grants from terraform-config
+  # monitoring.grants is a map of tag -> list of ports
+  monitoring_grants = [
+    for tag, ports in local.config.monitoring.grants : {
+      src = ["tag:monitoring"]
+      dst = ["tag:${tag}"]
+      ip  = [for port in ports : tostring(port)]
+    }
+  ]
+
   static_grants = [
     # Cloudflare Tunnel -> Caddy (both on ingress host)
     {
@@ -21,41 +31,6 @@ locals {
       src = ["tag:home-automation"]
       dst = ["tag:ingress"]
       ip  = ["443"]
-    },
-
-    # Monitoring: node-exporter runs on all lab hosts
-    {
-      src = ["tag:monitoring"]
-      dst = ["tag:lab"]
-      ip  = ["9100"]
-    },
-
-    # Monitoring: router services (CoreDNS, etcd, Kea)
-    {
-      src = ["tag:monitoring"]
-      dst = ["tag:router"]
-      ip  = ["2379", "9153", "9547"]
-    },
-
-    # Monitoring: ingress services (Caddy)
-    {
-      src = ["tag:monitoring"]
-      dst = ["tag:ingress"]
-      ip  = ["2019"]
-    },
-
-    # Monitoring: NAS services (Syncthing)
-    {
-      src = ["tag:monitoring"]
-      dst = ["tag:nas"]
-      ip  = ["8384"]
-    },
-
-    # Monitoring: ntfy metrics (runs on same host as monitoring)
-    {
-      src = ["tag:monitoring"]
-      dst = ["tag:ntfy"]
-      ip  = ["9095"]
     },
 
     # Devices managed outside the home lab.
@@ -89,7 +64,7 @@ locals {
   acl = {
     tagOwners = { for tag in local.all_tags : "tag:${tag}" => ["autogroup:admin", "tag:${tag}"] }
 
-    grants = concat(local.ingress_grants, local.static_grants)
+    grants = concat(local.ingress_grants, local.monitoring_grants, local.static_grants)
 
     ssh = [
       {

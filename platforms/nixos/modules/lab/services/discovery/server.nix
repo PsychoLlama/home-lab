@@ -18,6 +18,21 @@ in
   options.lab.services.discovery.server = {
     enable = lib.mkEnableOption "Run a discovery server";
 
+    prometheus = {
+      port = lib.mkOption {
+        type = types.int;
+        readOnly = true;
+        default = ports.client;
+        description = "Port for etcd Prometheus metrics (same as client port)";
+      };
+      acl.tag = lib.mkOption {
+        type = types.str;
+        readOnly = true;
+        default = "router";
+        description = "Tailscale ACL tag for monitoring access";
+      };
+    };
+
     allowInterfaces = lib.mkOption {
       type = types.listOf types.str;
       default = [ ];
