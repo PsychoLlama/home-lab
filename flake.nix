@@ -222,6 +222,7 @@
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
               pkgs.just
+              pkgs.mcp-grafana
               pkgs.nixfmt-rfc-style
               pkgs.nixVersions.latest
               pkgs.opentofu
