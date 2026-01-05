@@ -18,41 +18,35 @@ in
     lab.services.ingress = {
       enable = true;
 
-      virtualHosts.grafana = {
-        serverName = "grafana.selfhosted.city";
+      hosts."grafana.selfhosted.city" = {
         backend = "rpi4-002:3000";
-        targetTag = "monitoring";
+        acl.tag = "monitoring";
       };
 
-      virtualHosts.syncthing = {
-        serverName = "syncthing.selfhosted.city";
+      hosts."syncthing.selfhosted.city" = {
         backend = "nas-001:8384";
-        targetTag = "nas";
+        acl.tag = "nas";
       };
 
-      virtualHosts.restic = {
-        serverName = "restic.selfhosted.city";
+      hosts."restic.selfhosted.city" = {
         backend = "nas-001:8000";
-        targetTag = "nas";
+        acl.tag = "nas";
       };
 
-      virtualHosts.home = {
-        serverName = "home.selfhosted.city";
+      hosts."home.selfhosted.city" = {
         backend = "rpi4-002:8123";
-        targetTag = "home-automation";
+        acl.tag = "home-automation";
       };
 
-      virtualHosts.unifi = {
-        serverName = "unifi.selfhosted.city";
-        backend = "https://rpi4-001:8443";
-        targetTag = "router";
-        insecure = true;
+      hosts."unifi.selfhosted.city" = {
+        backend = "rpi4-001:8443";
+        acl.tag = "router";
+        tls.verify = false;
       };
 
-      virtualHosts.ntfy = {
-        serverName = "ntfy.selfhosted.city";
+      hosts."ntfy.selfhosted.city" = {
         backend = "rpi4-002:2586";
-        targetTag = "ntfy";
+        acl.tag = "ntfy";
         streaming = true;
       };
     };

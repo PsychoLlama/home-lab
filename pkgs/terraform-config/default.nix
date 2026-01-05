@@ -7,26 +7,29 @@
 let
   json = formats.json { };
 
+  # Find all nodes matching a predicate
+  findNodesWhere = pred: lib.filter pred (lib.attrValues nodes);
+
+  # Find exactly one node matching a predicate (asserts if != 1 match)
+  findSingleNode =
+    pred:
+    let
+      matches = findNodesWhere pred;
+    in
+    assert lib.length matches == 1;
+    lib.head matches;
+
   # Read lab config from any node (shared via defaults)
   labConfig = (lib.head (lib.attrValues nodes)).config.lab;
 
   # Find nodes by enabled features
-  vpnNodes = lib.filterAttrs (_: node: node.config.lab.services.vpn.client.enable) nodes;
-  ingressHosts = lib.filterAttrs (_: node: node.config.lab.services.ingress.enable) nodes;
-  routerHosts = lib.filterAttrs (_: node: node.config.lab.stacks.router.enable) nodes;
-  tunnelHosts = lib.filterAttrs (_: node: node.config.lab.services.tunnel.enable) nodes;
+  vpnNodes = findNodesWhere (node: node.config.lab.services.vpn.client.enable);
 
-  # Extract virtualHosts from the ingress host
-  ingressHostName = lib.head (lib.attrNames ingressHosts);
-  virtualHosts = ingressHosts.${ingressHostName}.config.lab.services.ingress.virtualHosts;
-
-  # Extract tunnel hosts (if any)
-  tunnelHostName = if tunnelHosts != { } then lib.head (lib.attrNames tunnelHosts) else null;
-  tunnelHostsConfig =
-    if tunnelHostName != null then
-      tunnelHosts.${tunnelHostName}.config.lab.services.tunnel.hosts
-    else
-      { };
+  services = {
+    ingress = findSingleNode (node: node.config.lab.services.ingress.enable);
+    tunnel = findSingleNode (node: node.config.lab.services.tunnel.enable);
+    router = findSingleNode (node: node.config.lab.stacks.router.enable);
+  };
 in
 
 json.generate "terraform-config.json" {
@@ -35,19 +38,27 @@ json.generate "terraform-config.json" {
   };
 
   router = {
-    hostName = lib.head (lib.attrNames routerHosts);
+    hostName = services.router.config.networking.hostName;
   };
 
   vpn = {
-    nodes = lib.mapAttrs (_: node: { inherit (node.config.lab.services.vpn.client) tags; }) vpnNodes;
+    nodes = lib.listToAttrs (
+      map (node: {
+        name = node.config.networking.hostName;
+        value = { inherit (node.config.lab.services.vpn.client) tags; };
+      }) vpnNodes
+    );
   };
 
   ingress = {
-    private = lib.mapAttrs (_: vhost: { inherit (vhost) backend targetTag; }) virtualHosts;
+    private = lib.mapAttrs (_: host: {
+      inherit (host) backend;
+      acl.tag = host.acl.tag;
+    }) services.ingress.config.lab.services.ingress.hosts;
 
     public = lib.mapAttrs (_: host: {
       inherit (host) service path;
       tlsVerify = host.tls.verify;
-    }) tunnelHostsConfig;
+    }) services.tunnel.config.lab.services.tunnel.hosts;
   };
 }

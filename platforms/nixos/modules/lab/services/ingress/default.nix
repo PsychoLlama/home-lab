@@ -14,87 +14,80 @@ let
     hash = "sha256-ea8PC/+SlPRdEVVF/I3c1CBprlVp1nrumKM5cMwJJ3U=";
   };
 
-  # Parse backend URL to extract dial address
-  # Handles both "host:port" and "https://host:port" formats
-  parseBackend =
-    backend:
-    let
-      isHttps = lib.hasPrefix "https://" backend;
-      stripped = lib.removePrefix "https://" (lib.removePrefix "http://" backend);
-    in
-    {
-      dial = stripped;
-      inherit isHttps;
-    };
+  # Recursively remove null values from an attrset
+  withoutNulls = lib.filterAttrsRecursive (_: v: v != null);
 
-  # Generate a route for a virtualHost
+  # Generate a Caddy route for a host.
+  # Output shape (nulls filtered):
+  #   { match: [{ host: [string] }], handle: [{ handler, upstreams, transport?, flush_interval? }] }
   mkRoute =
-    _: vhost:
+    _: host:
     let
-      backend = parseBackend vhost.backend;
-      needsTls = vhost.insecure || backend.isHttps;
-      needsTransport = needsTls || vhost.streaming;
-      transport = lib.optionalAttrs needsTransport (
-        {
-          protocol = "http";
-        }
-        // lib.optionalAttrs needsTls {
-          tls.insecure_skip_verify = vhost.insecure;
-        }
-        // lib.optionalAttrs vhost.streaming {
-          read_timeout = 0;
-          write_timeout = 0;
-        }
-      );
-      handler = {
-        handler = "reverse_proxy";
-        upstreams = [ { dial = backend.dial; } ];
-      }
-      // lib.optionalAttrs vhost.streaming { flush_interval = -1; }
-      // lib.optionalAttrs (transport != { }) { inherit transport; };
+      useTls = host.tls.verify != null;
+      needsTransport = useTls || host.streaming;
     in
-    {
-      match = [ { host = [ vhost.serverName ]; } ];
-      handle = [ handler ];
+    withoutNulls {
+      match = [ { host = [ host.name ]; } ];
+      handle = [
+        (withoutNulls {
+          handler = "reverse_proxy";
+          upstreams = [ { dial = host.backend; } ];
+          flush_interval = if host.streaming then -1 else null;
+          transport =
+            if needsTransport then
+              withoutNulls {
+                protocol = "http";
+                tls = if useTls then { insecure_skip_verify = !host.tls.verify; } else null;
+                read_timeout = if host.streaming then 0 else null;
+                write_timeout = if host.streaming then 0 else null;
+              }
+            else
+              null;
+        })
+      ];
     };
 
   # Collect all server names for TLS policy
-  allServerNames = lib.mapAttrsToList (_: vhost: vhost.serverName) cfg.virtualHosts;
+  allServerNames = lib.mapAttrsToList (_: host: host.name) cfg.hosts;
 in
 
 {
   options.lab.services.ingress = {
     enable = lib.mkEnableOption "Caddy reverse proxy with automatic HTTPS";
 
-    virtualHosts = lib.mkOption {
+    hosts = lib.mkOption {
       default = { };
       type = lib.types.attrsOf (
-        lib.types.submodule {
-          options = {
-            serverName = lib.mkOption {
-              type = lib.types.str;
-              description = "FQDN for this virtual host";
+        lib.types.submodule (
+          { name, ... }:
+          {
+            options = {
+              name = lib.mkOption {
+                type = lib.types.str;
+                default = name;
+                description = "FQDN for this host (defaults to attribute name)";
+              };
+              backend = lib.mkOption {
+                type = lib.types.str;
+                description = "Backend address as host:port";
+              };
+              tls.verify = lib.mkOption {
+                type = lib.types.nullOr lib.types.bool;
+                default = null;
+                description = "TLS verification for backend: null = no TLS, true = verify, false = skip verification";
+              };
+              streaming = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Enable streaming mode for WebSocket/SSE backends (disables timeouts)";
+              };
+              acl.tag = lib.mkOption {
+                type = lib.types.str;
+                description = "Tailscale ACL tag for the backend service (used by Terraform for firewall grants)";
+              };
             };
-            backend = lib.mkOption {
-              type = lib.types.str;
-              description = "Backend URL to proxy to";
-            };
-            insecure = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Skip TLS verification for HTTPS backends";
-            };
-            streaming = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Enable streaming mode for WebSocket/SSE backends (disables timeouts)";
-            };
-            targetTag = lib.mkOption {
-              type = lib.types.str;
-              description = "Tailscale ACL tag for the backend service (used by Terraform for firewall grants)";
-            };
-          };
-        }
+          }
+        )
       );
     };
   };
@@ -110,7 +103,7 @@ in
         apps = {
           http.servers.main = {
             listen = [ ":443" ];
-            routes = lib.mapAttrsToList mkRoute cfg.virtualHosts;
+            routes = lib.mapAttrsToList mkRoute cfg.hosts;
           };
 
           tls.automation.policies = [

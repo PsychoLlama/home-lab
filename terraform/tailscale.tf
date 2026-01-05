@@ -1,10 +1,10 @@
 locals {
-  # Parse "host:port" or "https://host:port" -> port
+  # Extract port from "host:port" backend
   ingress_grants = [
-    for name, vhost in local.config.ingress.private : {
+    for name, host in local.config.ingress.private : {
       src = ["tag:ingress"]
-      dst = ["tag:${vhost.targetTag}"]
-      ip  = [split(":", replace(replace(vhost.backend, "https://", ""), "http://", ""))[1]]
+      dst = ["tag:${host.acl.tag}"]
+      ip  = [split(":", host.backend)[1]]
     }
   ]
 
