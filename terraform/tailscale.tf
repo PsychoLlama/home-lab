@@ -71,6 +71,13 @@ locals {
       ip  = ["80", "443"]
     },
 
+    # Syncthing: allow mobile devices to sync with laptops and NAS
+    {
+      src = ["tag:mobile"]
+      dst = ["tag:laptop", "tag:nas"]
+      ip  = ["22000"]
+    },
+
     # All devices can use the router's DNS server for split horizon DNS
     {
       src = ["*"]
