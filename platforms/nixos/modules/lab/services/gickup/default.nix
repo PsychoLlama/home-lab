@@ -10,6 +10,8 @@ let
   yaml = pkgs.formats.yaml { };
 
   configFile = yaml.generate "gickup.yml" {
+    cron = cfg.cron;
+
     source.github = [
       {
         token_file = config.age.secrets.gickup-github-token.path;
@@ -32,6 +34,11 @@ let
         };
       }
     ];
+
+    metrics.prometheus = {
+      listen_addr = ":${toString cfg.prometheus.port}";
+      endpoint = "/metrics";
+    };
   };
 in
 
@@ -39,10 +46,10 @@ in
   options.lab.services.gickup = {
     enable = lib.mkEnableOption "Gickup GitHub mirroring";
 
-    schedule = lib.mkOption {
+    cron = lib.mkOption {
       type = lib.types.str;
-      default = "daily";
-      description = "Systemd timer OnCalendar schedule for running gickup";
+      default = "0 0 * * *";
+      description = "Cron schedule for sync (standard 5-field format)";
     };
 
     mirrorInterval = lib.mkOption {
@@ -50,30 +57,40 @@ in
       default = "6h0m0s";
       description = "Interval for Gitea to pull changes from mirrored repos";
     };
+
+    prometheus = {
+      port = lib.mkOption {
+        type = lib.types.port;
+        readOnly = true;
+        default = 6178;
+        description = "Port for the Prometheus metrics endpoint";
+      };
+
+      acl.tag = lib.mkOption {
+        type = lib.types.str;
+        readOnly = true;
+        default = "gickup";
+        description = "Tailscale ACL tag for monitoring access";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    lab.services.vpn.client.tags = [ cfg.prometheus.acl.tag ];
+
     age.secrets.gickup-github-token.file = ./github-token.age;
     age.secrets.gickup-gitea-token.file = ./gitea-token.age;
 
     systemd.services.gickup = {
       description = "Mirror GitHub repos to Gitea";
+      wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
 
       serviceConfig = {
-        Type = "oneshot";
+        Type = "simple";
         ExecStart = "${pkgs.gickup}/bin/gickup ${configFile}";
-      };
-    };
-
-    systemd.timers.gickup = {
-      wantedBy = [ "timers.target" ];
-
-      timerConfig = {
-        OnCalendar = cfg.schedule;
-        Persistent = true;
-        RandomizedDelaySec = "1h";
+        Restart = "on-failure";
       };
     };
   };

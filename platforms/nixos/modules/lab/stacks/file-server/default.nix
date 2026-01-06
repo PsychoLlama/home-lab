@@ -29,6 +29,14 @@ in
         default = 8384;
         description = "Port for Syncthing Prometheus metrics";
       };
+
+      gitea.port = lib.mkOption {
+        type = lib.types.int;
+        readOnly = true;
+        default = config.lab.services.gitea.prometheus.port;
+        description = "Port for Gitea Prometheus metrics";
+      };
+
       acl.tag = lib.mkOption {
         type = lib.types.str;
         readOnly = true;
@@ -117,12 +125,10 @@ in
     lab.services.gitea = {
       enable = true;
       dataDir = "/mnt/pool0/gitea";
+      prometheus.enable = true;
     };
 
-    lab.services.gickup = {
-      enable = true;
-      schedule = "daily";
-    };
+    lab.services.gickup.enable = true;
 
     lab.services.restic-server = {
       enable = true;

@@ -102,6 +102,30 @@ let
       }
     ))
   ];
+
+  # Find all nodes with Gitea metrics enabled
+  giteaTargets = lib.pipe nodes [
+    (lib.filterAttrs (
+      _: node: node.config.lab.services.gitea.enable && node.config.lab.services.gitea.prometheus.enable
+    ))
+    (lib.mapAttrsToList (
+      name: node: {
+        targets = [ "${name}:${toString node.config.lab.services.gitea.prometheus.port}" ];
+        labels.instance = name;
+      }
+    ))
+  ];
+
+  # Find all nodes with Gickup enabled (metrics always exposed)
+  gickupTargets = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.services.gickup.enable))
+    (lib.mapAttrsToList (
+      name: node: {
+        targets = [ "${name}:${toString node.config.lab.services.gickup.prometheus.port}" ];
+        labels.instance = name;
+      }
+    ))
+  ];
 in
 
 {
@@ -190,6 +214,16 @@ in
           {
             job_name = "ntfy";
             static_configs = ntfyTargets;
+          }
+
+          {
+            job_name = "gitea";
+            static_configs = giteaTargets;
+          }
+
+          {
+            job_name = "gickup";
+            static_configs = gickupTargets;
           }
         ];
       };

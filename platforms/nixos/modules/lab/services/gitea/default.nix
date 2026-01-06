@@ -38,6 +38,24 @@ in
       default = 2222;
       description = "SSH port for Git operations";
     };
+
+    prometheus = {
+      enable = lib.mkEnableOption "Expose Prometheus metrics";
+
+      port = lib.mkOption {
+        type = lib.types.port;
+        readOnly = true;
+        default = cfg.http.port;
+        description = "Port for the Prometheus metrics endpoint (same as HTTP port)";
+      };
+
+      acl.tag = lib.mkOption {
+        type = lib.types.str;
+        readOnly = true;
+        default = cfg.acl.tag;
+        description = "Tailscale ACL tag for monitoring access";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -65,6 +83,12 @@ in
         };
 
         session.COOKIE_SECURE = true;
+
+        metrics = lib.mkIf cfg.prometheus.enable {
+          ENABLED = true;
+          ENABLED_ISSUE_BY_LABEL = true;
+          ENABLED_ISSUE_BY_REPOSITORY = true;
+        };
       };
     };
 
