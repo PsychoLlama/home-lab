@@ -53,4 +53,17 @@ in
   "platforms/nixos/modules/lab/services/tunnel/cloudflare-tunnel-token.age".publicKeys = keysFor (
     node: node.config.lab.services.tunnel.enable
   );
+
+  # GitHub fine-grained token for Gickup to read repositories.
+  # Create at: https://github.com/settings/personal-access-tokens/new
+  # Repository access: All repositories, Permissions: Contents (read-only)
+  "platforms/nixos/modules/lab/services/gickup/github-token.age".publicKeys = keysFor (
+    node: node.config.lab.services.gickup.enable
+  );
+
+  # Gitea API token for Gickup to create/update mirrors.
+  # Create in Gitea: Settings → Applications → Generate New Token
+  "platforms/nixos/modules/lab/services/gickup/gitea-token.age".publicKeys = keysFor (
+    node: node.config.lab.services.gickup.enable
+  );
 }

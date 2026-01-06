@@ -31,6 +31,11 @@ in
       enable = true;
       prometheus.enable = true;
 
+      hosts."gitea.selfhosted.city" = {
+        backend = "nas-001:3000";
+        acl.tag = nodes.nas-001.config.lab.services.gitea.acl.tag;
+      };
+
       hosts."grafana.selfhosted.city" = {
         backend = "rpi4-002:3000";
         acl.tag = nodes.rpi4-002.config.lab.stacks.observability.acl.tag;

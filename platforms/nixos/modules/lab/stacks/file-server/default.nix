@@ -46,6 +46,7 @@ in
       enable = true;
       mounts = {
         "/mnt/pool0" = "pool0";
+        "/mnt/pool0/gitea" = "pool0/gitea";
         "/mnt/pool0/restic" = "pool0/restic";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
       };
@@ -72,6 +73,7 @@ in
           mountpoint = "none";
         };
 
+        datasets.gitea.properties."com.sun:auto-snapshot" = "true";
         datasets.restic.properties."com.sun:auto-snapshot" = "true";
         datasets.syncthing.properties."com.sun:auto-snapshot" = "true";
       };
@@ -91,6 +93,35 @@ in
 
       # Don't start automatically. Wait for pool decryption.
       wantedBy = lib.mkForce [ decryption.target ];
+    };
+
+    systemd.services.gitea = {
+      requires = [ decryption.target ];
+      after = [ decryption.target ];
+
+      # Don't start automatically. Wait for pool decryption.
+      wantedBy = lib.mkForce [ decryption.target ];
+    };
+
+    systemd.services.gickup = {
+      requires = [
+        decryption.target
+        "gitea.service"
+      ];
+      after = [
+        decryption.target
+        "gitea.service"
+      ];
+    };
+
+    lab.services.gitea = {
+      enable = true;
+      dataDir = "/mnt/pool0/gitea";
+    };
+
+    lab.services.gickup = {
+      enable = true;
+      schedule = "daily";
     };
 
     lab.services.restic-server = {
