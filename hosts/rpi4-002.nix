@@ -7,7 +7,10 @@
   lab.stacks = {
     home-automation.enable = true;
     observability.enable = true;
-    vpn.client.enable = true;
+    vpn.client = {
+      enable = true;
+      exitNode = true;
+    };
   };
 
   home-manager.users.root.home.stateVersion = "23.11";

@@ -66,6 +66,14 @@ locals {
       dst = ["tag:router"]
       ip  = ["53"]
     },
+
+    # Laptops and mobile devices can use exit nodes for internet access
+    {
+      src = ["tag:laptop", "tag:mobile"]
+      dst = ["autogroup:internet"]
+      via = ["tag:exit-node"]
+      ip  = ["*"]
+    },
   ]
 
   acl = {
