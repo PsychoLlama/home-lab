@@ -83,16 +83,6 @@ let
             tag = stk.file-server.prometheus.acl.tag;
             port = stk.file-server.prometheus.syncthing.port;
           }
-          # Gitea
-          ++ lib.optional (svc.gitea.enable && svc.gitea.prometheus.enable) {
-            tag = svc.gitea.prometheus.acl.tag;
-            port = svc.gitea.prometheus.port;
-          }
-          # Gickup
-          ++ lib.optional svc.gickup.enable {
-            tag = svc.gickup.prometheus.acl.tag;
-            port = svc.gickup.prometheus.port;
-          }
         ) (lib.attrValues nodes)
       );
 

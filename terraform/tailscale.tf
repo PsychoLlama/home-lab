@@ -33,13 +33,6 @@ locals {
       ip  = ["443"]
     },
 
-    # NAS -> ingress for gickup to reach Gitea
-    {
-      src = ["tag:nas"]
-      dst = ["tag:ingress"]
-      ip  = ["443"]
-    },
-
     # Devices managed outside the home lab.
     {
       src = ["tag:laptop"]

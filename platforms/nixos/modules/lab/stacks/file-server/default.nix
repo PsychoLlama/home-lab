@@ -30,13 +30,6 @@ in
         description = "Port for Syncthing Prometheus metrics";
       };
 
-      gitea.port = lib.mkOption {
-        type = lib.types.int;
-        readOnly = true;
-        default = config.lab.services.gitea.prometheus.port;
-        description = "Port for Gitea Prometheus metrics";
-      };
-
       acl.tag = lib.mkOption {
         type = lib.types.str;
         readOnly = true;
@@ -54,7 +47,6 @@ in
       enable = true;
       mounts = {
         "/mnt/pool0" = "pool0";
-        "/mnt/pool0/gitea" = "pool0/gitea";
         "/mnt/pool0/restic" = "pool0/restic";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
       };
@@ -81,7 +73,6 @@ in
           mountpoint = "none";
         };
 
-        datasets.gitea.properties."com.sun:auto-snapshot" = "true";
         datasets.restic.properties."com.sun:auto-snapshot" = "true";
         datasets.syncthing.properties."com.sun:auto-snapshot" = "true";
       };
@@ -102,33 +93,6 @@ in
       # Don't start automatically. Wait for pool decryption.
       wantedBy = lib.mkForce [ decryption.target ];
     };
-
-    systemd.services.gitea = {
-      requires = [ decryption.target ];
-      after = [ decryption.target ];
-
-      # Don't start automatically. Wait for pool decryption.
-      wantedBy = lib.mkForce [ decryption.target ];
-    };
-
-    systemd.services.gickup = {
-      requires = [
-        decryption.target
-        "gitea.service"
-      ];
-      after = [
-        decryption.target
-        "gitea.service"
-      ];
-    };
-
-    lab.services.gitea = {
-      enable = true;
-      dataDir = "/mnt/pool0/gitea";
-      prometheus.enable = true;
-    };
-
-    lab.services.gickup.enable = true;
 
     lab.services.restic-server = {
       enable = true;
