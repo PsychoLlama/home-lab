@@ -73,6 +73,11 @@ let
             tag = svc.ntfy.prometheus.acl.tag;
             port = svc.ntfy.prometheus.port;
           }
+          # ClickHouse
+          ++ lib.optional (svc.clickhouse.enable && svc.clickhouse.prometheus.enable) {
+            tag = svc.clickhouse.prometheus.acl.tag;
+            port = svc.clickhouse.prometheus.port;
+          }
           # Home Assistant
           ++ lib.optional stk.home-automation.enable {
             tag = stk.home-automation.prometheus.acl.tag;

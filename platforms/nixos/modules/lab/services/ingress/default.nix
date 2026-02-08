@@ -133,9 +133,15 @@ in
               issuers = [
                 {
                   module = "acme";
-                  challenges.dns.provider = {
-                    name = "cloudflare";
-                    api_token = "{env.CLOUDFLARE_API_TOKEN}";
+                  challenges.dns = {
+                    provider = {
+                      name = "cloudflare";
+                      api_token = "{env.CLOUDFLARE_API_TOKEN}";
+                    };
+                    # Use public resolvers for ACME propagation checks.
+                    # The default system resolver (Tailscale MagicDNS)
+                    # follows CNAMEs into .ts.net which returns NOTIMP.
+                    resolvers = [ "1.1.1.1" ];
                   };
                 }
               ];

@@ -1,5 +1,6 @@
 {
   imports = [
+    ./clickhouse.nix
     ./dhcp
     ./discovery
     ./dns.nix

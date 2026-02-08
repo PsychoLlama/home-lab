@@ -57,6 +57,11 @@ in
         tls.verify = false;
       };
 
+      hosts."clickhouse.selfhosted.city" = {
+        backend = "nas-001:${toString nodes.nas-001.config.lab.services.clickhouse.http.port}";
+        acl.tag = nodes.nas-001.config.lab.services.clickhouse.acl.tag;
+      };
+
       hosts."ntfy.selfhosted.city" = {
         backend = "rpi4-002:2586";
         acl.tag = nodes.rpi4-002.config.lab.services.ntfy.acl.tag;

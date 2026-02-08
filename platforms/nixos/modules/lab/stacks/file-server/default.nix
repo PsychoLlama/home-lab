@@ -47,6 +47,7 @@ in
       enable = true;
       mounts = {
         "/mnt/pool0" = "pool0";
+        "/mnt/pool0/clickhouse" = "pool0/clickhouse";
         "/mnt/pool0/restic" = "pool0/restic";
         "/mnt/pool0/syncthing" = "pool0/syncthing";
       };
@@ -73,9 +74,18 @@ in
           mountpoint = "none";
         };
 
+        datasets.clickhouse.properties."com.sun:auto-snapshot" = "true";
         datasets.restic.properties."com.sun:auto-snapshot" = "true";
         datasets.syncthing.properties."com.sun:auto-snapshot" = "true";
       };
+    };
+
+    systemd.services.clickhouse = {
+      requires = [ decryption.target ];
+      after = [ decryption.target ];
+
+      # Don't start automatically. Wait for pool decryption.
+      wantedBy = lib.mkForce [ decryption.target ];
     };
 
     systemd.services.syncthing = {
@@ -92,6 +102,12 @@ in
 
       # Don't start automatically. Wait for pool decryption.
       wantedBy = lib.mkForce [ decryption.target ];
+    };
+
+    lab.services.clickhouse = {
+      enable = true;
+      dataDir = "/mnt/pool0/clickhouse";
+      prometheus.enable = true;
     };
 
     lab.services.restic-server = {
