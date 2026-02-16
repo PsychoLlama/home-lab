@@ -22,6 +22,10 @@ sandbox:
 test expr:
     nix run ".#tests.{{expr}}.driver"
 
+# Update all flake inputs.
+update:
+    nix flake update
+
 # Run all checks.
 check:
     @just fmt-check
