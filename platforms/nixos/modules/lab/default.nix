@@ -8,7 +8,6 @@
     ./stacks
     ./services
     ./ssh.nix
-    ./stratums.nix
   ];
 
   # A place to store constants. These should be set for every host. Not all
