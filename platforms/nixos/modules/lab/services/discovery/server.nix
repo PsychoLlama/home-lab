@@ -67,6 +67,12 @@ in
             Generated full path to the DNS prefix key in etcd.
           '';
 
+          defaultText = lib.literalExpression ''
+            lib.pipe "''${cfg.dns.zone}.''${cfg.dns.prefix.name}." [
+              (lib.splitString ".") (lib.reverseList) (lib.concatStringsSep "/")
+            ]
+          '';
+
           default = lib.pipe "${cfg.dns.zone}.${cfg.dns.prefix.name}." [
             # [ "example" "com" "dns" "" ]
             (lib.splitString ".")
@@ -95,6 +101,8 @@ in
             description = ''
               Generated full prefix key for host records in etcd.
             '';
+
+            defaultText = lib.literalExpression ''"''${cfg.dns.prefix.key}/''${cfg.dns.prefix.host.name}"'';
 
             default = "${cfg.dns.prefix.key}/${cfg.dns.prefix.host.name}";
           };
@@ -137,6 +145,10 @@ in
               readOnly = true;
               description = ''
                 Generated command that updates etcd.
+              '';
+
+              defaultText = lib.literalExpression ''
+                "''${etcd}/bin/etcdctl put -- ''${config.key} < ''${config.value}\n"
               '';
 
               default = ''

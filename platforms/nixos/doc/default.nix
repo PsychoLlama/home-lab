@@ -3,6 +3,7 @@
   lib,
   colmena,
   home-manager,
+  agenix,
   revision,
   ...
 }:
@@ -23,6 +24,7 @@ let
       colmena.nixosModules.deploymentOptions
       colmena.nixosModules.assertionModule
       home-manager.nixosModules.home-manager
+      agenix.nixosModules.age
       ../modules
 
       {

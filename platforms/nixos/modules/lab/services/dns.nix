@@ -194,6 +194,7 @@ in
             options.file = mkOption {
               type = types.path;
               readOnly = true;
+              defaultText = lib.literalMD "Generated BIND zone file derived from `zones.<name>.records`.";
               default = pkgs.unstable.writeText "${name}.zone" ''
                 $ORIGIN ${name}.
                 @       IN SOA dns trash (
