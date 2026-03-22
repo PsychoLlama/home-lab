@@ -39,6 +39,8 @@ in
       image = cfg.image;
       environment = {
         TZ = cfg.timezone;
+        # Container has no IPv6 route; force IPv4 so SSO calls reach sso.ui.com.
+        JVM_EXTRA_OPTS = "-Djava.net.preferIPv4Stack=true";
       };
       # Bind to specific interfaces - not exposed to WAN
       ports = [

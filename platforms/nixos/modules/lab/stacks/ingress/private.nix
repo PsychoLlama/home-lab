@@ -55,6 +55,8 @@ in
         backend = "rpi4-001:8443";
         acl.tag = nodes.rpi4-001.config.lab.stacks.router.acl.tag;
         tls.verify = false;
+        # UniFi checks Origin/Referer against its local address.
+        stripOrigin = true;
       };
 
       hosts."clickhouse.selfhosted.city" = {

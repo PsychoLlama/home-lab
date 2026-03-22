@@ -33,6 +33,20 @@ let
           handler = "reverse_proxy";
           upstreams = [ { dial = host.backend; } ];
           flush_interval = if host.streaming then -1 else null;
+
+          # Strip Origin/Referer so backends don't reject proxied
+          # requests as cross-origin (CSRF protection).
+          headers =
+            if host.stripOrigin then
+              {
+                request.delete = [
+                  "Origin"
+                  "Referer"
+                ];
+              }
+            else
+              null;
+
           transport =
             if needsTransport then
               withoutNulls {
@@ -91,6 +105,11 @@ in
                 type = lib.types.nullOr lib.types.bool;
                 default = null;
                 description = "TLS verification for backend: null = no TLS, true = verify, false = skip verification";
+              };
+              stripOrigin = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Strip Origin/Referer headers to avoid CSRF rejection by the backend";
               };
               streaming = lib.mkOption {
                 type = lib.types.bool;
