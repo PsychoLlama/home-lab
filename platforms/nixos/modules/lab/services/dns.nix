@@ -237,11 +237,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Ensure CoreDNS starts after Tailscale so the interface has its IPv4 address.
     # CoreDNS caches interface addresses at startup and won't rebind later.
+    # Start after tailscaled so tailscale0 exists, but don't wait for
+    # autoconnect (circular: Tailscale needs DNS to reach control plane).
+    # Instead, restart CoreDNS after autoconnect assigns the Tailscale IPv4.
     systemd.services.coredns = lib.mkIf (lib.elem "tailscale0" cfg.interfaces) {
       wants = [ "tailscaled.service" ];
       after = [ "tailscaled.service" ];
+    };
+
+    systemd.services.tailscaled-autoconnect = lib.mkIf (lib.elem "tailscale0" cfg.interfaces) {
+      serviceConfig.ExecStartPost = [ "${config.systemd.package}/bin/systemctl restart coredns.service" ];
     };
 
     networking = {
