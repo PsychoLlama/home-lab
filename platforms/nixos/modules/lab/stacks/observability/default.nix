@@ -2,7 +2,6 @@
   nodes,
   config,
   lib,
-  pkgs,
   ...
 }:
 
@@ -104,26 +103,6 @@ let
     ))
   ];
 
-  # Find all nodes with ClickHouse metrics enabled
-  clickhouseTargets = lib.pipe nodes [
-    (lib.filterAttrs (
-      _: node:
-      node.config.lab.services.clickhouse.enable && node.config.lab.services.clickhouse.prometheus.enable
-    ))
-    (lib.mapAttrsToList (
-      name: node: {
-        targets = [ "${name}:${toString node.config.lab.services.clickhouse.prometheus.port}" ];
-        labels.instance = name;
-      }
-    ))
-  ];
-
-  # Find first node with ClickHouse enabled for Grafana datasource
-  clickhouseNode = lib.pipe nodes [
-    (lib.filterAttrs (_: node: node.config.lab.services.clickhouse.enable))
-    lib.attrNames
-    lib.head
-  ];
 in
 
 {
@@ -213,17 +192,11 @@ in
             job_name = "ntfy";
             static_configs = ntfyTargets;
           }
-
-          {
-            job_name = "clickhouse";
-            static_configs = clickhouseTargets;
-          }
         ];
       };
 
       grafana = {
         enable = true;
-        declarativePlugins = [ pkgs.grafanaPlugins.grafana-clickhouse-datasource ];
 
         settings.server = {
           http_addr = "0.0.0.0";
@@ -238,18 +211,6 @@ in
               type = "prometheus";
               access = "proxy";
               url = "http://localhost:9090";
-            }
-            {
-              name = "ClickHouse";
-              type = "grafana-clickhouse-datasource";
-              access = "proxy";
-              url = "http://${clickhouseNode}:${
-                toString nodes.${clickhouseNode}.config.lab.services.clickhouse.http.port
-              }";
-              jsonData = {
-                defaultDatabase = "default";
-                protocol = "http";
-              };
             }
           ];
         };
