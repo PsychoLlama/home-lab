@@ -1,3 +1,3 @@
 {
-  imports = [ ./fancy-shell.nix ];
+  imports = [ ./host-defaults.nix ];
 }

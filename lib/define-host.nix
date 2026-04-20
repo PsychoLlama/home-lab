@@ -60,8 +60,7 @@ in
       inputs.self.nixosModules.home-manager-platform
 
       {
-        # Manage the system shell by default.
-        lab.stacks.fancy-shell.enable = lib.mkDefault true;
+        lab.stacks.host-defaults.enable = lib.mkDefault true;
       }
     ];
   };
