@@ -192,6 +192,17 @@ in
             job_name = "ntfy";
             static_configs = ntfyTargets;
           }
+
+          {
+            job_name = "bme280";
+            scrape_interval = "30s";
+            static_configs = [
+              {
+                targets = [ "esp32-001.host.${config.lab.datacenter}.${config.lab.domain}:80" ];
+                labels.instance = "esp32-001";
+              }
+            ];
+          }
         ];
       };
 
