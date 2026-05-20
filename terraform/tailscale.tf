@@ -95,6 +95,14 @@ data "tailscale_device" "nodes" {
   hostname = each.key
 }
 
+# Capture each device's current Tailscale ID so that replace_triggered_by has
+# a managed resource to compare against. Data-source attributes can't be
+# referenced from replace_triggered_by directly.
+resource "terraform_data" "node_device_id" {
+  for_each = local.config.vpn.nodes
+  input    = data.tailscale_device.nodes[each.key].id
+}
+
 # Apply tags to each device via Terraform (instead of --advertise-tags)
 # depends_on ACL because tags must exist in tagOwners before assignment.
 resource "tailscale_device_tags" "nodes" {
@@ -102,6 +110,13 @@ resource "tailscale_device_tags" "nodes" {
   device_id  = data.tailscale_device.nodes[each.key].id
   tags       = [for t in concat(each.value.tags, ["lab", local.config.lab.datacenter]) : "tag:${t}"]
   depends_on = [tailscale_acl.primary]
+
+  # If a node re-registers (e.g. crash wiped tailscaled.state), the hostname
+  # lookup returns a new device_id. Force replacement so tags re-apply to the
+  # live device instead of leaving the resource bound to a dead 404'ing ID.
+  lifecycle {
+    replace_triggered_by = [terraform_data.node_device_id[each.key]]
+  }
 }
 
 # Split horizon DNS: forward domain queries to the router's CoreDNS
