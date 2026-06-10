@@ -1,42 +1,52 @@
 # Home Lab
 
-A set of [NixOS](https://nixos.org/) modules for building your own on-premise cloud (according to a hobbyist).
+A set of [NixOS](https://nixos.org/) modules turning cheap hardware into a self-hosting powerhouse of technical debt.
 
-## Project Status
+I'm a terrible sysadmin but it's a fun way to burn weekends.
 
-:construction: Under Construction :construction:
+## Notable Bits
 
-This is undergoing a rewrite to incorporate learnings from a few years of working with NixOS. See [ye-olden-days](https://github.com/PsychoLlama/home-lab/tree/ye-olden-days) for a more elaborate, albiet messy example.
-
-## Components
-
-### Router
+### The Router
 
 The router module configures a router (nat, dhcp, dns, ...) and manages the network for everything else in the lab.
 
-### File Server
+Losing the network brings big sadness so those components are heavily tested.
 
-The file storage module manages ZFS pools and datasets. A host profile attaches Syncthing and adds snapshotting.
-
-## Project Structure
-
-- `platforms/nixos/modules/lab`: Unopinionated "library" modules for building a home lab.
-- `platforms/nixos/tests`: Virtual machine tests for services in `modules/lab`.
-- `platforms/nixos/modules/lab/profiles`: Opinionated configurations.
-- `hosts`: Per-host configurations. They are thin wrappers around profiles.
-
-Tests can be executed by entering a dev shell and running `project test <drv_path>`:
+Run 'em with `just test <name>`:
 
 ```bash
 # Example:
-project test dns
+just test dns
 ```
 
-To cripple your machine by running all tests, do:
+See [all the tests here](https://github.com/PsychoLlama/home-lab/tree/main/platforms/nixos/tests). Or, cripple your machine by running all the tests:
 
 ```bash
 nix build --verbose '.#tests'
 ```
+
+### File Server
+
+A [little CM3588 with SSDs](https://blog.psychollama.io/nixos-on-a-cm3588/) cosplaying as a file server. Manages a ZFS pool with Syncthing, Restic backups, and the hopes and dreams of the american people.
+
+### Observability Stack
+
+Grafana in a trenchcoat.
+
+### Home Automation
+
+Home Assistant with permission grants to my most private data, yeeted into Grafana, and thrown with reckless abandon into Claude via MCP.
+
+### VPN
+
+Split-horizon DNS over my `selfhosted.city` domain. Internal services are only accessible over the tailnet, and public services routed through a Caddy ingress. I understood how it worked, once.
+
+## Project Structure
+
+- `platforms/home-manager/modules`: QOL configs for remote administration.
+- `platforms/nixos/modules/lab`: Library modules for building a home lab, layered as services and stacks.
+- `platforms/nixos/tests`: Virtual machine tests for services in `modules/lab`.
+- `hosts`: Per-host configurations. They are thin wrappers around stacks.
 
 ## Inspiration
 
