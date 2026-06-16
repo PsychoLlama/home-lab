@@ -33,6 +33,17 @@ in
     services.tailscale = {
       enable = true;
       authKeyFile = config.age.secrets.tailscale-oauth.path;
+
+      # OAuth client secrets register ephemeral nodes by default, which the
+      # control plane purges after a node is offline past a timeout. A single
+      # extended outage (e.g. an ISP blip) then silently deletes every lab node
+      # from the tailnet. Force non-ephemeral registration so nodes persist
+      # across outages. preauthorized skips manual device approval.
+      authKeyParameters = {
+        ephemeral = false;
+        preauthorized = true;
+      };
+
       extraUpFlags =
         let
           # Minimal tags for initial auth - Terraform manages the full set
