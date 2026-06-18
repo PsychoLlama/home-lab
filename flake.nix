@@ -5,11 +5,6 @@
     systems.url = "github:nix-systems/default";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
-    # Pinned to the commit before the raspberry-pi kernel bump to 6.12.75-1+rpt1.
-    # Hydra's trunk-combined eval is wedged on a broken zfs-kernel, so the new
-    # kernel hasn't been uploaded to cache.nixos.org and would build from source.
-    # Unpin once cache catches up.
-    nixos-hardware.url = "github:NixOS/nixos-hardware/eeb02f6e29fc8139c0b15af5ff0fdfdc6d0d3d90";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
@@ -40,7 +35,6 @@
       self,
       nixpkgs-unstable,
       nixpkgs,
-      nixos-hardware,
       colmena,
       agenix,
       ...
