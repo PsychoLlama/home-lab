@@ -173,6 +173,11 @@ in
       # and RPi3 boot loaders aren't expressive enough to securely run an SSH
       # server in stage 1.
       zfs.requestEncryptionCredentials = false;
+
+      # Adopt the safer default landing in 26.11. Root boots from ext4 here
+      # (ZFS holds only data pools), so this has no practical effect beyond
+      # silencing the deprecation warning.
+      zfs.forceImportRoot = false;
     };
 
     # Required by `zpool`. It uses the host ID as a unique marker ensuring

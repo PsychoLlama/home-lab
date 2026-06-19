@@ -127,6 +127,14 @@ in
       group = "prometheus";
     };
 
+    # Grafana secret key. NixOS 26.05 dropped the built-in default, so it
+    # must be supplied explicitly via a file provider.
+    age.secrets.grafana-secret-key = {
+      file = ./grafana-secret-key.age;
+      owner = "grafana";
+      group = "grafana";
+    };
+
     services = {
       prometheus = {
         enable = true;
@@ -209,9 +217,14 @@ in
       grafana = {
         enable = true;
 
-        settings.server = {
-          http_addr = "0.0.0.0";
-          http_port = 3000;
+        settings = {
+          server = {
+            http_addr = "0.0.0.0";
+            http_port = 3000;
+          };
+
+          # 26.05 removed the default; read it from the agenix secret.
+          security.secret_key = "$__file{${config.age.secrets.grafana-secret-key.path}}";
         };
 
         provision = {

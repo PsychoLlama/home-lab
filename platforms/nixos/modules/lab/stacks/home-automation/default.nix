@@ -93,7 +93,9 @@ in
         frontend = { };
         api = { };
         mobile_app = { };
-        lovelace.mode = "storage";
+        # Storage (UI-managed) dashboards are Home Assistant's default; the
+        # legacy top-level `lovelace.mode` was deprecated in 26.05 ahead of
+        # its removal in HA 2026.8, so we no longer set it explicitly.
 
         # Discovery
         zeroconf = { };
