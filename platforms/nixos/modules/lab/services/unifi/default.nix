@@ -56,7 +56,7 @@ in
         # Web UI: HTTPS management interface, exposed only on Tailscale IP
         # so ingress can proxy it. TODO: Hardcoded IP is brittle - if the
         # Tailscale IP changes, this breaks.
-        "100.88.147.49:8443:8443"
+        "100.65.115.63:8443:8443"
       ];
       volumes = [
         "unifi-data:/unifi"
