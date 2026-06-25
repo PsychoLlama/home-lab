@@ -94,6 +94,14 @@
       # booted. The downstream firmware DTB binds fine to the mainline drivers.
       hardware.deviceTree.enable = false;
 
+      # Arm the BCM2835 hardware watchdog so a hard freeze self-recovers instead
+      # of staying dark until someone power-cycles the board. systemd pets it
+      # from PID 1's main loop; if the kernel wedges hard enough that PID 1 stops
+      # running, the pets stop and the SoC force-resets. 15s is the hardware
+      # ceiling (20-bit counter at 65536 Hz). Distinct from the default
+      # RebootWatchdogSec, which only guards a hung shutdown, not a live hang.
+      systemd.settings.Manager.RuntimeWatchdogSec = "15s";
+
       # Enable audio.
       services.pulseaudio.enable = true;
 
