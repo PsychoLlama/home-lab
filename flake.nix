@@ -16,6 +16,7 @@
       inputs = {
         nixpkgs.follows = "nixpkgs-unstable";
         stable.follows = "nixpkgs";
+        flake-utils.inputs.systems.follows = "systems";
       };
     };
 
