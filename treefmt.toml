@@ -6,3 +6,9 @@ includes = ["*.nix"]
 command = "tofu"
 options = ["fmt", "-"]
 includes = ["*.tf"]
+
+[formatter.just]
+command = "just"
+options = ["--fmt", "--justfile"]
+includes = ["justfile", "**/justfile", "*.just"]
+no-positional-arg-support = true
