@@ -90,7 +90,6 @@
           system = "aarch64-linux";
           ip4 = "10.0.0.208";
           interface = "end0";
-          builder.enable = true;
           publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJLMZ6+HaPahE4gGIAWW/uGIl/y40p/rSfIhb5t4G+g9" ];
         };
         rpi4-003 = {
@@ -99,7 +98,6 @@
           system = "aarch64-linux";
           ip4 = "10.0.0.204";
           interface = "end0";
-          builder.enable = true;
           publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFsNbo3bbm0G11GAbRwnr944AitRyqoQMN4LG7rMsvpK" ];
         };
       };
@@ -215,22 +213,6 @@
               pkgs.unstable.opentofu
               pkgs.unstable.treefmt
             ];
-
-            # NOTE: Configuring remote builds through the client assumes you
-            # are a trusted Nix user. Without permission, you'll see errors
-            # where it refuses to compile a foreign architecture.
-            NIX_CONFIG = ''
-              experimental-features = nix-command flakes
-              builders-use-substitutes = true
-              builders = @${pkgs.writeText "nix-remote-builders" ''
-                ${lib.pipe hive.nodes [
-                  (lib.mapAttrs (_: node: node.config.lab.host))
-                  (lib.filterAttrs (_: host: host.builder.enable))
-                  (lib.mapAttrsToList (_: host: host.builder.conf))
-                  (lib.concatStringsSep "\n")
-                ]}
-              ''}
-            '';
           };
         }
       );

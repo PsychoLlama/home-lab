@@ -27,6 +27,10 @@ in
   # Deploy over Tailscale (MagicDNS resolves short hostnames)
   deployment.targetHost = config.networking.hostName;
 
+  # Build on each host rather than trying to build locally.
+  deployment.buildOnTarget = true;
+
+  # Used in the SSH prompt.
   environment.sessionVariables.DATACENTER = datacenter;
 
   networking = {

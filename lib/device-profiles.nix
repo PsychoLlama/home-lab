@@ -104,14 +104,6 @@
 
       # Enable audio.
       services.pulseaudio.enable = true;
-
-      # Necessary for building boot images and running NixOS tests.
-      lab.host.builder.supportedFeatures = [
-        "benchmark"
-        "big-parallel"
-        "kvm"
-        "nixos-test"
-      ];
     };
 
   cm3588 =
