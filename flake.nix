@@ -38,6 +38,7 @@
       nixpkgs,
       colmena,
       agenix,
+      systems,
       ...
     }@flake-inputs:
 
@@ -49,24 +50,11 @@
       datacenter = "nova";
       tailnet = "taila3423a.ts.net";
 
-      # A subset of Hydra's standard architectures.
-      standardSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-
-      # Necessary evils with non-free licenses.
-      evilPackages = [ ];
-
       # Load nixpkgs with home-lab overrides.
       loadPkgs =
         { system }:
         import nixpkgs {
           inherit system;
-
-          config = {
-            allowUnfreePredicate = pkg: lib.elem (lib.getName pkg) evilPackages;
-          };
 
           overlays = [
             self.overlays.unstable-packages
@@ -74,9 +62,9 @@
         };
 
       # Attrs { system -> pkgs }
-      packageUniverse = lib.genAttrs standardSystems (system: loadPkgs { inherit system; });
+      pkgsBySystem = lib.genAttrs (import systems) (system: loadPkgs { inherit system; });
 
-      eachSystem = lib.flip lib.mapAttrs packageUniverse;
+      eachSystem = lib.flip lib.mapAttrs pkgsBySystem;
 
       # Each record maps to `config.lab.host`.
       hosts = with deviceProfiles; {
@@ -210,7 +198,7 @@
           };
 
           # Match each host with the packages for its architecture.
-          nodeNixpkgs = lib.mapAttrs (_: host: packageUniverse.${host.system}) hosts;
+          nodeNixpkgs = lib.mapAttrs (_: host: pkgsBySystem.${host.system}) hosts;
         };
       };
 
@@ -220,12 +208,12 @@
             packages = [
               agenix.packages.${system}.default
               colmena.packages.${system}.colmena
-              pkgs.just
-              pkgs.mcp-grafana
-              pkgs.nixfmt
-              pkgs.nixVersions.latest
-              pkgs.opentofu
-              pkgs.treefmt
+              pkgs.unstable.just
+              pkgs.unstable.mcp-grafana
+              pkgs.unstable.nixVersions.latest
+              pkgs.unstable.nixfmt
+              pkgs.unstable.opentofu
+              pkgs.unstable.treefmt
             ];
 
             # NOTE: Configuring remote builds through the client assumes you
