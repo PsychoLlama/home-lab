@@ -1,6 +1,9 @@
 set indentation := "  "
 set default-list
 
+# Infrastructure recipes live in `terraform/justfile`.
+mod terraform
+
 # Format the codebase.
 fmt:
   treefmt
@@ -19,17 +22,5 @@ update:
 
 # Run all checks.
 check:
-  @just fmt-check
+  just fmt-check
   nix flake check
-
-# Generate Terraform data from Nix.
-tf-gen:
-  nix build .#terraform-config -o terraform/config.json
-
-# Show planned infrastructure changes.
-tf-plan: tf-gen
-  tofu -chdir=terraform plan
-
-# Apply infrastructure changes (runs plan first).
-tf-apply: tf-gen
-  tofu -chdir=terraform apply

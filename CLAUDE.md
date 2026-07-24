@@ -85,8 +85,8 @@ OpenTofu (`tofu`) manages external infrastructure in `terraform/`:
 HCL files in `terraform/*.tf` consume JSON data exported from colmena nodes via `pkgs/terraform-config`. VirtualHosts become DNS records, service tags become ACL grants.
 
 ```sh
-just tf-gen    # Generate terraform/config.json from Nix
-just tf-apply  # Generate + apply
+just terraform build-inputs  # Generate terraform/config.json from Nix
+just terraform apply         # Generate + apply
 ```
 
 Credentials come from `TF_VAR_*` env vars (see `.env`).

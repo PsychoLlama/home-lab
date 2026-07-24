@@ -1,0 +1,14 @@
+set indentation := "  "
+set default-list
+
+# Generate Terraform data from Nix.
+build-inputs:
+    @nix build "..#terraform-config" -o config.json
+
+# Show planned infrastructure changes.
+plan: build-inputs
+    tofu plan
+
+# Apply infrastructure changes (runs plan first).
+apply: build-inputs
+    tofu apply
