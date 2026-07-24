@@ -14,13 +14,9 @@ bootstrap host arch="aarch64-linux":
   nix build ".#packages.{{ arch }}.{{ host }}-image"
   readlink -f result
 
-# Enter a VM sandbox for experimentation.
-sandbox:
-  nix run ".#tests.sandbox.driver"
-
 # Run one of the VM tests under `nixos/tests`.
 test expr:
-  nix run ".#tests.{{ expr }}.driver"
+  @nix run ".#checks.$(nix eval --impure --raw --expr builtins.currentSystem).{{ expr }}.driver"
 
 # Update all flake inputs.
 update:
@@ -29,6 +25,7 @@ update:
 # Run all checks.
 check:
   @just fmt-check
+  nix flake check
 
 # Generate Terraform data from Nix.
 tf-gen:

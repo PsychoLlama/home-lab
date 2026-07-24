@@ -22,7 +22,7 @@ just test dns
 See [all the tests here](https://github.com/PsychoLlama/home-lab/tree/main/platforms/nixos/tests). Or, cripple your machine by running all the tests:
 
 ```bash
-nix build --verbose '.#tests'
+nix flake check
 ```
 
 ### File Server

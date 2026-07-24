@@ -248,38 +248,6 @@
             }
           ) { } hive.nodes;
 
-          # Create a pseudo-package `tests` that holds all `nixosTest` drvs
-          # underneath. This is useful to escape the flat namespace constraint
-          # of `flake.packages` while remaining easily scriptable.
-          testScripts = eachSystem (
-            system: pkgs: {
-              # Building this package will run all tests. This is probably not
-              # what you want. Instead, build individual tests by path.
-              tests = pkgs.stdenvNoCC.mkDerivation rec {
-                name = "tests";
-                phases = [ "installPhase" ];
-
-                buildInputs = lib.collect (value: value ? __test) passthru;
-                installPhase = ''
-                  touch $out
-                '';
-
-                # All tests are exposed as attributes on this derivation. You can
-                # build them by path:
-                # ```
-                # nix build .#tests.<module>.<test-name>
-                # ```
-                passthru = pkgs.callPackage ./platforms/nixos/tests {
-                  inherit (flake-inputs)
-                    colmena
-                    home-manager
-                    agenix
-                    ;
-                };
-              };
-            }
-          );
-
           # Export node data as JSON for Terraform consumption
           terraformData = eachSystem (
             _: pkgs: {
@@ -289,8 +257,25 @@
         in
         lib.foldl lib.recursiveUpdate { } [
           hostImages
-          testScripts
           terraformData
         ];
+
+      checks = eachSystem (
+        _: pkgs:
+
+        let
+          importTest = import ./platforms/nixos/tests {
+            inherit pkgs;
+
+            inputs = flake-inputs;
+          };
+        in
+
+        {
+          dhcp = importTest ./platforms/nixos/tests/dhcp.nix;
+          dns = importTest ./platforms/nixos/tests/dns.nix;
+          gateway = importTest ./platforms/nixos/tests/gateway.nix;
+        }
+      );
     };
 }

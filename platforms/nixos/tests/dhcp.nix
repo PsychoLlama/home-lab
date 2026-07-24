@@ -1,6 +1,6 @@
-{ makeTest, lib, ... }:
+{ defineLabTest, lib, ... }:
 
-makeTest {
+defineLabTest {
   name = "dhcp-assignment";
 
   defaults.lab.networks.test.ipv4 = {

@@ -1,4 +1,4 @@
-{ makeTest, ... }:
+{ defineLabTest, ... }:
 
 let
   wan-vlan-id = 1;
@@ -11,7 +11,7 @@ let
   };
 in
 
-makeTest {
+defineLabTest {
   name = "gateway";
 
   defaults.lab.networks = {

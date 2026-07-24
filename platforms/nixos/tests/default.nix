@@ -1,50 +1,35 @@
-{
-  pkgs,
-  callPackage,
-  colmena,
-  home-manager,
-  agenix,
-}:
+{ pkgs, inputs }:
 
 let
+  inherit (pkgs) lib;
+
   baseModule = {
     defaults = {
       imports = [
-        colmena.nixosModules.deploymentOptions
-        colmena.nixosModules.assertionModule
-        home-manager.nixosModules.home-manager
-        agenix.nixosModules.default
-        ../modules
+        inputs.colmena.nixosModules.deploymentOptions
+        inputs.colmena.nixosModules.assertionModule
+        inputs.home-manager.nixosModules.home-manager
+        inputs.agenix.nixosModules.default
+        inputs.self.nixosModules.nixos-platform
       ];
 
       home-manager = {
-        sharedModules = [ ../../platforms/home-manager/modules ];
+        sharedModules = [ inputs.self.nixosModules.home-manager-platform ];
         useGlobalPkgs = true;
         useUserPackages = true;
       };
     };
   };
 
-  makeTest =
+  defineLabTest =
     testModule:
-    (pkgs.testers.runNixOSTest {
+    pkgs.testers.runNixOSTest {
       imports = [
         baseModule
         testModule
       ];
-    })
-    // {
-      __test = true;
     };
-
-  importTests = path: args: callPackage path (args // { inherit importTests makeTest; });
 in
-{
-  dhcp = importTests ./dhcp.nix { };
-  dns = importTests ./dns.nix { };
-  gateway = importTests ./gateway.nix { };
 
-  # A place to experiment locally. This is much faster than waiting for
-  # a Colmena deploy.
-  sandbox = importTests ./sandbox.nix { };
-}
+# Import a single VM test module, injecting the shared test helpers.
+path: import path { inherit defineLabTest lib; }

@@ -1,6 +1,6 @@
-{ makeTest, ... }:
+{ defineLabTest, ... }:
 
-makeTest {
+defineLabTest {
   name = "dns-lookup";
 
   nodes.machine =
