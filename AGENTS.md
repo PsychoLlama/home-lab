@@ -42,11 +42,11 @@ acl.tag = lib.mkOption {
 ## Testing
 
 Tests mirror the filesystem under `platforms/nixos/tests/` and are exposed as
-standard flake checks. Run them all with `nix flake check`, or build an
+standard flake checks. Run them all with `nix flake check`, or run an
 individual test by name:
 
 ```sh
-nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).dhcp  # platforms/nixos/tests/dhcp.nix
+just test dhcp  # platforms/nixos/tests/dhcp.nix
 ```
 
 ## Building
