@@ -252,25 +252,7 @@
           # underneath. This is useful to escape the flat namespace constraint
           # of `flake.packages` while remaining easily scriptable.
           testScripts = eachSystem (
-            system: pkgs:
-            let
-              docOutputs = pkgs.callPackage ./platforms/nixos/doc {
-                inherit (flake-inputs) colmena home-manager agenix;
-                revision = self.rev or "latest";
-              };
-            in
-            {
-              docs = pkgs.stdenvNoCC.mkDerivation {
-                name = "docs";
-                phases = [ "installPhase" ];
-                buildInputs = [
-                  docOutputs.manpage
-                  docOutputs.markdown
-                ];
-                installPhase = "touch $out";
-                passthru = docOutputs;
-              };
-
+            system: pkgs: {
               # Building this package will run all tests. This is probably not
               # what you want. Instead, build individual tests by path.
               tests = pkgs.stdenvNoCC.mkDerivation rec {
