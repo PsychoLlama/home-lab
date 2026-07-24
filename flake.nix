@@ -44,7 +44,7 @@
 
     let
       inherit (nixpkgs-unstable) lib;
-      inherit (import ./lib flake-inputs) defineHost deviceProfiles makeImage;
+      inherit (import ./lib flake-inputs) defineHost deviceProfiles;
 
       domain = "selfhosted.city";
       datacenter = "nova";
@@ -235,30 +235,12 @@
         }
       );
 
-      packages =
-        let
-          # Create a bootable disk image for each machine.
-          hostImages = lib.foldlAttrs (
-            packages: hostName: node:
-            lib.recursiveUpdate packages {
-              ${node.pkgs.stdenv.hostPlatform.system}."${hostName}-image" = makeImage {
-                inherit nixpkgs;
-                nixosSystem = node;
-              };
-            }
-          ) { } hive.nodes;
-
-          # Export node data as JSON for Terraform consumption
-          terraformData = eachSystem (
-            _: pkgs: {
-              terraform-config = pkgs.callPackage ./pkgs/terraform-config { nodes = hive.nodes; };
-            }
-          );
-        in
-        lib.foldl lib.recursiveUpdate { } [
-          hostImages
-          terraformData
-        ];
+      # Export node data as JSON for Terraform consumption
+      packages = eachSystem (
+        _: pkgs: {
+          terraform-config = pkgs.callPackage ./pkgs/terraform-config { nodes = hive.nodes; };
+        }
+      );
 
       checks = eachSystem (
         _: pkgs:
