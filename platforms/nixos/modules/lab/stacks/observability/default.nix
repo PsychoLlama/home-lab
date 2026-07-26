@@ -90,6 +90,18 @@ let
     ))
   ];
 
+  # ESPHome BME280 sensors. These aren't NixOS nodes, so they're listed by
+  # hand. Names come from their DHCP hostnames, resolved through etcd/CoreDNS.
+  bme280Hosts = [
+    "esp-001" # Bedroom
+    "esp-002" # Living room
+  ];
+
+  bme280Targets = map (name: {
+    targets = [ "${name}.host.${config.lab.datacenter}.${config.lab.domain}:80" ];
+    labels.instance = name;
+  }) bme280Hosts;
+
   # Find all nodes with ntfy metrics enabled
   ntfyTargets = lib.pipe nodes [
     (lib.filterAttrs (
@@ -204,12 +216,7 @@ in
           {
             job_name = "bme280";
             scrape_interval = "30s";
-            static_configs = [
-              {
-                targets = [ "esp32-001.host.${config.lab.datacenter}.${config.lab.domain}:80" ];
-                labels.instance = "esp32-001";
-              }
-            ];
+            static_configs = bme280Targets;
           }
         ];
       };
