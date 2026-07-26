@@ -53,7 +53,6 @@ in
         "hue"
         "cast" # Also covers Google Home speakers
         # "xbox" - disabled due to insecure ecdsa dependency (CVE-2024-23342)
-        "fitbit"
         "withings"
         "spotify"
 
