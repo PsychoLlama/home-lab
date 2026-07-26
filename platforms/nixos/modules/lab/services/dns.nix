@@ -226,6 +226,36 @@ in
       '';
     };
 
+    authoritative = mkOption {
+      type = types.listOf types.str;
+      readOnly = true;
+
+      defaultText = lib.literalMD "Every discovery zone, plus one entry per record in `zones`.";
+
+      default = lib.unique (
+        cfg.discovery.zones
+        ++ lib.concatLists (
+          lib.mapAttrsToList (
+            zoneName: zone:
+            map (
+              record:
+              # A wildcard claims the whole zone, and "@" *is* the zone.
+              # Both collapse to the zone name, which still suffix-matches.
+              if record.name == "*" || record.name == "@" then zoneName else "${record.name}.${zoneName}"
+            ) zone.records
+          ) cfg.zones
+        )
+      );
+
+      description = ''
+        Names this server answers authoritatively, as DNS suffixes.
+
+        Split-horizon resolvers use this to delegate only what CoreDNS
+        actually serves. Delegating a whole zone instead would shadow public
+        records for any name in that zone hosted outside the lab.
+      '';
+    };
+
     hosts.file = mkOption {
       type = types.path;
       default = pkgs.emptyFile;

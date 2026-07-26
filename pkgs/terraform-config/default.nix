@@ -101,6 +101,9 @@ json.generate "terraform-config.json" {
 
   router = {
     hostName = services.router.config.networking.hostName;
+
+    # Suffixes to point at the router's CoreDNS via Tailscale split DNS.
+    dns.authoritative = services.router.config.lab.services.dns.authoritative;
   };
 
   vpn = {

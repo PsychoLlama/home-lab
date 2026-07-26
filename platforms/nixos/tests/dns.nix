@@ -101,6 +101,21 @@ defineLabTest {
             DNS server did not open firewall.
           '';
         }
+
+        {
+          # Wildcards and "@" collapse to the bare zone; everything else is
+          # a fully-qualified name. Discovery zones pass through whole.
+          assertion =
+            lib.sort lib.lessThan config.lab.services.dns.authoritative == [
+              "custom-record.host.services.test"
+              "dyn.example.com"
+              "ingress.services.test"
+              "services.test"
+            ];
+          message = ''
+            Unexpected authoritative names: ${toString config.lab.services.dns.authoritative}
+          '';
+        }
       ];
     };
 

@@ -119,8 +119,15 @@ resource "tailscale_device_tags" "nodes" {
   }
 }
 
-# Split horizon DNS: forward domain queries to the router's CoreDNS
+# Split horizon DNS: forward private names to the router's CoreDNS.
+#
+# Scoped to the names CoreDNS is authoritative for, not the whole domain.
+# Delegating `selfhosted.city` wholesale would shadow public records for
+# anything in the zone that isn't hosted in the lab. Tailscale matches by
+# suffix, so a zone here still covers all of its subdomains.
 resource "tailscale_dns_split_nameservers" "private_services" {
-  domain      = local.config.lab.domain
+  for_each = toset(local.config.router.dns.authoritative)
+
+  domain      = each.value
   nameservers = [data.tailscale_device.nodes[local.config.router.hostName].addresses[0]]
 }
