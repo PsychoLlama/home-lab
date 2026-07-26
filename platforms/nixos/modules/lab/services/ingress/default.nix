@@ -8,6 +8,16 @@
 let
   cfg = config.lab.services.ingress;
 
+  inherit (config.lab) domain tailnet;
+
+  # Only names inside the lab's zone can be published by the router's
+  # CoreDNS. Anything else needs DNS managed wherever that domain lives.
+  inZone = host: host.name == domain || lib.hasSuffix ".${domain}" host.name;
+  partitionedHosts = lib.partition inZone (lib.attrValues cfg.hosts);
+
+  # Zone-relative record name for an FQDN ("@" for the zone apex).
+  toRecordName = fqdn: if fqdn == domain then "@" else lib.removeSuffix ".${domain}" fqdn;
+
   # Build Caddy with Cloudflare DNS plugin
   caddyWithCloudflare = pkgs.caddy.withPlugins {
     plugins = [ "github.com/caddy-dns/cloudflare@v0.2.2" ];
@@ -125,10 +135,45 @@ in
         )
       );
     };
+
+    dns.records = lib.mkOption {
+      type = lib.types.listOf (lib.types.attrsOf lib.types.str);
+      readOnly = true;
+
+      defaultText = lib.literalMD "One CNAME per in-zone entry in `hosts`, pointing at this node's MagicDNS name.";
+
+      default = map (host: {
+        type = "CNAME";
+        name = toRecordName host.name;
+        value = "${config.networking.hostName}.${tailnet}.";
+      }) partitionedHosts.right;
+
+      description = ''
+        DNS records publishing the names Caddy serves, shaped for
+        `lab.services.dns.zones.<zone>.records`. The router collects these
+        from every ingress node via `nodes`.
+
+        Every entry in `hosts` is published; an assertion rejects names
+        outside `lab.domain`.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
     age.secrets.cloudflare-api-token.file = ./cloudflare-api-token.age;
+
+    # Out-of-zone hosts are broken twice over: the router can't publish DNS
+    # for them, and the ACME policy below only holds a token for `domain`,
+    # so they can't get a cert either. Always a typo.
+    assertions = [
+      {
+        assertion = partitionedHosts.wrong == [ ];
+        message = ''
+          lab.services.ingress: hosts must be inside ${domain}, but found
+          ${lib.concatMapStringsSep ", " (host: host.name) partitionedHosts.wrong}.
+        '';
+      }
+    ];
 
     services.caddy = {
       enable = true;

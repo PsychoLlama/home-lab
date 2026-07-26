@@ -39,6 +39,13 @@ let
     };
   };
 
+  # Every ingress node publishes CNAMEs for the vhosts it terminates.
+  ingressRecords = lib.pipe nodes [
+    (lib.filterAttrs (_: node: node.config.lab.services.ingress.enable))
+    (lib.mapAttrsToList (_: node: node.config.lab.services.ingress.dns.records))
+    lib.concatLists
+  ];
+
   networks = {
     datacenter.interface = "lan"; # Dongle to ethernet switch
     home.interface = "wap"; # Dongle to WAP (no VLAN)
@@ -213,16 +220,11 @@ in
         hosts.file = "${pkgs.unstable.stevenblack-blocklist}/hosts";
         prometheus.enable = true;
 
-        # Wildcard zone for services (routes all *.selfhosted.city to ingress)
-        zones.${config.lab.domain} = {
-          records = [
-            {
-              type = "CNAME";
-              name = "*";
-              value = "rpi4-003.${config.lab.tailnet}.";
-            }
-          ];
-        };
+        # Explicit CNAMEs for the names Caddy actually serves, collected
+        # from every ingress node. A wildcard here would be simpler, but it
+        # swallows the whole domain: any name not behind the reverse proxy
+        # resolves to Caddy, which has neither a route nor a cert for it.
+        zones.${config.lab.domain}.records = ingressRecords;
 
         discovery = {
           enable = true;
