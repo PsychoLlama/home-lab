@@ -334,6 +334,7 @@ in
 
               file ${zone.file} {
                 reload 0
+                fallthrough
               }
 
               ${lib.concatMapStringsSep "\n" forward cfg.forward}
