@@ -55,6 +55,27 @@ in
         [ "--advertise-tags=${tagList}" ] ++ lib.optionals cfg.exitNode [ "--advertise-exit-node" ];
     };
 
+    # tailscaled reads the host's base resolver once at startup and never
+    # re-reads it. It also registers itself with resolvconf exclusively, so
+    # the merged `/etc/resolv.conf` lists only tailscaled, which it discards
+    # as a loop. Starting before the DHCP client therefore leaves it with no
+    # upstreams permanently: every name outside the tailnet SERVFAILs until
+    # something re-triggers the config, and a host that builds on itself
+    # can't resolve the binary cache.
+    #
+    # dhcpcd is `Type=forking`, so `network-online.target` is only reached
+    # once the lease is in and the resolvconf record is written.
+    #
+    # Hosts that set `networking.nameservers` get a static resolvconf record
+    # from early boot and never race. Ordering them here would stall
+    # tailscaled behind a WAN lease, and on a router it would drag CoreDNS
+    # (which starts after tailscaled) along with it — leaving the LAN
+    # without DNS during an ISP outage, exactly when it's least welcome.
+    systemd.services.tailscaled = lib.mkIf (config.networking.nameservers == [ ]) {
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+    };
+
     # Exit nodes require IP forwarding
     boot.kernel.sysctl = lib.mkIf cfg.exitNode {
       "net.ipv4.ip_forward" = 1;
