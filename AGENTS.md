@@ -4,13 +4,18 @@ NixOS configurations for my home lab infrastructure.
 
 ## Architecture
 
+`flake.nix` declares inputs only. Outputs come from [`flake-parts`](https://flake.parts) modules under `modules/`:
+
+- **`modules/flake/`**: Flake outputs, one file per concern. Flake-level options live in the `lab.*` namespace, mirroring the NixOS side.
+- **`modules/hosts/`**: One file per machine, declaring `lab.hosts.<name>`. `modules/flake/colmena.nix` turns those into colmena nodes and applies the shared baseline.
+
 Modules live under `platforms/<platform>/modules/lab/` (nixos, home-manager). Three layers:
 
 - **Presets** (`presets/`): Opinionated config for exactly one program. Self-contained and reusable.
 - **Services** (`services/`): Higher-level DSL abstracting a program. Reusable, but may reference other services and shared config (`lab.networks`, `lab.host`, etc).
 - **Stacks** (`stacks/`): Combine presets and services into a role (e.g., `router`, `file-server`). Specific to this lab.
 
-Hosts in `hosts/` are minimal—they adopt stacks and add hardware-specific overrides.
+Hosts in `modules/hosts/` are minimal—they adopt stacks and add hardware-specific overrides. Hardware profiles live in `modules/flake/device-profiles/`.
 
 ## ACL Tags
 

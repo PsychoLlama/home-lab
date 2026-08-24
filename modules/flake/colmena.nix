@@ -1,0 +1,144 @@
+{
+  config,
+  inputs,
+  lib,
+  loadPkgs,
+  withSystem,
+  ...
+}:
+
+let
+  inherit (config.flake) homeModules nixosModules;
+  inherit (config.lab) defaults hosts;
+
+  # Creates a top-level NixOS config, applied to all machines in the home lab.
+  # This is responsible for setting the baseline configuration.
+  defineHost =
+    host:
+
+    { config, lib, ... }:
+
+    let
+      inherit (config.lab) domain datacenter;
+      home = config.home-manager.users.root;
+    in
+
+    {
+      imports = [
+        inputs.home-manager.nixosModules.home-manager
+        inputs.agenix.nixosModules.default
+        nixosModules.nixos-platform
+
+        host.profile
+        host.module
+      ];
+
+      # Deploy over Tailscale (MagicDNS resolves short hostnames)
+      deployment.targetHost = config.networking.hostName;
+
+      # Build on each host rather than trying to build locally.
+      deployment.buildOnTarget = true;
+
+      # Used in the SSH prompt.
+      environment.sessionVariables.DATACENTER = datacenter;
+
+      networking = {
+        hostName = lib.mkDefault host.name;
+        domain = "host.${datacenter}.${domain}";
+      };
+
+      nix = {
+        # Run garbage collection on a schedule.
+        gc.automatic = true;
+
+        # Use hard links to save disk space.
+        optimise.automatic = true;
+
+        # Enable Flake support.
+        settings.experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
+      };
+
+      services.openssh = {
+        enable = true;
+        settings.PasswordAuthentication = false;
+      };
+
+      home-manager = {
+        useGlobalPkgs = lib.mkDefault true;
+        useUserPackages = lib.mkDefault true;
+        sharedModules = [
+          homeModules.home-manager-platform
+
+          {
+            lab.stacks.host-defaults.enable = lib.mkDefault true;
+          }
+        ];
+      };
+
+      lab = {
+        host = {
+          inherit (host)
+            interface
+            ip4
+            module
+            profile
+            publicKeys
+            system
+            ;
+        };
+
+        ssh = {
+          enable = lib.mkDefault true;
+          authorizedKeys = [
+            ../../lib/keys/deploy.pub
+            ../../lib/keys/admin.pub
+          ];
+        };
+      };
+
+      users.defaultUserShell = home.programs.nushell.package;
+
+      system = {
+        configurationRevision = inputs.self.rev or inputs.self.dirtyRev or "dirty";
+
+        # Flake inputs don't write .git-revision into the source tree, so the
+        # defaults read by lib.trivial.revisionWithDefault return null and we end
+        # up with "25.11pre-git" + "Nixpkgs commit hash is unknown". Set these
+        # explicitly from the locked input.
+        nixos = {
+          revision = inputs.nixpkgs.rev or inputs.nixpkgs.dirtyRev or "dirty";
+          versionSuffix =
+            ".${builtins.substring 0 8 (inputs.nixpkgs.lastModifiedDate or "19700101")}"
+            + ".${inputs.nixpkgs.shortRev or "dirty"}";
+        };
+      };
+    };
+in
+
+{
+  flake = {
+    colmena = lib.mapAttrs (_: defineHost) hosts // {
+      inherit defaults;
+
+      meta = {
+        description = config.lab.domain;
+
+        # This value is required, but I want host to specify it instead.
+        # By selecting an intentionally wrong value they are forced to
+        # override it; Bad things will happen if they do not.
+        nixpkgs = loadPkgs "riscv64-linux";
+
+        # Match each host with the packages for its architecture.
+        nodeNixpkgs = lib.mapAttrs (_: host: withSystem host.system ({ pkgs, ... }: pkgs)) hosts;
+      };
+    };
+
+    # Workaround for unlocked inputs in pure evaluations using newer
+    # versions of Nix. Supports Colmena's `--experimental-flake-eval` flag.
+    # See: https://github.com/zhaofengli/colmena/issues/202
+    colmenaHive = inputs.colmena.lib.makeHive config.flake.colmena;
+  };
+}

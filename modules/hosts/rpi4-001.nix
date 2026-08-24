@@ -1,0 +1,36 @@
+{ config, ... }:
+
+{
+  lab.hosts.rpi4-001 = {
+    profile = config.lab.deviceProfiles.raspberry-pi-4;
+    system = "aarch64-linux";
+    ip4 = "10.0.0.1"; # Router
+    interface = null; # No "primary" interface.
+    publicKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAyb4vh9xDEEV+30G0UPMTSdtVq3Tyfgl9I9VRwf226v" ];
+
+    module =
+      { config, ... }:
+
+      let
+        inherit (config.lab.services.gateway.networks) datacenter home;
+        inherit (config.lab.services.gateway) wan;
+      in
+      {
+        lab.stacks = {
+          router.enable = true;
+          vpn.client.enable = true;
+        };
+
+        # Assign sensible names to the network interfaces. Anything with vlans needs
+        # a hardware-related filter to avoid conflicts with virtual devices.
+        services.udev.extraRules = ''
+          SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="b0:a7:b9:2c:a9:b5", NAME="${home.interface}", ENV{ID_BUS}=="usb"
+          SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="dc:a6:32:e1:42:81", NAME="${datacenter.interface}"
+          SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="60:a4:b7:59:07:f2", NAME="${wan.interface}"
+        '';
+
+        home-manager.users.root.home.stateVersion = "23.11";
+        system.stateVersion = "21.05";
+      };
+  };
+}

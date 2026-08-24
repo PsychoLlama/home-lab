@@ -46,7 +46,7 @@ Split-horizon DNS over my `selfhosted.city` domain. Internal services are only a
 - `platforms/home-manager/modules`: QOL configs for remote administration.
 - `platforms/nixos/modules/lab`: Library modules for building a home lab, layered as services and stacks.
 - `platforms/nixos/tests`: Virtual machine tests for services in `modules/lab`.
-- `hosts`: Per-host configurations. They are thin wrappers around stacks.
+- `modules/hosts`: Per-host configurations. They are thin wrappers around stacks.
 
 ## Inspiration
 

@@ -14,7 +14,7 @@ let
       ];
 
       home-manager = {
-        sharedModules = [ inputs.self.nixosModules.home-manager-platform ];
+        sharedModules = [ inputs.self.homeModules.home-manager-platform ];
         useGlobalPkgs = true;
         useUserPackages = true;
       };
