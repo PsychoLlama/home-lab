@@ -8,8 +8,9 @@ NixOS configurations for my home lab infrastructure.
 
 - **`modules/flake/`**: Flake outputs, one file per concern. Flake-level options live in the `lab.*` namespace, mirroring the NixOS side.
 - **`modules/hosts/`**: One file per machine, declaring `lab.hosts.<name>`. `modules/flake/colmena.nix` turns those into colmena nodes and applies the shared baseline.
+- **`modules/platforms/<platform>/`**: NixOS and home-manager modules, imported by path rather than by `flake-parts`.
 
-Modules live under `platforms/<platform>/modules/lab/` (nixos, home-manager). Three layers:
+Modules live under `modules/platforms/<platform>/lab/` (nixos, home-manager). Three layers:
 
 - **Presets** (`presets/`): Opinionated config for exactly one program. Self-contained and reusable.
 - **Services** (`services/`): Higher-level DSL abstracting a program. Reusable, but may reference other services and shared config (`lab.networks`, `lab.host`, etc).
@@ -46,12 +47,12 @@ acl.tag = lib.mkOption {
 
 ## Testing
 
-Tests mirror the filesystem under `platforms/nixos/tests/` and are exposed as
+Tests mirror the filesystem under `modules/platforms/nixos/tests/` and are exposed as
 standard flake checks. Run them all with `nix flake check`, or run an
 individual test by name:
 
 ```sh
-just test dhcp  # platforms/nixos/tests/dhcp.nix
+just test dhcp  # modules/platforms/nixos/tests/dhcp.nix
 ```
 
 ## Building

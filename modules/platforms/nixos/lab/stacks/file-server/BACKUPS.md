@@ -14,9 +14,9 @@ Backup server at `restic.selfhosted.city` (Tailscale only, append-only).
 nix run nixpkgs#mkpasswd -- -m bcrypt
 
 # Update htpasswd secret
-agenix -d platforms/nixos/modules/lab/services/restic-server/restic-htpasswd.age > /tmp/htpasswd
+agenix -d modules/platforms/nixos/lab/services/restic-server/restic-htpasswd.age > /tmp/htpasswd
 echo 'workstation-newhost:<hash>' >> /tmp/htpasswd
-agenix -e platforms/nixos/modules/lab/services/restic-server/restic-htpasswd.age < /tmp/htpasswd
+agenix -e modules/platforms/nixos/lab/services/restic-server/restic-htpasswd.age < /tmp/htpasswd
 rm /tmp/htpasswd
 
 # Deploy
