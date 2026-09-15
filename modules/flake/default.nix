@@ -11,5 +11,6 @@
     ./overlays.nix
     ./packages.nix
     ./shell.nix
+    ./unit-tests.nix
   ];
 }

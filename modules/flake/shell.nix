@@ -10,6 +10,7 @@
           inputs.colmena.packages.${system}.colmena
           pkgs.unstable.just
           pkgs.unstable.mcp-grafana
+          pkgs.unstable.nix-unit
           pkgs.unstable.nixVersions.latest
           pkgs.unstable.nixfmt
           pkgs.unstable.opentofu
