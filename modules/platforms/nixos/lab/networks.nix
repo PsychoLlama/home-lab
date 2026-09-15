@@ -3,7 +3,18 @@
 let
   inherit (lib) types mkOption;
 
-  buildCidrInfo = pkgs.writers.writePython3 "print_cidr_info" { } ''
+  # TODO: Fix this abominable hack. Ideally port IP parsing to pure Nix.
+  #
+  # CIDR parsing uses import-from-derivation, so the helper must be buildable
+  # by the machine *evaluating* the config, not the target. Otherwise
+  # evaluating an aarch64 host from x86_64 fails trying to build an aarch64
+  # derivation. `currentSystem` is unavailable in pure evaluation (colmena,
+  # flakes), so assume the deploy workstation there.
+  evalPkgs = import pkgs.path {
+    system = "x86_64-linux";
+  };
+
+  buildCidrInfo = evalPkgs.writers.writePython3 "print_cidr_info" { } ''
     from ipaddress import ip_interface
     import sys
     import json
@@ -28,7 +39,7 @@ let
     cidr_address:
     builtins.fromJSON (
       builtins.readFile (
-        pkgs.runCommand "cidr-info" { inherit cidr_address; } ''
+        evalPkgs.runCommandLocal "cidr-info" { inherit cidr_address; } ''
           ${buildCidrInfo} $cidr_address > $out
         ''
       )
