@@ -104,18 +104,23 @@ in
     };
   };
 
-  /**
-    Anything unparseable fails the build, and the builder's log rides along
-    in the error, which is why the input can be matched at all. A pure-Nix
-    port will word this differently; what must survive is that the input is
-    rejected rather than guessed at.
-  */
+  # Anything unparseable is rejected rather than guessed at.
   testRejectsMalformedAddress = {
     expr = parse "192.168.1.1/33";
 
     expectedError = {
-      type = "Error";
-      msg = "192.168.1.1/33";
+      type = "ThrownError";
+      msg = "prefix length 33 is out of range";
+    };
+  };
+
+  # Reading one field still validates the whole input.
+  testRejectsMalformedPrefixWhenReadingAddress = {
+    expr = (parse "192.168.1.1/33").gatewayAddress;
+
+    expectedError = {
+      type = "ThrownError";
+      msg = "prefix length 33 is out of range";
     };
   };
 }
