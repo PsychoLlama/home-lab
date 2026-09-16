@@ -62,8 +62,8 @@ in
             useDHCP = false;
             ipv4.addresses = [
               {
-                address = network.ipv4.gateway;
-                prefixLength = network.ipv4.prefixLength;
+                address = network.ipv4.addresses.gateway;
+                prefixLength = network.ipv4.subnet.prefixLength;
               }
             ];
           };
@@ -76,7 +76,7 @@ in
         internalInterfaces = lib.mapAttrsToList (_: network: network.interface) networks;
 
         internalIPs = lib.mapAttrsToList (
-          _: network: "${network.ipv4.gateway}/${toString network.ipv4.prefixLength}"
+          _: network: "${network.ipv4.addresses.gateway}/${toString network.ipv4.subnet.prefixLength}"
         ) networks;
       };
 

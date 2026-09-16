@@ -247,7 +247,7 @@ in
 
           subnet4 = lib.map (network: {
             id = cfg.lib.toSubnetId network.id;
-            subnet = network.ipv4.subnet;
+            subnet = network.ipv4.subnet.cidr;
             pools = lib.forEach network.ipv4.dhcp.pools (lease: {
               pool = "${lease.start} - ${lease.end}";
             });
@@ -262,11 +262,11 @@ in
               ++ [
                 {
                   name = "routers";
-                  data = network.ipv4.gateway;
+                  data = network.ipv4.addresses.gateway;
                 }
                 {
                   name = "broadcast-address";
-                  data = network.ipv4.broadcast;
+                  data = network.ipv4.addresses.broadcast;
                 }
               ];
           }) (lib.attrValues networks);

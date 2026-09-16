@@ -23,7 +23,7 @@ defineLabTest {
         lab.services.dhcp = {
           enable = true;
           networks.test.interface = "eth1";
-          nameservers = [ config.lab.networks.test.ipv4.gateway ];
+          nameservers = [ config.lab.networks.test.ipv4.addresses.gateway ];
           reservations = [
             rec {
               type = "client-id";

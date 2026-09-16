@@ -42,8 +42,8 @@ defineLabTest {
         virtualisation.vlans = [ wan-vlan-id ];
         networking.interfaces.eth1.ipv4.addresses = [
           {
-            address = wan.ipv4.gateway;
-            prefixLength = wan.ipv4.prefixLength;
+            address = wan.ipv4.addresses.gateway;
+            prefixLength = wan.ipv4.subnet.prefixLength;
           }
         ];
 
@@ -80,7 +80,7 @@ defineLabTest {
 
         networking = {
           defaultGateway = {
-            address = config.lab.networks.lan.ipv4.gateway;
+            address = config.lab.networks.lan.ipv4.addresses.gateway;
             interface = "eth1";
           };
 

@@ -168,7 +168,7 @@ let
     # Type
 
     ```
-    describeSubnet :: { address :: Int, prefixLength :: Int } -> AttrSet
+    describeSubnet :: { address :: Int, prefixLength :: Int } -> Subnet
     ```
   */
   describeSubnet =
@@ -181,12 +181,17 @@ let
     in
 
     {
-      inherit prefixLength;
-      gatewayAddress = formatAddress address;
-      networkAddress = formatAddress network;
-      broadcastAddress = formatAddress (lib.bitOr network hostMask);
-      subnetMask = formatAddress subnetMask;
-      subnet = "${formatAddress network}/${toString prefixLength}";
+      subnet = {
+        cidr = "${formatAddress network}/${toString prefixLength}";
+        mask = formatAddress subnetMask;
+        inherit prefixLength;
+      };
+
+      addresses = {
+        host = formatAddress address;
+        network = formatAddress network;
+        broadcast = formatAddress (lib.bitOr network hostMask);
+      };
     };
 
   /**
@@ -197,7 +202,7 @@ let
     prefix length is a decimal number (0-32) after a slash. Both are
     required. Leading zeros, whitespace, and netmask-style prefixes
     (`/255.255.255.0`) are rejected. The address may have host bits set;
-    they're kept in `gatewayAddress` and cleared everywhere else.
+    they're kept in `addresses.host` and cleared everywhere else.
 
     Throws on malformed input.
 
@@ -206,25 +211,28 @@ let
     ```nix
     parseV4 "10.0.1.1/24"
     => {
-      gatewayAddress = "10.0.1.1";
-      networkAddress = "10.0.1.0";
-      broadcastAddress = "10.0.1.255";
-      prefixLength = 24;
-      subnetMask = "255.255.255.0";
-      subnet = "10.0.1.0/24";
+      subnet = {
+        cidr = "10.0.1.0/24";
+        mask = "255.255.255.0";
+        prefixLength = 24;
+      };
+
+      addresses = {
+        host = "10.0.1.1";
+        network = "10.0.1.0";
+        broadcast = "10.0.1.255";
+      };
     }
     ```
 
     # Type
 
     ```
-    parseV4 :: String -> {
-      gatewayAddress :: String,
-      networkAddress :: String,
-      broadcastAddress :: String,
-      prefixLength :: Int,
-      subnetMask :: String,
-      subnet :: String,
+    parseV4 :: String -> Subnet
+
+    Subnet :: {
+      subnet :: { cidr :: String, mask :: String, prefixLength :: Int },
+      addresses :: { host :: String, network :: String, broadcast :: String },
     }
     ```
   */

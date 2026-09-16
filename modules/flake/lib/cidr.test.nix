@@ -19,29 +19,39 @@ in
     expr = parse "10.0.1.1/24";
 
     expected = {
-      gatewayAddress = "10.0.1.1";
-      networkAddress = "10.0.1.0";
-      broadcastAddress = "10.0.1.255";
-      prefixLength = 24;
-      subnetMask = "255.255.255.0";
-      subnet = "10.0.1.0/24";
+      subnet = {
+        cidr = "10.0.1.0/24";
+        mask = "255.255.255.0";
+        prefixLength = 24;
+      };
+
+      addresses = {
+        host = "10.0.1.1";
+        network = "10.0.1.0";
+        broadcast = "10.0.1.255";
+      };
     };
   };
 
   /**
     The address keeps its host bits - it is the interface, not the network.
-    Only `gatewayAddress` carries them; the rest describe the subnet.
+    Only `addresses.host` carries them; the rest describe the subnet.
   */
   testKeepsHostBits = {
     expr = parse "10.0.0.37/24";
 
     expected = {
-      gatewayAddress = "10.0.0.37";
-      networkAddress = "10.0.0.0";
-      broadcastAddress = "10.0.0.255";
-      prefixLength = 24;
-      subnetMask = "255.255.255.0";
-      subnet = "10.0.0.0/24";
+      subnet = {
+        cidr = "10.0.0.0/24";
+        mask = "255.255.255.0";
+        prefixLength = 24;
+      };
+
+      addresses = {
+        host = "10.0.0.37";
+        network = "10.0.0.0";
+        broadcast = "10.0.0.255";
+      };
     };
   };
 
@@ -50,12 +60,17 @@ in
     expr = parse "172.16.5.4/12";
 
     expected = {
-      gatewayAddress = "172.16.5.4";
-      networkAddress = "172.16.0.0";
-      broadcastAddress = "172.31.255.255";
-      prefixLength = 12;
-      subnetMask = "255.240.0.0";
-      subnet = "172.16.0.0/12";
+      subnet = {
+        cidr = "172.16.0.0/12";
+        mask = "255.240.0.0";
+        prefixLength = 12;
+      };
+
+      addresses = {
+        host = "172.16.5.4";
+        network = "172.16.0.0";
+        broadcast = "172.31.255.255";
+      };
     };
   };
 
@@ -64,12 +79,17 @@ in
     expr = parse "10.0.0.1/32";
 
     expected = {
-      gatewayAddress = "10.0.0.1";
-      networkAddress = "10.0.0.1";
-      broadcastAddress = "10.0.0.1";
-      prefixLength = 32;
-      subnetMask = "255.255.255.255";
-      subnet = "10.0.0.1/32";
+      subnet = {
+        cidr = "10.0.0.1/32";
+        mask = "255.255.255.255";
+        prefixLength = 32;
+      };
+
+      addresses = {
+        host = "10.0.0.1";
+        network = "10.0.0.1";
+        broadcast = "10.0.0.1";
+      };
     };
   };
 
@@ -81,12 +101,17 @@ in
     expr = parse "10.0.0.1/31";
 
     expected = {
-      gatewayAddress = "10.0.0.1";
-      networkAddress = "10.0.0.0";
-      broadcastAddress = "10.0.0.1";
-      prefixLength = 31;
-      subnetMask = "255.255.255.254";
-      subnet = "10.0.0.0/31";
+      subnet = {
+        cidr = "10.0.0.0/31";
+        mask = "255.255.255.254";
+        prefixLength = 31;
+      };
+
+      addresses = {
+        host = "10.0.0.1";
+        network = "10.0.0.0";
+        broadcast = "10.0.0.1";
+      };
     };
   };
 
@@ -95,12 +120,17 @@ in
     expr = parse "0.0.0.0/0";
 
     expected = {
-      gatewayAddress = "0.0.0.0";
-      networkAddress = "0.0.0.0";
-      broadcastAddress = "255.255.255.255";
-      prefixLength = 0;
-      subnetMask = "0.0.0.0";
-      subnet = "0.0.0.0/0";
+      subnet = {
+        cidr = "0.0.0.0/0";
+        mask = "0.0.0.0";
+        prefixLength = 0;
+      };
+
+      addresses = {
+        host = "0.0.0.0";
+        network = "0.0.0.0";
+        broadcast = "255.255.255.255";
+      };
     };
   };
 
@@ -116,7 +146,7 @@ in
 
   # Reading one field still validates the whole input.
   testRejectsMalformedPrefixWhenReadingAddress = {
-    expr = (parse "192.168.1.1/33").gatewayAddress;
+    expr = (parse "192.168.1.1/33").addresses.host;
 
     expectedError = {
       type = "ThrownError";

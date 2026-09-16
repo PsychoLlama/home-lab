@@ -35,58 +35,62 @@ let
           example = "192.168.1.1/24";
         };
 
-        gateway = mkOption {
-          description = "IP address of the gateway for this network";
-          type = types.str;
-          default = ipv4.gatewayAddress;
-          example = "192.168.1.1";
-          visible = false;
-          readOnly = true;
+        subnet = {
+          cidr = mkOption {
+            description = "The subnet in CIDR notation, without host bits";
+            type = types.str;
+            default = ipv4.subnet.cidr;
+            example = "192.168.1.0/24";
+            visible = false;
+            readOnly = true;
+          };
+
+          mask = mkOption {
+            description = "Subnet mask for this network";
+            type = types.str;
+            default = ipv4.subnet.mask;
+            example = "255.255.255.0";
+            visible = false;
+            readOnly = true;
+          };
+
+          prefixLength = mkOption {
+            description = "Number of bits in the network mask";
+            type = types.int;
+            default = ipv4.subnet.prefixLength;
+            example = 24;
+            visible = false;
+            readOnly = true;
+          };
         };
 
-        network = mkOption {
-          description = "First available IP address in the network";
-          type = types.str;
-          default = ipv4.networkAddress;
-          example = "192.168.1.0";
-          visible = false;
-          readOnly = true;
-        };
+        addresses = {
+          gateway = mkOption {
+            description = "IP address of the gateway for this network";
+            type = types.str;
+            default = ipv4.addresses.host;
+            example = "192.168.1.1";
+            visible = false;
+            readOnly = true;
+          };
 
-        broadcast = mkOption {
-          description = "Broadcast address for the network";
-          type = types.str;
-          default = ipv4.broadcastAddress;
-          example = "192.168.1.255";
-          visible = false;
-          readOnly = true;
-        };
+          network = mkOption {
+            description = "Network address, the first in the subnet";
+            type = types.str;
+            default = ipv4.addresses.network;
+            example = "192.168.1.0";
+            visible = false;
+            readOnly = true;
+          };
 
-        prefixLength = mkOption {
-          description = "Number of bits in the network mask";
-          type = types.int;
-          default = ipv4.prefixLength;
-          example = 24;
-          visible = false;
-          readOnly = true;
-        };
-
-        netmask = mkOption {
-          description = "Subnet mask for this network";
-          type = types.str;
-          default = ipv4.subnetMask;
-          example = "255.255.255.0";
-          visible = false;
-          readOnly = true;
-        };
-
-        subnet = mkOption {
-          description = "CIDR notation of the subnet";
-          type = types.str;
-          default = ipv4.subnet;
-          example = "192.168.1.0/24";
-          visible = false;
-          readOnly = true;
+          broadcast = mkOption {
+            description = "Broadcast address for the network";
+            type = types.str;
+            default = ipv4.addresses.broadcast;
+            example = "192.168.1.255";
+            visible = false;
+            readOnly = true;
+          };
         };
 
         dhcp.pools = mkOption {
