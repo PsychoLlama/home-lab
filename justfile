@@ -16,8 +16,7 @@ fmt-check:
 test expr:
   @nix run ".#checks.$(nix eval --impure --raw --expr builtins.currentSystem).{{ expr }}.driver"
 
-# Run the `*.test.nix` unit tests, or only those in one file
-# (e.g. `modules/platforms/nixos/lab/networks.test.nix`).
+# Run the `*.test.nix` unit tests, or only those in a specific file.
 test-unit file="":
   nix-unit --quiet --flake '.#libTests{{ if file == "" { "" } else { "." + '"' + file + '"' } }}'
 

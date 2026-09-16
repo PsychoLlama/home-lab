@@ -1,11 +1,5 @@
 { flake, ... }:
 
-/**
-  A snapshot of `cidr.v4.parse`'s current behavior, taken before porting it
-  from import-from-derivation to pure Nix. Everything here is what Python's
-  `ipaddress.ip_interface` does today, quirks included - these cases say what
-  the port must keep, not what the interface ought to be.
-*/
 let
   inherit (flake.lib.cidr.v4) parse;
 in

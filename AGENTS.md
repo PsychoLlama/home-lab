@@ -55,6 +55,14 @@ individual test by name:
 just test dhcp  # modules/platforms/nixos/tests/dhcp.nix
 ```
 
+### Unit Tests
+
+- Powered by `nix-unit`, grouped by filename.
+- Run with `just test-unit [file_path]`. Omitting the arg runs all of them.
+- Files matching `{name}.test.nix` load automatically.
+- Co-locate unit tests with the file they test and a symmetric name.
+- Useful for standalone Nix functions with significant complexity (rare).
+
 ## Building
 
 Test builds locally with colmena:

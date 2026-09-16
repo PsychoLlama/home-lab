@@ -24,7 +24,7 @@ let
         cidr = mkOption {
           description = ''
             Defines the subnet in CIDR notation. The IP address is the
-            gatway.
+            gateway.
 
             Syntax: "{gateway_ip}/{mask_bits}"
 

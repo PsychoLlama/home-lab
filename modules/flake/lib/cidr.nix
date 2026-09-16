@@ -46,7 +46,7 @@ let
 
   /**
     Parse a bounded decimal number. Rejects signs, whitespace, and leading
-    zeros, same as Python's `ipaddress`.
+    zeros.
 
     # Inputs
 
