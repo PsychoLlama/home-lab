@@ -1,10 +1,18 @@
-{ inputs, lib, ... }:
+{
+  config,
+  inputs,
+  lib,
+  ...
+}:
 
 let
   root = ../..;
 
   # Handed to every test file. Shared test helpers go here.
-  context = { inherit lib; };
+  context = {
+    inherit lib;
+    inherit (config) flake;
+  };
 
   # Tests live beside the file they cover: `foo.nix` is tested by
   # `foo.test.nix`.
