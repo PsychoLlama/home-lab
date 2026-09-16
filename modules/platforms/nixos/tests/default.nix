@@ -1,9 +1,16 @@
-{ pkgs, inputs }:
+{
+  pkgs,
+  inputs,
+  flake,
+}:
 
 let
   inherit (pkgs) lib;
 
   baseModule = {
+    # Match the `flake` argument colmena gives every node.
+    node.specialArgs = { inherit flake; };
+
     defaults = {
       imports = [
         inputs.colmena.nixosModules.deploymentOptions
@@ -17,6 +24,7 @@ let
         sharedModules = [ inputs.self.homeModules.home-manager-platform ];
         useGlobalPkgs = true;
         useUserPackages = true;
+        extraSpecialArgs = { inherit flake; };
       };
     };
   };

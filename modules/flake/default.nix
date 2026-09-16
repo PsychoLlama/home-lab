@@ -6,6 +6,7 @@
     ./device-profiles
     ./hosts.nix
     ./lab.nix
+    ./lib
     ./platforms.nix
     ./nixpkgs.nix
     ./overlays.nix

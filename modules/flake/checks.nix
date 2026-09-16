@@ -1,11 +1,14 @@
-{ inputs, ... }:
+{ config, inputs, ... }:
 
 {
   perSystem =
     { pkgs, ... }:
 
     let
-      importTest = import ../platforms/nixos/tests { inherit pkgs inputs; };
+      importTest = import ../platforms/nixos/tests {
+        inherit pkgs inputs;
+        inherit (config) flake;
+      };
     in
 
     {

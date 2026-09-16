@@ -8,6 +8,7 @@
 }:
 
 let
+  inherit (config) flake;
   inherit (config.flake) homeModules nixosModules;
   inherit (config.lab) defaults hosts;
 
@@ -69,6 +70,7 @@ let
       home-manager = {
         useGlobalPkgs = lib.mkDefault true;
         useUserPackages = lib.mkDefault true;
+        extraSpecialArgs = { inherit flake; };
         sharedModules = [
           homeModules.home-manager-platform
 
@@ -133,6 +135,12 @@ in
 
         # Match each host with the packages for its architecture.
         nodeNixpkgs = lib.mapAttrs (_: host: withSystem host.system ({ pkgs, ... }: pkgs)) hosts;
+
+        # Expose the flake's outputs (e.g. `flake.lib`) to every node.
+        #
+        # TODO: Remove once NixOS modules are defined in `flake-parts` scope,
+        # where they can use `self.lib` directly.
+        specialArgs = { inherit flake; };
       };
     };
 

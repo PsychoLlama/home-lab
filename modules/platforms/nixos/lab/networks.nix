@@ -1,56 +1,14 @@
-{ pkgs, lib, ... }:
+{ flake, lib, ... }:
 
 let
   inherit (lib) types mkOption;
-
-  # TODO: Fix this abominable hack. Ideally port IP parsing to pure Nix.
-  #
-  # CIDR parsing uses import-from-derivation, so the helper must be buildable
-  # by the machine *evaluating* the config, not the target. Otherwise
-  # evaluating an aarch64 host from x86_64 fails trying to build an aarch64
-  # derivation. `currentSystem` is unavailable in pure evaluation (colmena,
-  # flakes), so assume the deploy workstation there.
-  evalPkgs = import pkgs.path {
-    system = "x86_64-linux";
-  };
-
-  buildCidrInfo = evalPkgs.writers.writePython3 "print_cidr_info" { } ''
-    from ipaddress import ip_interface
-    import sys
-    import json
-
-    # Expects a CIDR address as the first argument.
-    interface = ip_interface(sys.argv[1])
-    data = json.dumps({
-        "gatewayAddress": str(interface.ip),
-        "networkAddress": str(interface.network.network_address),
-        "broadcastAddress": str(interface.network.broadcast_address),
-        "prefixLength": interface.network.prefixlen,
-        "subnetMask": str(interface.network.netmask),
-        "subnet": str(interface.network),
-    })
-
-    print(data)
-  '';
-
-  # Run the python script passing the CIDR address. Read the file back as
-  # JSON, providing the data as a Nix value.
-  parseCidrNotation =
-    cidr_address:
-    builtins.fromJSON (
-      builtins.readFile (
-        evalPkgs.runCommandLocal "cidr-info" { inherit cidr_address; } ''
-          ${buildCidrInfo} $cidr_address > $out
-        ''
-      )
-    );
 
   networkOption =
     { config, name, ... }:
     let
       # WARN: `cidr` isn't set when evaluating documentation. Mark any derived
       # properties as `visible = false`.
-      ipv4 = parseCidrNotation config.ipv4.cidr;
+      ipv4 = flake.lib.cidr.v4.parse config.ipv4.cidr;
     in
     {
       options.name = mkOption {
