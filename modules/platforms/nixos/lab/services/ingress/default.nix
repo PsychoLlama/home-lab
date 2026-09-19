@@ -20,8 +20,8 @@ let
 
   # Build Caddy with Cloudflare DNS plugin
   caddyWithCloudflare = pkgs.caddy.withPlugins {
-    plugins = [ "github.com/caddy-dns/cloudflare@v0.2.2" ];
-    hash = "sha256-xAw+kBA+rdhzABdogwNCo9zEtNMPG7zj5rgPpFxvpDo=";
+    plugins = [ "github.com/caddy-dns/cloudflare@v0.2.4" ];
+    hash = "sha256-dQvk6ezY6TQ1J7PjhCXnThF/SqVgPwBO8/RXzHCY+js=";
   };
 
   # Recursively remove null values from an attrset
