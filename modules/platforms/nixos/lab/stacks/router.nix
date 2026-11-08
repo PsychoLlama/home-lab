@@ -122,6 +122,10 @@ in
     networking = {
       # Don't use DNS servers advertised by the ISP.
       inherit (config.lab.services.dhcp) nameservers;
+
+      # Seriously, don't use DNS servers advertised by the ISP.
+      # `resolv.conf` hook tries to insert them despite static nameservers.
+      dhcpcd.extraConfig = "nohook resolv.conf";
     };
 
     lab.services = {
