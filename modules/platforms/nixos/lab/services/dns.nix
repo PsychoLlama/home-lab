@@ -296,7 +296,7 @@ in
 
     services.coredns = {
       enable = true;
-      package = pkgs.unstable.coredns;
+      package = pkgs.coredns;
 
       config = ''
         (common) {
