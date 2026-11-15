@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Run a command, tee output to the given log, then wait for confirmation.
+set -uo pipefail
+
+if (( $# < 2 )); then
+  echo "Usage: run-and-hold <log file> <command> [args...]" >&2
+  exit 1
+fi
+
+log="$1"
+shift
+
+echo "\$ $*" | tee "$log"
+"$@" 2>&1 | (trap '' INT && exec tee -a "$log")
+status=${PIPESTATUS[0]}
+echo -e "\nexit status: $status" | tee -a "$log"
+
+echo -e "\nLog file: $log"
+read -rp "[Press enter to close]"
+exit "$status"

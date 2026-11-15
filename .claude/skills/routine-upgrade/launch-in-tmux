@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Spawn a heavy command (build, check, deploy) as a new window in a dedicated
+# tmux session. Usage: launch-in-tmux <command> [args...]
+#
+# This is a workaround for Claude, which happily accumulates memory but never
+# seems to free it. A max utilization of 12GB RAM will continue holding 12GB
+# at rest. The only way to release it is quitting the process, and sometimes
+# it leaks into other Claude processes (although I haven't nailed this down).
+#
+# Tmux has no such limitation. Tmux is blessed; tmux is life.
+
+if (( $# == 0 )); then
+  echo "Usage: launch-in-tmux <command> [args...]" >&2
+  exit 1
+fi
+
+# Avoid `:` and `.` in session names. Tmux parses them as target separators.
+session="lab@builds"
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root="$(git -C "$dir" rev-parse --show-toplevel)"
+log="$(mktemp --tmpdir routine-upgrade.XXXXXX.log)"
+
+# Pass argv separately so tmux execs directly instead of via default-shell
+# (nushell here, which mangles bash-style quoting).
+cmd=("$dir/run-and-hold" "$log" "$@")
+name="$(basename "$1")-$(date +%H%M%S)"
+
+if tmux has-session -t "=$session" 2>/dev/null; then
+  tmux new-window -d -t "=$session:" -n "$name" -c "$root" "${cmd[@]}"
+else
+  tmux new-session -d -s "$session" -n "$name" -c "$root" "${cmd[@]}"
+fi
+
+echo "$log"
